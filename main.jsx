@@ -5,7 +5,7 @@ import App from "./App.jsx";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <App
-      moduleFilter={["pricing-calc", "proposals"]}
+      moduleFilter={["pricing-calculator", "proposals"]}
       appName="Aerchain · Pricing & Proposals"
     />
   </StrictMode>
