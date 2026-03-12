@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/render-app-preview-JZk7t
+      - claude/continue-previous-session-n4WHn
       - main
 
 permissions:
