@@ -975,7 +975,7 @@ After updating, respond with only: {"success":true}`;
   // ── Render ────────────────────────────────────────────────
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"100vh", minHeight:"-webkit-fill-available", background:T.bg, fontFamily:"'Montserrat',sans-serif", color:T.text, overflow:"hidden" }}>
+    <div style={{ display:"flex", flexDirection:"column", height:"100dvh", background:T.bg, fontFamily:"'Montserrat',sans-serif", color:T.text, overflow:"hidden" }}>
 
       {/* TOPBAR */}
       <div style={{ height:56, background:T.topbar, borderBottom:`1px solid ${T.border}`, backdropFilter:"blur(20px)", display:"flex", alignItems:"center", padding:"0 20px", gap:16, flexShrink:0, zIndex:10 }}>
