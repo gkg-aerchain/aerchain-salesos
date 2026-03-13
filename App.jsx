@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  RefreshCw, Mail, BarChart3, Users, Brain, Zap, Settings,
-  Target, BookOpen, AlertCircle, CheckCircle, Clock, Database,
-  Loader2, Activity, TrendingUp, FileText, Search, ChevronRight,
-  Wifi, WifiOff, Eye, Inbox, DollarSign, Shield, GitBranch, X
+  RefreshCw, Mail, BarChart3, Users, Brain, Zap,
+  Target, BookOpen, AlertCircle, Clock, Database,
+  Loader2, Activity, FileText, Search,
+  DollarSign, Shield, X
 } from "lucide-react";
+import { supabase } from "./supabaseClient.js";
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -165,6 +166,21 @@ function isStale(lastSynced, hrs = 4) {
   return (Date.now() - new Date(lastSynced).getTime()) / 3600000 > hrs;
 }
 
+async function withRetry(fn, { retries = 3, label = "" } = {}) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const status = err?.status || err?.statusCode;
+      if (status && status >= 400 && status < 500 && status !== 429) throw err;
+      if (attempt === retries) throw err;
+      const delay = Math.pow(2, attempt + 1) * 1000;
+      console.warn(`[withRetry] ${label} attempt ${attempt + 1} failed, retrying in ${delay}ms:`, err.message);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+}
+
 function timeAgo(date) {
   if (!date) return "Never";
   const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -182,30 +198,34 @@ function fmt$(n) {
 }
 
 async function callClaude(prompt, mcpKeys = []) {
-  const servers = mcpKeys.map(k => MCP[k]).filter(Boolean);
-  const body = {
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4000,
-    system: "You are a data sync agent for Aerchain's GKG Master App. Use the provided MCP tools to fetch real live data. After fetching data with tools, return ONLY the raw JSON object requested — no markdown fences, no explanation, no preamble. Your response text must start with { and end with }.",
-    messages: [{ role: "user", content: prompt }],
-    ...(servers.length > 0 && { mcp_servers: servers }),
-  };
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.error?.message || `HTTP ${res.status}`);
-  }
-  const data = await res.json();
-  return (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+  return withRetry(async () => {
+    const servers = mcpKeys.map(k => MCP[k]).filter(Boolean);
+    const body = {
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4000,
+      system: "You are a data sync agent for Aerchain's GKG Master App. Use the provided MCP tools to fetch real live data. After fetching data with tools, return ONLY the raw JSON object requested — no markdown fences, no explanation, no preamble. Your response text must start with { and end with }.",
+      messages: [{ role: "user", content: prompt }],
+      ...(servers.length > 0 && { mcp_servers: servers }),
+    };
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      const err = new Error(e.error?.message || `HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    const data = await res.json();
+    return (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+  }, { retries: 3, label: "callClaude" });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -831,43 +851,48 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
     setSyncLog(prev => [{ msg, type, time: new Date() }, ...prev].slice(0, 80));
   }, []);
 
-  // ── Load from Notion ─────────────────────────────────────
+  // ── Load from Supabase ───────────────────────────────────
 
-  const loadFromNotion = useCallback(async () => {
+  const loadFromSupabase = useCallback(async () => {
     setLoadingNotion(true);
-    addLog("🔌 Connecting to Notion Memory DB…", "info");
+    addLog("🔌 Connecting to Supabase…", "info");
     try {
-      const prompt = `Use the Notion MCP to query the database at this URL: ${NOTION_DB_URL}
-Fetch all pages in the database. For each row, extract:
-- "Module" (title property)
-- "Data" (rich text property - this is a JSON string)
-- "Status" (select property)
-- "Last Synced" (date property)
-- "Stale After (hrs)" (number property)
-- "Sync Count" (number property)
+      await withRetry(async () => {
+        // Fetch modules registry
+        const { data: modules, error: modErr } = await supabase.from("modules").select("*");
+        if (modErr) throw modErr;
 
-Return ONLY a raw JSON object (no markdown, no explanation):
-{"modules":[{"module":"command-center","data":{},"status":"⬜ Never Synced","lastSynced":null,"staleAfterHrs":4,"syncCount":0}]}
+        // Fetch latest data for each module
+        const { data: allData, error: dataErr } = await supabase
+          .from("module_data")
+          .select("*")
+          .order("version", { ascending: false });
+        if (dataErr) throw dataErr;
 
-For the "data" field: if it's a non-empty JSON string, parse it to an object. If empty or "{}", use {}.`;
-
-      const text = await callClaude(prompt, ["notion"]);
-      const parsed = extractJSON(text);
-      if (parsed?.modules) {
-        const next = {};
-        parsed.modules.forEach(m => {
-          let d = m.data;
-          if (typeof d === "string") { try { d = JSON.parse(d); } catch { d = {}; } }
-          next[m.module] = { data: d || {}, status: m.status, lastSynced: m.lastSynced, staleAfterHrs: m.staleAfterHrs || 4, syncCount: m.syncCount || 0 };
+        // Group by module_key, take latest version
+        const latestByKey = {};
+        allData.forEach(row => {
+          if (!latestByKey[row.module_key]) latestByKey[row.module_key] = row;
         });
+
+        const next = {};
+        modules.forEach(m => {
+          const latest = latestByKey[m.key];
+          next[m.key] = {
+            data: latest?.data || {},
+            status: m.status || "⬜ Never Synced",
+            lastSynced: m.last_synced,
+            staleAfterHrs: m.stale_after_hrs || 4,
+            syncCount: m.sync_count || 0,
+          };
+        });
+
         setModuleData(next);
-        const fresh = parsed.modules.filter(m => m.status?.includes("Fresh")).length;
-        addLog(`✅ Loaded ${parsed.modules.length} modules (${fresh} fresh) from Notion`, "success");
-      } else {
-        addLog("⚠️ Could not parse Notion response — starting with empty state", "warn");
-      }
+        const fresh = modules.filter(m => m.status?.includes("Fresh")).length;
+        addLog(`✅ Loaded ${modules.length} modules (${fresh} fresh) from Supabase`, "success");
+      }, { retries: 3, label: "loadFromSupabase" });
     } catch (e) {
-      addLog(`❌ Notion load failed: ${e.message}`, "error");
+      addLog(`❌ Supabase load failed: ${e.message}`, "error");
     } finally {
       setLoadingNotion(false);
     }
@@ -887,7 +912,7 @@ For the "data" field: if it's a non-empty JSON string, parse it to an object. If
         }
       } catch {}
     }
-    loadFromNotion();
+    loadFromSupabase();
   }, []);
 
   useEffect(() => {
@@ -896,9 +921,60 @@ For the "data" field: if it's a non-empty JSON string, parse it to an object. If
     }
   }, [moduleData]);
 
-  // ── Write to Notion (background) ─────────────────────────
+  // ── Write to Supabase ────────────────────────────────────
 
-  const writeToNotion = useCallback(async (key, data, syncCount) => {
+  const writeToSupabase = useCallback(async (key, data, syncCount) => {
+    try {
+      await withRetry(async () => {
+        // Get current max version for this module
+        const { data: existing } = await supabase
+          .from("module_data")
+          .select("version")
+          .eq("module_key", key)
+          .order("version", { ascending: false })
+          .limit(1);
+        const nextVersion = (existing?.[0]?.version || 0) + 1;
+
+        // Insert new versioned data row
+        const { error: insertErr } = await supabase.from("module_data").insert({
+          module_key: key,
+          data,
+          source: (MOD[key]?.keys || []).join(","),
+          version: nextVersion,
+        });
+        if (insertErr) throw insertErr;
+
+        // Update modules registry
+        const { error: updateErr } = await supabase.from("modules").update({
+          status: "🟢 Fresh",
+          last_synced: new Date().toISOString(),
+          sync_count: syncCount,
+        }).eq("key", key);
+        if (updateErr) throw updateErr;
+
+        // Insert sync log entry
+        await supabase.from("sync_log").insert({
+          module_key: key,
+          action: "SYNC",
+          status: "success",
+          message: `Synced ${MOD[key]?.label || key} v${nextVersion}`,
+        });
+      }, { retries: 3, label: `writeToSupabase(${key})` });
+    } catch (e) {
+      console.warn(`Supabase write failed for ${key}:`, e.message);
+      // Log the error to sync_log too
+      await supabase.from("sync_log").insert({
+        module_key: key,
+        action: "ERROR",
+        status: "error",
+        message: `Write failed: ${e.message}`,
+      }).catch(() => {});
+    }
+  }, []);
+
+  // ── Backup to Notion (background, contextual) ───────────
+
+  const backupToNotion = useCallback(async (key, data, syncCount) => {
     const pageId = NOTION_PAGE_IDS[key];
     if (!pageId) return;
     const today = new Date().toISOString().split("T")[0];
@@ -907,12 +983,12 @@ Set "Data" property to this exact string: ${JSON.stringify(JSON.stringify(data))
 Set "Status" select to "🟢 Fresh"
 Set "Last Synced" date to ${today}
 Set "Sync Count" number to ${syncCount}
-Set "Audit Log" to "2026-03-12 | SYNC | ${key} | claude-sonnet-4-6"
+Set "Audit Log" to "${today} | SYNC | ${key} | claude-sonnet-4-6"
 After updating, respond with only: {"success":true}`;
     try {
       await callClaude(prompt, ["notion"]);
     } catch (e) {
-      console.warn(`Background Notion write failed for ${key}:`, e.message);
+      console.warn(`Background Notion backup failed for ${key}:`, e.message);
     }
   }, []);
 
@@ -933,7 +1009,8 @@ After updating, respond with only: {"success":true}`;
         const entry = { data: parsed, status: "🟢 Fresh", lastSynced: new Date().toISOString(), staleAfterHrs: moduleData[key]?.staleAfterHrs || 4, syncCount: prevCount + 1 };
         setModuleData(prev => ({ ...prev, [key]: entry }));
         addLog(`✅ ${label} — synced successfully`, "success");
-        writeToNotion(key, parsed, prevCount + 1);
+        writeToSupabase(key, parsed, prevCount + 1);
+        backupToNotion(key, parsed, prevCount + 1);
       } else {
         addLog(`⚠️ ${label} — no parseable JSON returned`, "warn");
         setModuleData(prev => ({ ...prev, [key]: { ...prev[key], status: "🔴 Error" } }));
@@ -944,7 +1021,7 @@ After updating, respond with only: {"success":true}`;
     } finally {
       setSyncing(prev => { const n = new Set(prev); n.delete(key); return n; });
     }
-  }, [syncing, moduleData, addLog, writeToNotion]);
+  }, [syncing, moduleData, addLog, writeToSupabase, backupToNotion]);
 
   // ── Sync all ──────────────────────────────────────────────
 
@@ -1003,7 +1080,7 @@ After updating, respond with only: {"success":true}`;
         {/* Status indicators */}
         {loadingNotion && (
           <div style={{ display:"flex", alignItems:"center", gap:6, color:T.muted, fontSize:12 }}>
-            <Spinner size={11} /> Loading from Notion…
+            <Spinner size={11} /> Loading from Supabase…
           </div>
         )}
         {anyStale && !loadingNotion && (
@@ -1032,8 +1109,8 @@ After updating, respond with only: {"success":true}`;
           <Activity size={15} />
         </button>
 
-        {/* Reload Notion */}
-        <button onClick={loadFromNotion} disabled={loadingNotion} title="Reload from Notion" style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, padding:4 }}>
+        {/* Reload from Supabase */}
+        <button onClick={loadFromSupabase} disabled={loadingNotion} title="Reload from Supabase" style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, padding:4 }}>
           {loadingNotion ? <Spinner size={14}/> : <Database size={14}/>}
         </button>
       </div>
@@ -1113,7 +1190,7 @@ After updating, respond with only: {"success":true}`;
           <div style={{ flex:1, overflowY:"auto", padding:20 }}>
             {loadingNotion && !mData ? (
               <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", gap:10, color:T.muted }}>
-                <Spinner size={16}/> Loading from Notion Memory DB…
+                <Spinner size={16}/> Loading from Supabase…
               </div>
             ) : (
               <div style={{ animation:"fadeIn 0.2s ease" }}>
