@@ -5,8 +5,8 @@ export default defineConfig({
   base: process.env.NODE_ENV === "production" ? "/aerchain-pricing-proposals/" : "/",
   plugins: [react()],
   server: {
-    port: 3002,
-    open: true,
+    port: 5173,
+    open: false,
     host: true,
     allowedHosts: "all",
   },
