@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   RefreshCw, AlertCircle, Clock, Database,
   Loader2, Activity, FileText, DollarSign, X,
-  TrendingUp, Users
+  TrendingUp, Users, Wand2
 } from "lucide-react";
 import { supabase } from "./supabaseClient.js";
 
@@ -870,6 +870,18 @@ After updating, respond with only: {"success":true}`;
             </div>
           </div>
         )}
+      </div>
+
+      {/* LUMOS MARKER */}
+      <div style={{
+        position:"fixed", bottom:16, right:16, zIndex:200,
+        display:"flex", alignItems:"center", gap:6,
+        background:"rgba(139,92,246,0.15)", border:`1px solid rgba(139,92,246,0.4)`,
+        backdropFilter:"blur(12px)", borderRadius:8, padding:"6px 12px",
+        boxShadow:"0 0 12px rgba(139,92,246,0.25)",
+      }}>
+        <Wand2 size={14} color="#8b5cf6" />
+        <span style={{ fontSize:11, fontWeight:600, letterSpacing:"0.08em", color:"#8b5cf6", fontFamily:"'JetBrains Mono',monospace" }}>Lumos</span>
       </div>
 
       {/* GLOBAL SYNC OVERLAY */}
