@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  RefreshCw, AlertCircle, CheckCircle, Clock, Database,
-  Loader2, Activity, FileText, DollarSign, X
+  RefreshCw, AlertCircle, Clock, Database,
+  Loader2, Activity, FileText, DollarSign, X,
+  TrendingUp, Users
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════
@@ -15,12 +16,8 @@ const NOTION_PAGE_IDS = {
 };
 
 const MCP = {
-  gmail:   { type: "url", url: "https://gmail.mcp.claude.com/mcp",             name: "gmail"   },
-  gcal:    { type: "url", url: "https://gcal.mcp.claude.com/mcp",              name: "gcal"    },
-  notion:  { type: "url", url: "https://mcp.notion.com/mcp",                   name: "notion"  },
-  hubspot: { type: "url", url: "https://mcp.hubspot.com/anthropic",             name: "hubspot" },
-  slack:   { type: "url", url: "https://mcp.slack.com/mcp",                    name: "slack"   },
-  n8n:     { type: "url", url: "https://gkg-aerchain.app.n8n.cloud/mcp-server/http", name: "n8n" },
+  notion:  { type: "url", url: "https://mcp.notion.com/mcp",       name: "notion"  },
+  hubspot: { type: "url", url: "https://mcp.hubspot.com/anthropic", name: "hubspot" },
 };
 
 const GROUPS = [
@@ -88,13 +85,6 @@ function timeAgo(date) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-function fmt$(n) {
-  if (!n || isNaN(n)) return "$—";
-  if (n >= 1e6) return `$${(n/1e6).toFixed(1)}M`;
-  if (n >= 1e3) return `$${(n/1e3).toFixed(0)}K`;
-  return `$${Math.round(n).toLocaleString()}`;
-}
-
 async function callClaude(prompt, mcpKeys = []) {
   const servers = mcpKeys.map(k => MCP[k]).filter(Boolean);
   const body = {
@@ -129,7 +119,6 @@ async function callClaude(prompt, mcpKeys = []) {
 const T = {
   bg:        "#0d0a1e",
   bgCard:    "rgba(255,255,255,0.045)",
-  bgHover:   "rgba(255,255,255,0.07)",
   bgActive:  "rgba(139,92,246,0.18)",
   border:    "rgba(255,255,255,0.08)",
   borderAcc: "rgba(139,92,246,0.4)",
@@ -140,7 +129,6 @@ const T = {
   success:   "#10b981",
   warn:      "#f59e0b",
   error:     "#ef4444",
-  info:      "#3b82f6",
   topbar:    "rgba(13,10,30,0.92)",
   sidebar:   "rgba(255,255,255,0.025)",
 };
@@ -225,22 +213,198 @@ function AerchainLogo({ height = 18 }) {
 }
 
 
-// ── MODULE VIEWS ──────────────────────────────────────────
+// ── SHARED TABLE HELPERS ──────────────────────────────────
+
+const tableStyle = {
+  width: "100%", borderCollapse: "separate", borderSpacing: 0,
+  fontSize: 12, fontFamily: "'JetBrains Mono','Montserrat',sans-serif",
+};
+const thStyle = {
+  textAlign: "left", padding: "8px 12px", color: T.muted, fontSize: 10,
+  fontWeight: 700, letterSpacing: 1, borderBottom: `1px solid ${T.border}`,
+  whiteSpace: "nowrap", textTransform: "uppercase",
+};
+const tdStyle = {
+  padding: "10px 12px", borderBottom: `1px solid ${T.border}`, color: T.text,
+  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+};
+
+function fmt$(n) {
+  if (!n || isNaN(n)) return "$—";
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
+  return `$${Math.round(n).toLocaleString()}`;
+}
+
+function StatCard({ label, value, sub, icon: Ic, color = T.accent }) {
+  return (
+    <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px", flex: 1, minWidth: 140 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+        {Ic && <Ic size={13} color={color} />}
+        <span style={{ color: T.muted, fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</span>
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: T.text, fontFamily: "'JetBrains Mono',monospace" }}>{value}</div>
+      {sub && <div style={{ color: T.muted, fontSize: 11, marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+}
+
+// ── PRICING CALC VIEW ─────────────────────────────────────
+
+function PricingCalcView({ data }) {
+  const model = data.standardModel || {};
+  const deals = data.recentDeals || [];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Standard Model KPIs */}
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <StatCard label="Per $1B Spend" value={fmt$(model.per1BSpend)} sub="Annual platform fee" icon={DollarSign} />
+        <StatCard label="YoY Escalation" value={model.yoyEscalation || "—"} sub="Contract renewal rate" icon={TrendingUp} color={T.warn} />
+        <StatCard label="Break-Even" value={model.breakEven || "—"} sub="Spend under mgmt threshold" icon={Activity} color={T.success} />
+      </div>
+
+      {/* Recent Deals Table */}
+      <Card>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <Users size={13} color={T.accent} />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Recent Deals</span>
+          <span style={{ color: T.muted, fontSize: 11 }}>({deals.length})</span>
+        </div>
+        {deals.length === 0 ? (
+          <div style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: 20 }}>No deals synced yet</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Client</th>
+                  <th style={thStyle}>Y1 Amount</th>
+                  <th style={thStyle}>Spend Under Mgmt</th>
+                  <th style={thStyle}>Modules</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deals.map((d, i) => (
+                  <tr key={i} className="table-row" style={{ transition: "background 0.1s" }}>
+                    <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{d.client || "—"}</td>
+                    <td style={{ ...tdStyle, fontFamily: "'JetBrains Mono',monospace", color: T.success }}>{fmt$(d.y1Amount)}</td>
+                    <td style={{ ...tdStyle, color: T.muted }}>{d.spendUnderMgmt || "—"}</td>
+                    <td style={{ ...tdStyle, maxWidth: 200 }}>{d.modules || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+// ── PROPOSALS VIEW ────────────────────────────────────────
+
+function stageBadge(stage) {
+  const colors = {
+    proposal:  { bg: "rgba(139,92,246,0.15)", fg: T.accent },
+    negotiation: { bg: "rgba(245,158,11,0.15)", fg: T.warn },
+    "closed won": { bg: "rgba(16,185,129,0.15)", fg: T.success },
+    "closed lost": { bg: "rgba(239,68,68,0.15)", fg: T.error },
+  };
+  const key = (stage || "").toLowerCase();
+  const c = Object.entries(colors).find(([k]) => key.includes(k))?.[1] || { bg: T.bgCard, fg: T.muted };
+  return (
+    <span style={{ background: c.bg, color: c.fg, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 4, whiteSpace: "nowrap" }}>
+      {stage || "—"}
+    </span>
+  );
+}
+
+function statusBadge(status) {
+  const s = (status || "").toLowerCase();
+  const color = s.includes("submitted") ? T.success : s.includes("draft") ? T.warn : s.includes("lost") || s.includes("reject") ? T.error : T.muted;
+  return <span style={{ color, fontSize: 11, fontWeight: 500 }}>{status || "—"}</span>;
+}
+
+function ProposalsView({ data }) {
+  const proposals = data.activeProposals || [];
+  const total = data.total || proposals.length;
+  const totalValue = data.totalValue || proposals.reduce((s, p) => s + (p.value || 0), 0);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* KPI Row */}
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <StatCard label="Active Proposals" value={total} sub="In pipeline" icon={FileText} />
+        <StatCard label="Total Value" value={fmt$(totalValue)} sub="Combined deal value" icon={DollarSign} color={T.success} />
+        <StatCard label="Avg Deal Size" value={total > 0 ? fmt$(totalValue / total) : "$—"} sub="Per proposal" icon={TrendingUp} color={T.warn} />
+      </div>
+
+      {/* Proposals Table */}
+      <Card>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <FileText size={13} color={T.accent} />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Active Proposals</span>
+          <span style={{ color: T.muted, fontSize: 11 }}>({proposals.length})</span>
+        </div>
+        {proposals.length === 0 ? (
+          <div style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: 20 }}>No active proposals synced yet</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Client</th>
+                  <th style={thStyle}>Value</th>
+                  <th style={thStyle}>Stage</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={thStyle}>Submitted</th>
+                  <th style={thStyle}>Contact</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proposals.map((p, i) => (
+                  <tr key={i} className="table-row" style={{ transition: "background 0.1s" }}>
+                    <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{p.client || "—"}</td>
+                    <td style={{ ...tdStyle, fontFamily: "'JetBrains Mono',monospace", color: T.success }}>{fmt$(p.value)}</td>
+                    <td style={tdStyle}>{stageBadge(p.stage)}</td>
+                    <td style={tdStyle}>{statusBadge(p.status)}</td>
+                    <td style={{ ...tdStyle, color: T.muted }}>{p.submittedDate || "—"}</td>
+                    <td style={{ ...tdStyle, color: T.muted }}>{p.contact || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+// ── FALLBACK VIEW ─────────────────────────────────────────
 
 function GenericView({ data }) {
   return (
     <Card>
-      <pre style={{ color:T.text, fontSize:11, fontFamily:"'JetBrains Mono',monospace", whiteSpace:"pre-wrap", wordBreak:"break-all", margin:0, lineHeight:1.6 }}>
+      <pre style={{ color: T.text, fontSize: 11, fontFamily: "'JetBrains Mono',monospace", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, lineHeight: 1.6 }}>
         {JSON.stringify(data, null, 2)}
       </pre>
     </Card>
   );
 }
 
+// ── MODULE CONTENT ROUTER ─────────────────────────────────
+
 function ModuleContent({ moduleKey, data, onSync, syncing }) {
   const isEmpty = !data || Object.keys(data).length === 0 || (Object.keys(data).length === 1 && data.syncedAt);
   if (isEmpty) return <EmptyState moduleKey={moduleKey} onSync={onSync} loading={syncing} />;
-  return <GenericView data={data} />;
+
+  switch (moduleKey) {
+    case "pricing-calc": return <PricingCalcView data={data} />;
+    case "proposals":    return <ProposalsView data={data} />;
+    default:             return <GenericView data={data} />;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -252,7 +416,7 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
     ? GROUPS.map(g => ({ ...g, modules: g.modules.filter(m => moduleFilter.includes(m)) })).filter(g => g.modules.length > 0)
     : GROUPS;
 
-  const [selected, setSelected]           = useState(moduleFilter ? moduleFilter[0] : "command-center");
+  const [selected, setSelected]           = useState(moduleFilter ? moduleFilter[0] : "pricing-calc");
   const [moduleData, setModuleData]       = useState({});
   const [syncing, setSyncing]             = useState(new Set());
   const [syncingAll, setSyncingAll]       = useState(false);
@@ -274,7 +438,7 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
       @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
       @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
       .module-item:hover { background: rgba(255,255,255,0.06) !important; }
-      .list-row:hover { background: rgba(255,255,255,0.04) !important; }
+      .table-row:hover { background: rgba(255,255,255,0.04) !important; }
     `;
     document.head.appendChild(s);
     return () => s.remove();
@@ -290,8 +454,10 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
     setLoadingNotion(true);
     addLog("🔌 Connecting to Notion Memory DB…", "info");
     try {
+      const activeModules = Object.keys(MOD);
       const prompt = `Use the Notion MCP to query the database at this URL: ${NOTION_DB_URL}
-Fetch all pages in the database. For each row, extract:
+Fetch pages where the "Module" title matches one of: ${activeModules.map(m => `"${m}"`).join(", ")}.
+For each matching row, extract:
 - "Module" (title property)
 - "Data" (rich text property - this is a JSON string)
 - "Status" (select property)
@@ -300,7 +466,7 @@ Fetch all pages in the database. For each row, extract:
 - "Sync Count" (number property)
 
 Return ONLY a raw JSON object (no markdown, no explanation):
-{"modules":[{"module":"command-center","data":{},"status":"⬜ Never Synced","lastSynced":null,"staleAfterHrs":4,"syncCount":0}]}
+{"modules":[{"module":"pricing-calc","data":{},"status":"⬜ Never Synced","lastSynced":null,"staleAfterHrs":4,"syncCount":0}]}
 
 For the "data" field: if it's a non-empty JSON string, parse it to an object. If empty or "{}", use {}.`;
 
@@ -360,7 +526,7 @@ Set "Data" property to this exact string: ${JSON.stringify(JSON.stringify(data))
 Set "Status" select to "🟢 Fresh"
 Set "Last Synced" date to ${today}
 Set "Sync Count" number to ${syncCount}
-Set "Audit Log" to "2026-03-12 | SYNC | ${key} | claude-sonnet-4-6"
+Set "Audit Log" to "${today} | SYNC | ${key} | claude-sonnet-4-6"
 After updating, respond with only: {"success":true}`;
     try {
       await callClaude(prompt, ["notion"]);
