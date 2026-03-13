@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
-  RefreshCw, Mail, BarChart3, Users, Brain, Zap, Settings,
-  Target, BookOpen, AlertCircle, CheckCircle, Clock, Database,
-  Loader2, Activity, TrendingUp, FileText, Search, ChevronRight,
-  Wifi, WifiOff, Eye, Inbox, DollarSign, Shield, GitBranch, X
+  RefreshCw, AlertCircle, Clock, Database,
+  Loader2, Activity, FileText, DollarSign, X,
+  TrendingUp, Users
 } from "lucide-react";
+import { supabase } from "./supabaseClient.js";
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -12,56 +12,22 @@ import {
 
 const NOTION_DB_URL = "https://www.notion.so/4044b29e0f85481db7e4dd6b1aa88a2c";
 const NOTION_PAGE_IDS = {
-  "command-center":  "32101f618de2811092e2f331c371494d",
-  "sales-gtm":       "32101f618de281e2920ef12c1ea01bbf",
-  "governance":      "32101f618de281aeb744ffb37cc82096",
-  "customers":       "32101f618de281509aa0d667dabf7402",
-  "deal-desk":       "32101f618de2810c867fc9c520e7c0af",
-  "pricing-calc":    "32101f618de2813db745d7b46c936272",
-  "proposals":       "32101f618de2813f8ac5e65ed4ef7b14",
-  "emails":          "32101f618de281e99106de1c10228a94",
-  "hubspot-kb":      "32101f618de281329ae9fac5c1a682f0",
-  "hubspot-clean":   "32101f618de281a8abfeda91e45f0d10",
-  "people-hub":      "32101f618de2813d8f92ed6651d277da",
-  "rfp-brain":       "32101f618de281728997ea1c08272b3d",
-  "sales-campaigns": "32101f618de281a5912aca96fa24d6ce",
-  "sales-bible":     "32101f618de281cc97d9d88324e08964",
-  "memory":          "32101f618de281cc85eed2c160ef0ba2",
+  "pricing-calc": "32101f618de2813db745d7b46c936272",
+  "proposals":    "32101f618de2813f8ac5e65ed4ef7b14",
 };
 
 const MCP = {
-  gmail:   { type: "url", url: "https://gmail.mcp.claude.com/mcp",             name: "gmail"   },
-  gcal:    { type: "url", url: "https://gcal.mcp.claude.com/mcp",              name: "gcal"    },
-  notion:  { type: "url", url: "https://mcp.notion.com/mcp",                   name: "notion"  },
-  hubspot: { type: "url", url: "https://mcp.hubspot.com/anthropic",             name: "hubspot" },
-  slack:   { type: "url", url: "https://mcp.slack.com/mcp",                    name: "slack"   },
-  n8n:     { type: "url", url: "https://gkg-aerchain.app.n8n.cloud/mcp-server/http", name: "n8n" },
+  notion:  { type: "url", url: "https://mcp.notion.com/mcp",       name: "notion"  },
+  hubspot: { type: "url", url: "https://mcp.hubspot.com/anthropic", name: "hubspot" },
 };
 
 const GROUPS = [
-  { id: "command",      label: "COMMAND",      modules: ["command-center","sales-gtm","governance"] },
-  { id: "pipeline",     label: "PIPELINE",     modules: ["customers","deal-desk","pricing-calc","proposals"] },
-  { id: "intelligence", label: "INTELLIGENCE", modules: ["emails","hubspot-kb","hubspot-clean","people-hub","rfp-brain"] },
-  { id: "enablement",   label: "ENABLEMENT",   modules: ["sales-campaigns","sales-bible"] },
-  { id: "system",       label: "SYSTEM",       modules: ["memory"] },
+  { id: "pipeline", label: "PIPELINE", modules: ["pricing-calc","proposals"] },
 ];
 
 const MOD = {
-  "command-center":  { label: "Command Center",    Icon: Zap,        keys: ["notion","hubspot"] },
-  "sales-gtm":       { label: "Sales GTM",         Icon: Target,     keys: ["hubspot"]          },
-  "governance":      { label: "Governance",        Icon: Shield,     keys: ["notion"]           },
-  "customers":       { label: "Customers",         Icon: Users,      keys: ["hubspot"]          },
-  "deal-desk":       { label: "Deal Desk",         Icon: BarChart3,  keys: ["hubspot"]          },
-  "pricing-calc":    { label: "Pricing Calc",      Icon: DollarSign, keys: ["notion"]           },
-  "proposals":       { label: "Proposals",         Icon: FileText,   keys: ["notion","hubspot"] },
-  "emails":          { label: "Emails",            Icon: Mail,       keys: ["gmail"]            },
-  "hubspot-kb":      { label: "HubSpot Knowledge", Icon: Database,   keys: ["hubspot"]          },
-  "hubspot-clean":   { label: "HubSpot Cleaning",  Icon: Search,     keys: ["hubspot"]          },
-  "people-hub":      { label: "People Hub",        Icon: Users,      keys: ["hubspot","gmail"]  },
-  "rfp-brain":       { label: "RFP Brain",         Icon: Brain,      keys: ["notion"]           },
-  "sales-campaigns": { label: "Sales Campaigns",   Icon: Activity,   keys: ["hubspot"]          },
-  "sales-bible":     { label: "Sales Bible",       Icon: BookOpen,   keys: ["notion"]           },
-  "memory":          { label: "Memory DB",         Icon: Database,   keys: ["notion"]           },
+  "pricing-calc": { label: "Pricing Calc", Icon: DollarSign, keys: ["notion"]           },
+  "proposals":    { label: "Proposals",    Icon: FileText,   keys: ["notion","hubspot"] },
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -71,57 +37,6 @@ const MOD = {
 const getSyncPrompt = (key) => {
   const now = new Date().toISOString();
   const prompts = {
-    emails: `Use Gmail MCP to list the last 15 inbox messages. 
-Return ONLY raw JSON — no markdown, no code blocks, no explanation. Start with { end with }:
-{"emails":[{"subject":"...","from":"...","date":"...","snippet":"...","isUnread":true,"labels":[]}],"unreadCount":0,"totalFetched":15,"syncedAt":"${now}"}`,
-
-    "deal-desk": `Use HubSpot MCP to list all active CRM deals with their amounts, stages, and owners.
-Return ONLY raw JSON:
-{"deals":[{"name":"...","amount":0,"stage":"...","probability":0,"owner":"...","closeDate":"...","agedays":0}],"total":0,"totalValue":0,"weightedValue":0,"syncedAt":"${now}"}`,
-
-    customers: `Use HubSpot MCP to list companies that are existing customers (closed-won).
-Return ONLY raw JSON:
-{"customers":[{"name":"...","industry":"...","arr":0,"status":"Active","country":"...","modules":"..."}],"total":0,"totalARR":0,"syncedAt":"${now}"}`,
-
-    "rfp-brain": `Use the Notion MCP to query the Q&A Master Database at URL https://www.notion.so/8e0da51b23e64d6a8acb913f0bc3be7a.
-Fetch the first 20 pages and extract question text, answer quality rating, category, and confidence score.
-Return ONLY raw JSON:
-{"total":25,"byRating":{"Gold":0,"Silver":0,"Bronze":0},"categories":[{"name":"...","count":0}],"recentEntries":[{"question":"...","rating":"...","category":"...","confidence":0}],"syncedAt":"${now}"}`,
-
-    "command-center": `Use HubSpot MCP to get pipeline deal summary. Return key metrics and top 5 deals by value.
-Return ONLY raw JSON:
-{"health":87,"pipeline":{"totalDeals":0,"totalValue":0,"weightedValue":0,"closingThisMonth":0},"topDeals":[{"name":"...","value":0,"stage":"...","probability":0}],"recentActivity":[{"type":"deal_update","description":"...","date":"..."}],"syncedAt":"${now}"}`,
-
-    "sales-gtm": `Use HubSpot MCP to analyze pipeline by stage and by deal source/channel.
-Return ONLY raw JSON:
-{"stageBreakdown":[{"stage":"...","count":0,"totalValue":0}],"topSources":[{"source":"...","deals":0,"value":0}],"avgDealSize":0,"winRate":0,"syncedAt":"${now}"}`,
-
-    "people-hub": `Use HubSpot MCP to list recent contacts and their associated deals.
-Return ONLY raw JSON:
-{"contacts":[{"name":"...","company":"...","email":"...","title":"...","dealStage":"...","lastActivity":"..."}],"total":0,"syncedAt":"${now}"}`,
-
-    "hubspot-kb": `Use HubSpot MCP to analyze deal stage distribution, days-in-stage averages, and owner performance.
-Return ONLY raw JSON:
-{"stageMetrics":[{"stage":"...","count":0,"avgDays":0,"totalValue":0}],"ownerMetrics":[{"owner":"...","openDeals":0,"totalValue":0,"avgDealAge":0}],"syncedAt":"${now}"}`,
-
-    "hubspot-clean": `Use HubSpot MCP to identify CRM data quality issues: deals missing close dates, contacts missing emails, stale deals.
-Return ONLY raw JSON:
-{"issues":[{"type":"missing_close_date","count":0,"severity":"high","description":"Deals without close dates"},{"type":"stale_deals","count":0,"severity":"medium","description":"Deals untouched 30+ days"}],"healthScore":0,"totalIssues":0,"syncedAt":"${now}"}`,
-
-    memory: `Use the Notion MCP to fetch all rows from the GKG App Memory Database at URL ${NOTION_DB_URL}.
-For each row, return the Module name, Status, Last Synced date, and Sync Count.
-Return ONLY raw JSON:
-{"modules":[{"module":"...","status":"...","lastSynced":null,"syncCount":0}],"totalModules":15,"freshCount":0,"staleCount":0,"neverSyncedCount":15,"syncedAt":"${now}"}`,
-
-    "sales-campaigns": `Use HubSpot MCP to find deals grouped by their source/channel to represent campaign performance.
-Return ONLY raw JSON:
-{"campaigns":[{"name":"...","source":"...","deals":0,"pipelineValue":0,"status":"active"}],"total":0,"syncedAt":"${now}"}`,
-
-    "sales-bible": `Use the Notion MCP to search for content in the Aerchain Brain page https://www.notion.so/32001f618de281b88cd3ec9bbea47738.
-Look for sections on GTM strategy, competitive positioning, pricing, and objection handling.
-Return ONLY raw JSON:
-{"sections":[{"title":"...","category":"...","keyPoints":["..."],"wordCount":0}],"totalSections":0,"lastUpdated":"...","syncedAt":"${now}"}`,
-
     "pricing-calc": `Use the Notion MCP to fetch pricing intelligence from the Aerchain Brain.
 Look for deal-level pricing in Section 4 Pipeline & Revenue Intelligence.
 Return ONLY raw JSON:
@@ -130,9 +45,6 @@ Return ONLY raw JSON:
     proposals: `Use HubSpot MCP to list deals at Proposal or later stage. Use Notion MCP to check for active RFP submissions.
 Return ONLY raw JSON:
 {"activeProposals":[{"client":"...","value":0,"stage":"...","submittedDate":"...","status":"...","contact":"..."}],"total":0,"totalValue":0,"syncedAt":"${now}"}`,
-
-    governance: `Return Aerchain's confirmed compliance information as ONLY raw JSON (this is static reference data, no tool call needed):
-{"certifications":[{"name":"ISO 27001","status":"Active"},{"name":"SOC 2 Type I","status":"Active"},{"name":"SOC 2 Type II","status":"Active"},{"name":"GDPR","status":"Active"},{"name":"VAPT","status":"Active (periodic)"}],"infrastructure":{"primary":"AWS Mumbai","backup":"AWS US","gccc":"AWS Middle East (UAE)"},"uptime":"99.9%","encryption":"AES-256 / TLS 1.2+","auditor":"T R Chadha & Co LLP","breachNotification":"72 hours","dataRetention":"30–60 days post-termination","syncedAt":"${now}"}`,
   };
   return prompts[key] || `Return ONLY raw JSON: {"message":"No sync configured","syncedAt":"${now}"}`;
 };
@@ -165,6 +77,21 @@ function isStale(lastSynced, hrs = 4) {
   return (Date.now() - new Date(lastSynced).getTime()) / 3600000 > hrs;
 }
 
+async function withRetry(fn, { retries = 3, label = "" } = {}) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const status = err?.status || err?.statusCode;
+      if (status && status >= 400 && status < 500 && status !== 429) throw err;
+      if (attempt === retries) throw err;
+      const delay = Math.pow(2, attempt + 1) * 1000;
+      console.warn(`[withRetry] ${label} attempt ${attempt + 1} failed, retrying in ${delay}ms:`, err.message);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+}
+
 function timeAgo(date) {
   if (!date) return "Never";
   const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -174,38 +101,35 @@ function timeAgo(date) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-function fmt$(n) {
-  if (!n || isNaN(n)) return "$—";
-  if (n >= 1e6) return `$${(n/1e6).toFixed(1)}M`;
-  if (n >= 1e3) return `$${(n/1e3).toFixed(0)}K`;
-  return `$${Math.round(n).toLocaleString()}`;
-}
-
 async function callClaude(prompt, mcpKeys = []) {
-  const servers = mcpKeys.map(k => MCP[k]).filter(Boolean);
-  const body = {
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4000,
-    system: "You are a data sync agent for Aerchain's GKG Master App. Use the provided MCP tools to fetch real live data. After fetching data with tools, return ONLY the raw JSON object requested — no markdown fences, no explanation, no preamble. Your response text must start with { and end with }.",
-    messages: [{ role: "user", content: prompt }],
-    ...(servers.length > 0 && { mcp_servers: servers }),
-  };
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.error?.message || `HTTP ${res.status}`);
-  }
-  const data = await res.json();
-  return (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+  return withRetry(async () => {
+    const servers = mcpKeys.map(k => MCP[k]).filter(Boolean);
+    const body = {
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4000,
+      system: "You are a data sync agent for Aerchain's GKG Master App. Use the provided MCP tools to fetch real live data. After fetching data with tools, return ONLY the raw JSON object requested — no markdown fences, no explanation, no preamble. Your response text must start with { and end with }.",
+      messages: [{ role: "user", content: prompt }],
+      ...(servers.length > 0 && { mcp_servers: servers }),
+    };
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      const err = new Error(e.error?.message || `HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
+    const data = await res.json();
+    return (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+  }, { retries: 3, label: "callClaude" });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -215,7 +139,6 @@ async function callClaude(prompt, mcpKeys = []) {
 const T = {
   bg:        "#0d0a1e",
   bgCard:    "rgba(255,255,255,0.045)",
-  bgHover:   "rgba(255,255,255,0.07)",
   bgActive:  "rgba(139,92,246,0.18)",
   border:    "rgba(255,255,255,0.08)",
   borderAcc: "rgba(139,92,246,0.4)",
@@ -226,7 +149,6 @@ const T = {
   success:   "#10b981",
   warn:      "#f59e0b",
   error:     "#ef4444",
-  info:      "#3b82f6",
   topbar:    "rgba(13,10,30,0.92)",
   sidebar:   "rgba(255,255,255,0.025)",
 };
@@ -310,483 +232,198 @@ function AerchainLogo({ height = 18 }) {
   );
 }
 
-// ── STATIC FALLBACK DATA (shown before first sync) ────────
 
-const CMD_STATIC = {
-  health: 84,
-  pipeline: { totalDeals: 42, totalValue: 10200000, weightedValue: 3400000, avgCycleDays: 68 },
-  metrics: [
-    { label:"Pipeline Value", value:"$10.2M", change:"↑ 18% MoM", up:true, color:"hsl(262 75% 62%)", sparks:[30,45,35,55,65,50,80,72] },
-    { label:"Weighted Value", value:"$3.4M",  change:"↑ 12% MoM", up:true, color:"hsl(152 60% 52%)", sparks:[40,55,45,60,70,65,85,78] },
-    { label:"Active Deals",   value:"42",     change:"+5 this week", up:true, color:"hsl(38 85% 58%)", sparks:[50,45,60,55,70,65,75,80] },
-    { label:"Avg. Cycle",     value:"68d",    change:"↓ 2d vs target", up:false, color:"hsl(217 80% 65%)", sparks:[70,65,55,50,45,55,40,35] },
-  ],
-  priorityActions: [
-    { urgency:"urgent", title:"Resolve Iron Mountain NDA routing", sub:"Sreedhar perceiving inaction · Send to Shashank & Harsha today", badge:"Urgent" },
-    { urgency:"urgent", title:"L&T $3.5M — Discovery workshop overdue", sub:"Executive sponsor identification needed · Largest SAL deal", badge:"Urgent" },
-    { urgency:"urgent", title:"Pidilite $2.4M — On-hold 90 days", sub:"Re-engage VP Procurement · Stalled since Dec 2025", badge:"Urgent" },
-    { urgency:"today",  title:"Prep HMEL stakeholder call (14:00)", sub:"CFO framing: ₹3,000 Cr addressable · ROI narrative ready", badge:"Due 2h" },
-    { urgency:"today",  title:"Google $909K — Send final proposal", sub:"Revised SLA terms · Final Negotiation stage", badge:"Due today" },
-    { urgency:"today",  title:"Magnum $600K — Pricing review", sub:"Final negotiation with Kshitij · Commercial terms pending", badge:"Due today" },
-    { urgency:"soon",   title:"JDE Peet's — Update SOW for Dhiraj Ghosal", sub:"$308K Final Neg · SOW requested by Thursday", badge:"Due 2d" },
-    { urgency:"soon",   title:"Carlsberg $75K — Push MSA to signing", sub:"Final Negotiation · Contract ready for execution", badge:"Due 2d" },
-  ],
-  todaySchedule: [
-    { time:"10:00", title:"McAfee POC Weekly Sync", sub:"Darshan, Abhishek · Meet · Facilities POC", status:"Done" },
-    { time:"11:00", title:"Iron Mountain Deep-Dive", sub:"Sreedhar, Holly Sheppard · Teams · ServiceNow SPO", status:"Next" },
-    { time:"14:00", title:"HMEL Stakeholder Call", sub:"CFO framing · Zoom · ₹3,000 Cr addressable", status:"Prep" },
-    { time:"15:00", title:"Darshan 1:1 Performance Review", sub:"FY26-27 target setting · Internal", status:"Later" },
-    { time:"16:00", title:"JDE Peet's SOW Review", sub:"Dhiraj Ghosal · Teams · $308K deal", status:"Later" },
-    { time:"16:30", title:"Weekly Pipeline Review", sub:"Harsha · Internal · $10.2M review", status:"Later" },
-  ],
-  flags: [
-    { sev:"red",   title:"Jakson deal: 359 days stalled", sub:"Decision needed — close or archive · $60K at risk" },
-    { sev:"red",   title:"Nestlé: 221 days no movement", sub:"Reach out or formally archive · $114K stale" },
-    { sev:"red",   title:"Pidilite $2.4M: On-hold 90 days", sub:"Stakeholder re-engagement critical · Largest stalled deal" },
-    { sev:"red",   title:"L&T $3.5M: No executive sponsor", sub:"Largest SAL deal at risk without champion" },
-    { sev:"red",   title:"Iron Mountain NDA: 15 days unresolved", sub:"Sreedhar perceiving inaction · Resolve today" },
-    { sev:"amber", title:"J&J RFP not registered in HubSpot", sub:"Submitted Feb 20 — add with ARR estimate" },
-    { sev:"amber", title:"McAfee liability cap: $2M vs $5M ask", sub:"Legal deadlock on indemnity terms" },
-    { sev:"amber", title:"BPCL procurement cycle slowing", sub:"Government approvals pending · $397K deal" },
-    { sev:"amber", title:"Magnum: Champion on PTO until Mar 20", sub:"$600K pricing review delayed" },
-    { sev:"amber", title:"Google SLA terms: Legal review extended", sub:"$909K proposal delayed by compliance" },
-    { sev:"amber", title:"JDE Peet's: SOW revision 3 — scope creep", sub:"$308K deal · Requirements expanding" },
-    { sev:"amber", title:"Tata Comm: Mar 15 close at risk", sub:"CFO approval pending · $135K" },
-    { sev:"blue",  title:"ZoomInfo lapsed since Aug 2025", sub:"Prospecting data gap · No replacement tool" },
-  ],
-  topDeals: [
-    { name:"L&T — Procurement Transformation", value:3500000, stage:"SAL",      owner:"Gaurav",  age:"12d" },
-    { name:"Pidilite — S2P Platform",           value:2400000, stage:"On Hold",  owner:"Gaurav",  age:"142d" },
-    { name:"British Telecom — S2C",             value:1575000, stage:"Proposal", owner:"Darshan", age:"45d" },
-    { name:"3M — Procurement Platform",         value:1200000, stage:"Oppty",    owner:"Gaurav",  age:"38d" },
-    { name:"Microsoft — Autonomous Sourcing",   value:1000000, stage:"Demo",     owner:"Gaurav",  age:"62d" },
-    { name:"Google — Procurement Intel",        value:909000,  stage:"Final Neg",owner:"Gaurav",  age:"30d" },
-    { name:"Magnum — Procurement Platform",     value:600000,  stage:"Final Neg",owner:"Kshitij", age:"67d" },
-    { name:"Intel — S2C Platform",              value:500000,  stage:"SAL",      owner:"Gaurav",  age:"55d" },
-  ],
+// ── SHARED TABLE HELPERS ──────────────────────────────────
+
+const tableStyle = {
+  width: "100%", borderCollapse: "separate", borderSpacing: 0,
+  fontSize: 12, fontFamily: "'JetBrains Mono','Montserrat',sans-serif",
+};
+const thStyle = {
+  textAlign: "left", padding: "8px 12px", color: T.muted, fontSize: 10,
+  fontWeight: 700, letterSpacing: 1, borderBottom: `1px solid ${T.border}`,
+  whiteSpace: "nowrap", textTransform: "uppercase",
+};
+const tdStyle = {
+  padding: "10px 12px", borderBottom: `1px solid ${T.border}`, color: T.text,
+  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
 };
 
-// ── MODULE VIEWS ──────────────────────────────────────────
+function fmt$(n) {
+  if (!n || isNaN(n)) return "$—";
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
+  return `$${Math.round(n).toLocaleString()}`;
+}
 
-function Sparkline({ values = [], color }) {
-  const max = Math.max(...values, 1);
+function StatCard({ label, value, sub, icon: Ic, color = T.accent }) {
   return (
-    <div style={{ display:"flex", alignItems:"flex-end", gap:2, height:20, marginTop:"auto", paddingTop:8 }}>
-      {values.map((v, i) => (
-        <div key={i} style={{ flex:1, borderRadius:"2px 2px 0 0", minHeight:2, background:color, opacity:0.65, height:`${(v/max)*100}%` }} />
-      ))}
+    <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px", flex: 1, minWidth: 140 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+        {Ic && <Ic size={13} color={color} />}
+        <span style={{ color: T.muted, fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</span>
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: T.text, fontFamily: "'JetBrains Mono',monospace" }}>{value}</div>
+      {sub && <div style={{ color: T.muted, fontSize: 11, marginTop: 4 }}>{sub}</div>}
     </div>
   );
 }
 
-function MetricCard({ label, value, change, up, color, sparks }) {
-  return (
-    <div style={{
-      padding:"16px 18px", borderRadius:14, background:"rgba(255,255,255,0.06)",
-      backdropFilter:"blur(20px)", border:"1px solid rgba(255,255,255,0.08)",
-      boxShadow:"0 2px 16px rgba(0,0,0,0.4)", display:"flex", flexDirection:"column",
-      minHeight:100, position:"relative", overflow:"hidden", transition:"all 0.25s",
-    }}>
-      <div style={{ position:"absolute", top:0, left:0, right:0, height:3, borderRadius:"14px 14px 0 0", background:`linear-gradient(90deg,${color},${color}88)` }} />
-      <div style={{ fontSize:11, fontWeight:500, textTransform:"uppercase", letterSpacing:"0.07em", color:"rgba(255,255,255,0.45)", marginBottom:6 }}>{label}</div>
-      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:26, fontWeight:600, letterSpacing:"-0.02em", color }}>{value}</div>
-      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, marginTop:4, color: up ? "#4ade80" : "#f87171" }}>{change}</div>
-      {sparks && <Sparkline values={sparks} color={color} />}
-    </div>
-  );
-}
+// ── PRICING CALC VIEW ─────────────────────────────────────
 
-function ActionBadge({ urgency, label }) {
-  const style = urgency === "urgent"
-    ? { background:"hsl(0 65% 55% / .15)", color:"#f87171" }
-    : urgency === "today"
-    ? { background:"hsl(262 70% 55% / .15)", color:"hsl(262 70% 72%)" }
-    : { background:"rgba(255,255,255,0.06)", color:"rgba(255,255,255,0.45)" };
-  return <span style={{ ...style, display:"inline-flex", alignItems:"center", padding:"3px 10px", borderRadius:6, fontSize:11, fontWeight:500, fontFamily:"'JetBrains Mono',monospace", whiteSpace:"nowrap" }}>{label}</span>;
-}
-
-function ScrollCard({ title, iconColor, children, style = {} }) {
-  return (
-    <div style={{
-      background:"rgba(255,255,255,0.06)", backdropFilter:"blur(20px)",
-      border:"1px solid rgba(255,255,255,0.08)", borderRadius:14,
-      padding:"14px 16px", display:"flex", flexDirection:"column",
-      overflow:"hidden", ...style
-    }}>
-      <div style={{ fontSize:13, fontWeight:500, color:"rgba(255,255,255,0.92)", marginBottom:10, display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
-        <div style={{ width:6, height:6, borderRadius:2, background:iconColor, flexShrink:0 }} />
-        {title}
-      </div>
-      <div style={{ overflowY:"auto", flex:1, maxHeight:260, paddingRight:2 }}>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function ListRow({ children, style = {} }) {
-  return (
-    <div style={{
-      display:"flex", alignItems:"center", gap:10, padding:"8px 6px",
-      borderRadius:6, cursor:"pointer", transition:"background 0.15s",
-      borderTop:"1px solid rgba(255,255,255,0.05)",
-      ...style
-    }} className="list-row">
-      {children}
-    </div>
-  );
-}
-
-function CommandCenterView({ data }) {
-  // Use live data if synced, fall back to static
-  const d = (data && Object.keys(data).length > 1) ? data : CMD_STATIC;
-
-  const metrics  = d.metrics       || CMD_STATIC.metrics;
-  const actions  = d.priorityActions || CMD_STATIC.priorityActions;
-  const schedule = d.todaySchedule  || CMD_STATIC.todaySchedule;
-  const flags    = d.flags          || CMD_STATIC.flags;
-  const topDeals = d.topDeals       || CMD_STATIC.topDeals;
-  const health   = d.health         || CMD_STATIC.health;
-  const pipeline = d.pipeline       || CMD_STATIC.pipeline;
-  const isStatic = !(data && Object.keys(data).length > 1);
-
-  const scheduleStatusColor = s => s==="Done" ? "#4ade80" : s==="Next" ? "hsl(262 70% 72%)" : s==="Prep" ? "#facc15" : "rgba(255,255,255,0.38)";
+function PricingCalcView({ data }) {
+  const model = data.standardModel || {};
+  const deals = data.recentDeals || [];
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-
-      {/* Static data notice */}
-      {isStatic && (
-        <div style={{ background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.2)", borderRadius:8, padding:"7px 14px", fontSize:11, color:"rgba(255,255,255,0.5)", display:"flex", alignItems:"center", gap:6 }}>
-          <div style={{ width:5, height:5, borderRadius:"50%", background:"#8b5cf6" }} />
-          Showing reference data — sync to pull live pipeline from HubSpot
-        </div>
-      )}
-
-      {/* Header row: health + pipeline totals */}
-      <div style={{ display:"flex", alignItems:"center", gap:12, background:"rgba(255,255,255,0.04)", borderRadius:12, padding:"12px 18px", border:"1px solid rgba(255,255,255,0.07)" }}>
-        <div style={{ marginRight:8 }}>
-          <div style={{ fontSize:10, fontWeight:500, textTransform:"uppercase", letterSpacing:"0.1em", color:"rgba(255,255,255,0.38)", marginBottom:4 }}>Pipeline Health</div>
-          <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ width:60, height:5, background:"rgba(255,255,255,0.06)", borderRadius:3, overflow:"hidden" }}>
-              <div style={{ height:"100%", borderRadius:3, background:"#4ade80", width:`${health}%`, boxShadow:"0 0 8px #4ade80" }} />
-            </div>
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:600, color:"#4ade80" }}>{health}/100</span>
-          </div>
-        </div>
-        <div style={{ width:1, height:32, background:"rgba(255,255,255,0.07)" }} />
-        {[
-          { label:"Pipeline", val: fmt$(pipeline.totalValue) },
-          { label:"Weighted", val: fmt$(pipeline.weightedValue) },
-          { label:"Deals",    val: pipeline.totalDeals },
-          { label:"Avg Cycle",val: `${pipeline.avgCycleDays}d` },
-        ].map(({ label, val }) => (
-          <div key={label} style={{ padding:"0 14px", borderRight:"1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ fontSize:10, color:"rgba(255,255,255,0.38)", marginBottom:3, textTransform:"uppercase", letterSpacing:"0.06em" }}>{label}</div>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:15, fontWeight:600, color:"rgba(255,255,255,0.92)" }}>{val}</div>
-          </div>
-        ))}
-        <div style={{ flex:1 }} />
-        <div style={{ fontSize:10, color:"rgba(255,255,255,0.3)", fontFamily:"'JetBrains Mono',monospace" }}>March 13, 2026</div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Standard Model KPIs */}
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <StatCard label="Per $1B Spend" value={fmt$(model.per1BSpend)} sub="Annual platform fee" icon={DollarSign} />
+        <StatCard label="YoY Escalation" value={model.yoyEscalation || "—"} sub="Contract renewal rate" icon={TrendingUp} color={T.warn} />
+        <StatCard label="Break-Even" value={model.breakEven || "—"} sub="Spend under mgmt threshold" icon={Activity} color={T.success} />
       </div>
 
-      {/* 4 metric cards */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12 }}>
-        {metrics.map((m,i) => (
-          <MetricCard key={i} {...m} />
-        ))}
-      </div>
-
-      {/* Main 2-col layout */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-
-        {/* Priority Actions */}
-        <ScrollCard title="Priority Actions" iconColor="#8b5cf6">
-          {actions.map((a, i) => (
-            <ListRow key={i} style={{ borderTop: i===0?"none":"1px solid rgba(255,255,255,0.05)" }}>
-              <div style={{
-                width:28, height:28, borderRadius:8, flexShrink:0,
-                background: a.urgency==="urgent" ? "hsl(0 65% 55% / .15)" : "hsl(262 70% 55% / .15)",
-                color: a.urgency==="urgent" ? "#f87171" : "hsl(262 70% 72%)",
-                display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:700
-              }}>
-                {a.urgency==="urgent" ? "!" : "→"}
-              </div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:12, fontWeight:500, color:"rgba(255,255,255,0.92)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{a.title}</div>
-                <div style={{ fontSize:11, color:"rgba(255,255,255,0.38)", marginTop:1, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{a.sub}</div>
-              </div>
-              <ActionBadge urgency={a.urgency} label={a.badge} />
-            </ListRow>
-          ))}
-        </ScrollCard>
-
-        {/* Today's Schedule */}
-        <ScrollCard title="Today's Schedule" iconColor="#4ade80">
-          {schedule.map((s, i) => (
-            <ListRow key={i} style={{ borderTop: i===0?"none":"1px solid rgba(255,255,255,0.05)" }}>
-              <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"rgba(255,255,255,0.45)", flexShrink:0, minWidth:40 }}>{s.time}</div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:12, fontWeight:500, color:"rgba(255,255,255,0.92)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{s.title}</div>
-                <div style={{ fontSize:11, color:"rgba(255,255,255,0.38)", marginTop:1, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{s.sub}</div>
-              </div>
-              <span style={{ background:"rgba(255,255,255,0.06)", color: scheduleStatusColor(s.status), fontSize:10, fontWeight:500, padding:"2px 7px", borderRadius:4, fontFamily:"'JetBrains Mono',monospace", flexShrink:0 }}>{s.status}</span>
-            </ListRow>
-          ))}
-        </ScrollCard>
-
-        {/* Flags & Risks */}
-        <ScrollCard title="Flags & Risks" iconColor="#f87171" style={{ borderLeft:"3px solid hsl(0 65% 55% / .50)" }}>
-          {flags.map((f, i) => (
-            <ListRow key={i} style={{ borderTop: i===0?"none":"1px solid rgba(255,255,255,0.05)" }}>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:12, fontWeight: f.sev==="red" ? 500 : 400, color: f.sev==="red" ? "#f87171" : f.sev==="amber" ? "#facc15" : "#93c5fd", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{f.title}</div>
-                <div style={{ fontSize:11, color:"rgba(255,255,255,0.38)", marginTop:1, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{f.sub}</div>
-              </div>
-            </ListRow>
-          ))}
-        </ScrollCard>
-
-        {/* Top Deals */}
-        <ScrollCard title="Top Deals by Value" iconColor="#facc15">
-          <div style={{ display:"grid", gridTemplateColumns:"1fr auto auto", gap:"0 8px", alignItems:"center" }}>
-            {["Deal","Stage","Value"].map(h => (
-              <div key={h} style={{ fontSize:10, fontWeight:500, textTransform:"uppercase", letterSpacing:"0.06em", color:"rgba(255,255,255,0.3)", padding:"4px 6px", borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</div>
-            ))}
-            {topDeals.map((d, i) => {
-              const sc = d.stage==="Final Neg"?"hsl(262 70% 72%)":d.stage==="Proposal"?"hsl(262 70% 72%)":d.stage==="SAL"?"rgba(255,255,255,0.5)":d.stage==="On Hold"?"#facc15":d.stage==="Demo"?"#93c5fd":"rgba(255,255,255,0.4)";
-              return [
-                <div key={`n${i}`} style={{ fontSize:12, color:"rgba(255,255,255,0.85)", padding:"7px 6px", borderBottom:"1px solid rgba(255,255,255,0.04)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{d.name}</div>,
-                <div key={`s${i}`} style={{ padding:"7px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-                  <span style={{ background:sc+"22", color:sc, fontSize:10, fontWeight:500, padding:"2px 6px", borderRadius:4, fontFamily:"'JetBrains Mono',monospace", whiteSpace:"nowrap" }}>{d.stage}</span>
-                </div>,
-                <div key={`v${i}`} style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:600, color:"rgba(255,255,255,0.9)", textAlign:"right", padding:"7px 6px", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>{fmt$(d.value)}</div>
-              ];
-            })}
-          </div>
-        </ScrollCard>
-      </div>
-    </div>
-  );
-}
-
-function EmailsView({ data }) {
-  if (!data?.emails) return null;
-  return (
-    <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
-      <div style={{ display:"flex", gap:16, marginBottom:12, padding:"0 4px" }}>
-        <span style={{ color:T.muted, fontSize:12 }}>Fetched <b style={{color:T.text}}>{data.totalFetched || data.emails.length}</b> messages</span>
-        <span style={{ color:T.warn, fontSize:12 }}><b>{data.unreadCount}</b> unread</span>
-      </div>
-      {data.emails.map((e, i) => (
-        <div key={i} style={{
-          background: e.isUnread ? T.bgHover : T.bgCard,
-          border: `1px solid ${e.isUnread ? T.borderAcc : T.border}`,
-          borderRadius: 8, padding:"10px 14px",
-          display:"flex", flexDirection:"column", gap:3
-        }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-            <div style={{ color:T.text, fontSize:13, fontWeight: e.isUnread ? 600 : 400 }}>{e.subject || "(no subject)"}</div>
-            <div style={{ color:T.muted, fontSize:11, flexShrink:0, marginLeft:12 }}>{e.date}</div>
-          </div>
-          <div style={{ color:T.accent, fontSize:11 }}>{e.from}</div>
-          <div style={{ color:T.muted, fontSize:12 }}>{e.snippet}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function DealDeskView({ data }) {
-  if (!data?.deals) return null;
-  const stageColor = s => s?.toLowerCase().includes("won") ? T.success : s?.toLowerCase().includes("sal") ? T.info : s?.toLowerCase().includes("sql") ? T.accent : T.warn;
-  return (
-    <div>
-      <div style={{ display:"flex", gap:16, marginBottom:14, padding:"0 4px" }}>
-        <div style={{ color:T.muted, fontSize:12 }}>Total <b style={{color:T.text}}>{data.total}</b> deals</div>
-        <div style={{ color:T.muted, fontSize:12 }}>Pipeline <b style={{color:T.accent}}>{fmt$(data.totalValue)}</b></div>
-        <div style={{ color:T.muted, fontSize:12 }}>Weighted <b style={{color:T.success}}>{fmt$(data.weightedValue)}</b></div>
-      </div>
-      <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-        {data.deals.map((d, i) => (
-          <Card key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px" }}>
-            <div style={{ flex:1 }}>
-              <div style={{ color:T.text, fontSize:13, fontWeight:500 }}>{d.name}</div>
-              <div style={{ color:T.muted, fontSize:11, marginTop:2 }}>{d.owner} · Close: {d.closeDate}</div>
-            </div>
-            <div style={{ background: stageColor(d.stage)+"22", color: stageColor(d.stage), fontSize:11, fontWeight:600, padding:"3px 8px", borderRadius:4 }}>
-              {d.stage}
-            </div>
-            <div style={{ color:T.text, fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:600, minWidth:60, textAlign:"right" }}>{fmt$(d.amount)}</div>
-            <div style={{ color:T.muted, fontSize:11, minWidth:32, textAlign:"right" }}>{d.probability}%</div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function RFPBrainView({ data }) {
-  if (!data?.byRating) return null;
-  const ratingColors = { Gold:"#f59e0b", Silver:"#94a3b8", Bronze:"#b45309" };
-  return (
-    <div style={{ display:"grid", gridTemplateColumns:"260px 1fr", gap:12 }}>
-      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        <Card>
-          <div style={{ color:T.muted, fontSize:11, fontWeight:600, letterSpacing:1, marginBottom:12 }}>Q&A RATING BREAKDOWN</div>
-          <div style={{ fontSize:36, fontWeight:700, color:T.text, fontFamily:"'JetBrains Mono',monospace", marginBottom:8 }}>{data.total}</div>
-          <div style={{ color:T.muted, fontSize:11, marginBottom:16 }}>Total entries</div>
-          {Object.entries(data.byRating).map(([rating, count]) => (
-            <div key={rating} style={{ display:"flex", justifyContent:"space-between", padding:"5px 0", borderBottom:`1px solid ${T.border}` }}>
-              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <div style={{ width:8, height:8, borderRadius:"50%", background: ratingColors[rating] || T.muted }} />
-                <span style={{ color:T.text, fontSize:12 }}>{rating}</span>
-              </div>
-              <span style={{ color: ratingColors[rating] || T.muted, fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:600 }}>{count}</span>
-            </div>
-          ))}
-        </Card>
-        <Card>
-          <div style={{ color:T.muted, fontSize:11, fontWeight:600, letterSpacing:1, marginBottom:10 }}>CATEGORIES</div>
-          {(data.categories||[]).map((c,i) => (
-            <div key={i} style={{ display:"flex", justifyContent:"space-between", padding:"4px 0" }}>
-              <span style={{ color:T.text, fontSize:12 }}>{c.name}</span>
-              <span style={{ color:T.accent, fontSize:12, fontWeight:600 }}>{c.count}</span>
-            </div>
-          ))}
-        </Card>
-      </div>
-      <div>
-        <Card style={{ height:"100%" }}>
-          <div style={{ color:T.muted, fontSize:11, fontWeight:600, letterSpacing:1, marginBottom:12 }}>RECENT ENTRIES</div>
-          {(data.recentEntries||[]).map((e,i) => (
-            <div key={i} style={{ padding:"10px 0", borderBottom:`1px solid ${T.border}` }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
-                <div style={{ background: (ratingColors[e.rating]||T.muted)+"22", color: ratingColors[e.rating]||T.muted, fontSize:10, fontWeight:600, padding:"2px 6px", borderRadius:4 }}>{e.rating}</div>
-                <span style={{ color:T.muted, fontSize:11 }}>{e.category}</span>
-              </div>
-              <div style={{ color:T.text, fontSize:13 }}>{e.question}</div>
-            </div>
-          ))}
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function CustomersView({ data }) {
-  if (!data?.customers) return null;
-  return (
-    <div>
-      <div style={{ display:"flex", gap:16, marginBottom:14 }}>
-        <span style={{ color:T.muted, fontSize:12 }}>Total <b style={{color:T.text}}>{data.total}</b> customers</span>
-        <span style={{ color:T.muted, fontSize:12 }}>Total ARR <b style={{color:T.success}}>{fmt$(data.totalARR)}</b></span>
-      </div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-        {data.customers.map((c,i) => (
-          <Card key={i}>
-            <div style={{ color:T.text, fontSize:13, fontWeight:600, marginBottom:4 }}>{c.name}</div>
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-              {c.industry && <span style={{ color:T.muted, fontSize:11 }}>{c.industry}</span>}
-              {c.country && <span style={{ color:T.muted, fontSize:11 }}>· {c.country}</span>}
-            </div>
-            {c.modules && <div style={{ color:T.accent, fontSize:11, marginTop:4 }}>{c.modules}</div>}
-            {c.arr>0 && <div style={{ color:T.success, fontFamily:"'JetBrains Mono',monospace", fontSize:12, marginTop:4, fontWeight:600 }}>{fmt$(c.arr)}</div>}
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function GovernanceView({ data }) {
-  if (!data?.certifications) return null;
-  return (
-    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+      {/* Recent Deals Table */}
       <Card>
-        <div style={{ color:T.muted, fontSize:11, fontWeight:600, letterSpacing:1, marginBottom:12 }}>CERTIFICATIONS</div>
-        {data.certifications.map((c,i) => (
-          <div key={i} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 0", borderBottom:`1px solid ${T.border}` }}>
-            <CheckCircle size={14} color={T.success} />
-            <span style={{ color:T.text, fontSize:13, flex:1 }}>{c.name}</span>
-            <span style={{ color:T.success, fontSize:11, fontWeight:500 }}>{c.status}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <Users size={13} color={T.accent} />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Recent Deals</span>
+          <span style={{ color: T.muted, fontSize: 11 }}>({deals.length})</span>
+        </div>
+        {deals.length === 0 ? (
+          <div style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: 20 }}>No deals synced yet</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Client</th>
+                  <th style={thStyle}>Y1 Amount</th>
+                  <th style={thStyle}>Spend Under Mgmt</th>
+                  <th style={thStyle}>Modules</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deals.map((d, i) => (
+                  <tr key={i} className="table-row" style={{ transition: "background 0.1s" }}>
+                    <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{d.client || "—"}</td>
+                    <td style={{ ...tdStyle, fontFamily: "'JetBrains Mono',monospace", color: T.success }}>{fmt$(d.y1Amount)}</td>
+                    <td style={{ ...tdStyle, color: T.muted }}>{d.spendUnderMgmt || "—"}</td>
+                    <td style={{ ...tdStyle, maxWidth: 200 }}>{d.modules || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
+        )}
       </Card>
-      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        {[
-          { label:"Uptime SLA", val:data.uptime },
-          { label:"Encryption", val:data.encryption },
-          { label:"Auditor", val:data.auditor },
-          { label:"Breach Notification", val:data.breachNotification },
-          { label:"Primary DC", val:data.infrastructure?.primary },
-          { label:"Backup DC", val:data.infrastructure?.backup },
-        ].map(({ label, val }) => val && (
-          <Card key={label} style={{ padding:"10px 14px" }}>
-            <div style={{ color:T.muted, fontSize:11 }}>{label}</div>
-            <div style={{ color:T.text, fontSize:13, fontWeight:500, marginTop:3 }}>{val}</div>
-          </Card>
-        ))}
-      </div>
     </div>
   );
 }
 
-function MemoryDBView({ data }) {
-  if (!data?.modules) return null;
-  const statusColor = s => s?.includes("Fresh") ? T.success : s?.includes("Stale") ? T.warn : s?.includes("Error") ? T.error : T.muted;
+// ── PROPOSALS VIEW ────────────────────────────────────────
+
+function stageBadge(stage) {
+  const colors = {
+    proposal:  { bg: "rgba(139,92,246,0.15)", fg: T.accent },
+    negotiation: { bg: "rgba(245,158,11,0.15)", fg: T.warn },
+    "closed won": { bg: "rgba(16,185,129,0.15)", fg: T.success },
+    "closed lost": { bg: "rgba(239,68,68,0.15)", fg: T.error },
+  };
+  const key = (stage || "").toLowerCase();
+  const c = Object.entries(colors).find(([k]) => key.includes(k))?.[1] || { bg: T.bgCard, fg: T.muted };
   return (
-    <div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:14 }}>
-        {[
-          { label:"Total Modules", val:data.totalModules||15 },
-          { label:"🟢 Fresh", val:data.freshCount||0 },
-          { label:"⬜ Never Synced", val:data.neverSyncedCount||0 },
-          { label:"🔴 Error", val:0 },
-        ].map(({ label, val }) => (
-          <Card key={label} style={{ textAlign:"center", padding:"10px" }}>
-            <div style={{ color:T.muted, fontSize:10 }}>{label}</div>
-            <div style={{ color:T.text, fontSize:22, fontWeight:700, fontFamily:"'JetBrains Mono',monospace" }}>{val}</div>
-          </Card>
-        ))}
+    <span style={{ background: c.bg, color: c.fg, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 4, whiteSpace: "nowrap" }}>
+      {stage || "—"}
+    </span>
+  );
+}
+
+function statusBadge(status) {
+  const s = (status || "").toLowerCase();
+  const color = s.includes("submitted") ? T.success : s.includes("draft") ? T.warn : s.includes("lost") || s.includes("reject") ? T.error : T.muted;
+  return <span style={{ color, fontSize: 11, fontWeight: 500 }}>{status || "—"}</span>;
+}
+
+function ProposalsView({ data }) {
+  const proposals = data.activeProposals || [];
+  const total = data.total || proposals.length;
+  const totalValue = data.totalValue || proposals.reduce((s, p) => s + (p.value || 0), 0);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* KPI Row */}
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <StatCard label="Active Proposals" value={total} sub="In pipeline" icon={FileText} />
+        <StatCard label="Total Value" value={fmt$(totalValue)} sub="Combined deal value" icon={DollarSign} color={T.success} />
+        <StatCard label="Avg Deal Size" value={total > 0 ? fmt$(totalValue / total) : "$—"} sub="Per proposal" icon={TrendingUp} color={T.warn} />
       </div>
-      <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
-        {data.modules.map((m,i) => (
-          <Card key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"9px 14px" }}>
-            <StatusDot status={m.status} />
-            <span style={{ color:T.text, fontSize:12, flex:1, fontFamily:"'JetBrains Mono',monospace" }}>{m.module}</span>
-            <span style={{ color: statusColor(m.status), fontSize:11 }}>{m.status}</span>
-            <span style={{ color:T.muted, fontSize:11 }}>{m.lastSynced ? timeAgo(m.lastSynced) : "Never"}</span>
-            <span style={{ color:T.muted, fontSize:11, minWidth:40, textAlign:"right" }}>{m.syncCount||0}×</span>
-          </Card>
-        ))}
-      </div>
+
+      {/* Proposals Table */}
+      <Card>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <FileText size={13} color={T.accent} />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Active Proposals</span>
+          <span style={{ color: T.muted, fontSize: 11 }}>({proposals.length})</span>
+        </div>
+        {proposals.length === 0 ? (
+          <div style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: 20 }}>No active proposals synced yet</div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={tableStyle}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Client</th>
+                  <th style={thStyle}>Value</th>
+                  <th style={thStyle}>Stage</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={thStyle}>Submitted</th>
+                  <th style={thStyle}>Contact</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proposals.map((p, i) => (
+                  <tr key={i} className="table-row" style={{ transition: "background 0.1s" }}>
+                    <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{p.client || "—"}</td>
+                    <td style={{ ...tdStyle, fontFamily: "'JetBrains Mono',monospace", color: T.success }}>{fmt$(p.value)}</td>
+                    <td style={tdStyle}>{stageBadge(p.stage)}</td>
+                    <td style={tdStyle}>{statusBadge(p.status)}</td>
+                    <td style={{ ...tdStyle, color: T.muted }}>{p.submittedDate || "—"}</td>
+                    <td style={{ ...tdStyle, color: T.muted }}>{p.contact || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
+
+// ── FALLBACK VIEW ─────────────────────────────────────────
 
 function GenericView({ data }) {
   return (
     <Card>
-      <pre style={{ color:T.text, fontSize:11, fontFamily:"'JetBrains Mono',monospace", whiteSpace:"pre-wrap", wordBreak:"break-all", margin:0, lineHeight:1.6 }}>
+      <pre style={{ color: T.text, fontSize: 11, fontFamily: "'JetBrains Mono',monospace", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, lineHeight: 1.6 }}>
         {JSON.stringify(data, null, 2)}
       </pre>
     </Card>
   );
 }
 
+// ── MODULE CONTENT ROUTER ─────────────────────────────────
+
 function ModuleContent({ moduleKey, data, onSync, syncing }) {
   const isEmpty = !data || Object.keys(data).length === 0 || (Object.keys(data).length === 1 && data.syncedAt);
   if (isEmpty) return <EmptyState moduleKey={moduleKey} onSync={onSync} loading={syncing} />;
+
   switch (moduleKey) {
-    case "command-center":  return <CommandCenterView data={data} />;
-    case "emails":          return <EmailsView data={data} />;
-    case "deal-desk":       return <DealDeskView data={data} />;
-    case "rfp-brain":       return <RFPBrainView data={data} />;
-    case "customers":       return <CustomersView data={data} />;
-    case "governance":      return <GovernanceView data={data} />;
-    case "memory":          return <MemoryDBView data={data} />;
-    default:                return <GenericView data={data} />;
+    case "pricing-calc": return <PricingCalcView data={data} />;
+    case "proposals":    return <ProposalsView data={data} />;
+    default:             return <GenericView data={data} />;
   }
 }
 
@@ -799,7 +436,7 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
     ? GROUPS.map(g => ({ ...g, modules: g.modules.filter(m => moduleFilter.includes(m)) })).filter(g => g.modules.length > 0)
     : GROUPS;
 
-  const [selected, setSelected]           = useState(moduleFilter ? moduleFilter[0] : "command-center");
+  const [selected, setSelected]           = useState(moduleFilter ? moduleFilter[0] : "pricing-calc");
   const [moduleData, setModuleData]       = useState({});
   const [syncing, setSyncing]             = useState(new Set());
   const [syncingAll, setSyncingAll]       = useState(false);
@@ -821,7 +458,7 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
       @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
       @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
       .module-item:hover { background: rgba(255,255,255,0.06) !important; }
-      .list-row:hover { background: rgba(255,255,255,0.04) !important; }
+      .table-row:hover { background: rgba(255,255,255,0.04) !important; }
     `;
     document.head.appendChild(s);
     return () => s.remove();
@@ -831,43 +468,48 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
     setSyncLog(prev => [{ msg, type, time: new Date() }, ...prev].slice(0, 80));
   }, []);
 
-  // ── Load from Notion ─────────────────────────────────────
+  // ── Load from Supabase ───────────────────────────────────
 
-  const loadFromNotion = useCallback(async () => {
+  const loadFromSupabase = useCallback(async () => {
     setLoadingNotion(true);
-    addLog("🔌 Connecting to Notion Memory DB…", "info");
+    addLog("🔌 Connecting to Supabase…", "info");
     try {
-      const prompt = `Use the Notion MCP to query the database at this URL: ${NOTION_DB_URL}
-Fetch all pages in the database. For each row, extract:
-- "Module" (title property)
-- "Data" (rich text property - this is a JSON string)
-- "Status" (select property)
-- "Last Synced" (date property)
-- "Stale After (hrs)" (number property)
-- "Sync Count" (number property)
+      await withRetry(async () => {
+        // Fetch modules registry
+        const { data: modules, error: modErr } = await supabase.from("modules").select("*");
+        if (modErr) throw modErr;
 
-Return ONLY a raw JSON object (no markdown, no explanation):
-{"modules":[{"module":"command-center","data":{},"status":"⬜ Never Synced","lastSynced":null,"staleAfterHrs":4,"syncCount":0}]}
+        // Fetch latest data for each module
+        const { data: allData, error: dataErr } = await supabase
+          .from("module_data")
+          .select("*")
+          .order("version", { ascending: false });
+        if (dataErr) throw dataErr;
 
-For the "data" field: if it's a non-empty JSON string, parse it to an object. If empty or "{}", use {}.`;
-
-      const text = await callClaude(prompt, ["notion"]);
-      const parsed = extractJSON(text);
-      if (parsed?.modules) {
-        const next = {};
-        parsed.modules.forEach(m => {
-          let d = m.data;
-          if (typeof d === "string") { try { d = JSON.parse(d); } catch { d = {}; } }
-          next[m.module] = { data: d || {}, status: m.status, lastSynced: m.lastSynced, staleAfterHrs: m.staleAfterHrs || 4, syncCount: m.syncCount || 0 };
+        // Group by module_key, take latest version
+        const latestByKey = {};
+        allData.forEach(row => {
+          if (!latestByKey[row.module_key]) latestByKey[row.module_key] = row;
         });
+
+        const next = {};
+        modules.forEach(m => {
+          const latest = latestByKey[m.key];
+          next[m.key] = {
+            data: latest?.data || {},
+            status: m.status || "⬜ Never Synced",
+            lastSynced: m.last_synced,
+            staleAfterHrs: m.stale_after_hrs || 4,
+            syncCount: m.sync_count || 0,
+          };
+        });
+
         setModuleData(next);
-        const fresh = parsed.modules.filter(m => m.status?.includes("Fresh")).length;
-        addLog(`✅ Loaded ${parsed.modules.length} modules (${fresh} fresh) from Notion`, "success");
-      } else {
-        addLog("⚠️ Could not parse Notion response — starting with empty state", "warn");
-      }
+        const fresh = modules.filter(m => m.status?.includes("Fresh")).length;
+        addLog(`✅ Loaded ${modules.length} modules (${fresh} fresh) from Supabase`, "success");
+      }, { retries: 3, label: "loadFromSupabase" });
     } catch (e) {
-      addLog(`❌ Notion load failed: ${e.message}`, "error");
+      addLog(`❌ Supabase load failed: ${e.message}`, "error");
     } finally {
       setLoadingNotion(false);
     }
@@ -887,7 +529,7 @@ For the "data" field: if it's a non-empty JSON string, parse it to an object. If
         }
       } catch {}
     }
-    loadFromNotion();
+    loadFromSupabase();
   }, []);
 
   useEffect(() => {
@@ -896,9 +538,60 @@ For the "data" field: if it's a non-empty JSON string, parse it to an object. If
     }
   }, [moduleData]);
 
-  // ── Write to Notion (background) ─────────────────────────
+  // ── Write to Supabase ────────────────────────────────────
 
-  const writeToNotion = useCallback(async (key, data, syncCount) => {
+  const writeToSupabase = useCallback(async (key, data, syncCount) => {
+    try {
+      await withRetry(async () => {
+        // Get current max version for this module
+        const { data: existing } = await supabase
+          .from("module_data")
+          .select("version")
+          .eq("module_key", key)
+          .order("version", { ascending: false })
+          .limit(1);
+        const nextVersion = (existing?.[0]?.version || 0) + 1;
+
+        // Insert new versioned data row
+        const { error: insertErr } = await supabase.from("module_data").insert({
+          module_key: key,
+          data,
+          source: (MOD[key]?.keys || []).join(","),
+          version: nextVersion,
+        });
+        if (insertErr) throw insertErr;
+
+        // Update modules registry
+        const { error: updateErr } = await supabase.from("modules").update({
+          status: "🟢 Fresh",
+          last_synced: new Date().toISOString(),
+          sync_count: syncCount,
+        }).eq("key", key);
+        if (updateErr) throw updateErr;
+
+        // Insert sync log entry
+        await supabase.from("sync_log").insert({
+          module_key: key,
+          action: "SYNC",
+          status: "success",
+          message: `Synced ${MOD[key]?.label || key} v${nextVersion}`,
+        });
+      }, { retries: 3, label: `writeToSupabase(${key})` });
+    } catch (e) {
+      console.warn(`Supabase write failed for ${key}:`, e.message);
+      // Log the error to sync_log too
+      await supabase.from("sync_log").insert({
+        module_key: key,
+        action: "ERROR",
+        status: "error",
+        message: `Write failed: ${e.message}`,
+      }).catch(() => {});
+    }
+  }, []);
+
+  // ── Backup to Notion (background, contextual) ───────────
+
+  const backupToNotion = useCallback(async (key, data, syncCount) => {
     const pageId = NOTION_PAGE_IDS[key];
     if (!pageId) return;
     const today = new Date().toISOString().split("T")[0];
@@ -907,12 +600,12 @@ Set "Data" property to this exact string: ${JSON.stringify(JSON.stringify(data))
 Set "Status" select to "🟢 Fresh"
 Set "Last Synced" date to ${today}
 Set "Sync Count" number to ${syncCount}
-Set "Audit Log" to "2026-03-12 | SYNC | ${key} | claude-sonnet-4-6"
+Set "Audit Log" to "${today} | SYNC | ${key} | claude-sonnet-4-6"
 After updating, respond with only: {"success":true}`;
     try {
       await callClaude(prompt, ["notion"]);
     } catch (e) {
-      console.warn(`Background Notion write failed for ${key}:`, e.message);
+      console.warn(`Background Notion backup failed for ${key}:`, e.message);
     }
   }, []);
 
@@ -933,7 +626,8 @@ After updating, respond with only: {"success":true}`;
         const entry = { data: parsed, status: "🟢 Fresh", lastSynced: new Date().toISOString(), staleAfterHrs: moduleData[key]?.staleAfterHrs || 4, syncCount: prevCount + 1 };
         setModuleData(prev => ({ ...prev, [key]: entry }));
         addLog(`✅ ${label} — synced successfully`, "success");
-        writeToNotion(key, parsed, prevCount + 1);
+        writeToSupabase(key, parsed, prevCount + 1);
+        backupToNotion(key, parsed, prevCount + 1);
       } else {
         addLog(`⚠️ ${label} — no parseable JSON returned`, "warn");
         setModuleData(prev => ({ ...prev, [key]: { ...prev[key], status: "🔴 Error" } }));
@@ -944,14 +638,14 @@ After updating, respond with only: {"success":true}`;
     } finally {
       setSyncing(prev => { const n = new Set(prev); n.delete(key); return n; });
     }
-  }, [syncing, moduleData, addLog, writeToNotion]);
+  }, [syncing, moduleData, addLog, writeToSupabase, backupToNotion]);
 
   // ── Sync all ──────────────────────────────────────────────
 
   const syncAll = useCallback(async () => {
     if (syncingAll) return;
     setSyncingAll(true);
-    addLog("🚀 Full sync started — all 15 modules", "info");
+    addLog(`🚀 Full sync started — all ${Object.keys(MOD).length} modules`, "info");
     for (const key of Object.keys(MOD)) {
       await syncModule(key);
       await new Promise(r => setTimeout(r, 300));
@@ -1003,7 +697,7 @@ After updating, respond with only: {"success":true}`;
         {/* Status indicators */}
         {loadingNotion && (
           <div style={{ display:"flex", alignItems:"center", gap:6, color:T.muted, fontSize:12 }}>
-            <Spinner size={11} /> Loading from Notion…
+            <Spinner size={11} /> Loading from Supabase…
           </div>
         )}
         {anyStale && !loadingNotion && (
@@ -1033,7 +727,7 @@ After updating, respond with only: {"success":true}`;
         </button>
 
         {/* Reload Notion */}
-        <button onClick={loadFromNotion} disabled={loadingNotion} title="Reload from Notion" style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, padding:4 }}>
+        <button onClick={loadFromSupabase} disabled={loadingNotion} title="Reload from Supabase" style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, padding:4 }}>
           {loadingNotion ? <Spinner size={14}/> : <Database size={14}/>}
         </button>
       </div>
@@ -1113,7 +807,7 @@ After updating, respond with only: {"success":true}`;
           <div style={{ flex:1, overflowY:"auto", padding:20 }}>
             {loadingNotion && !mData ? (
               <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", gap:10, color:T.muted }}>
-                <Spinner size={16}/> Loading from Notion Memory DB…
+                <Spinner size={16}/> Loading from Supabase…
               </div>
             ) : (
               <div style={{ animation:"fadeIn 0.2s ease" }}>
@@ -1161,7 +855,7 @@ After updating, respond with only: {"success":true}`;
             <div style={{ padding:"10px", borderTop:`1px solid ${T.border}`, flexShrink:0 }}>
               <div style={{ color:T.muted, fontSize:10, fontWeight:600, letterSpacing:1, marginBottom:8 }}>QUICK SYNC</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                {["emails","deal-desk","rfp-brain","customers","command-center","governance"].map(key => (
+                {Object.keys(MOD).map(key => (
                   <button key={key} onClick={() => syncModule(key)} disabled={syncing.has(key)} style={{
                     background: syncing.has(key) ? T.accentBg : T.bgCard,
                     border:`1px solid ${syncing.has(key) ? T.borderAcc : T.border}`,
@@ -1187,7 +881,7 @@ After updating, respond with only: {"success":true}`;
             <div style={{ color:T.muted, fontSize:11 }}>{syncing.size} active · {Object.values(moduleData).filter(m=>m?.status?.includes("Fresh")).length} complete</div>
           </div>
           <div style={{ width:120, height:4, background:T.bgCard, borderRadius:4, overflow:"hidden" }}>
-            <div style={{ height:"100%", background:`linear-gradient(90deg,${T.accent},#6d28d9)`, borderRadius:4, width: `${(Object.values(moduleData).filter(m=>m?.status?.includes("Fresh")).length/15)*100}%`, transition:"width 0.5s" }}/>
+            <div style={{ height:"100%", background:`linear-gradient(90deg,${T.accent},#6d28d9)`, borderRadius:4, width: `${(Object.values(moduleData).filter(m=>m?.status?.includes("Fresh")).length/Object.keys(MOD).length)*100}%`, transition:"width 0.5s" }}/>
           </div>
         </div>
       )}
