@@ -471,6 +471,11 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
   // ── Load from Supabase ───────────────────────────────────
 
   const loadFromSupabase = useCallback(async () => {
+    if (!supabase) {
+      addLog("⚠️ Supabase not configured — using local cache only", "warn");
+      setLoadingNotion(false);
+      return;
+    }
     setLoadingNotion(true);
     addLog("🔌 Connecting to Supabase…", "info");
     try {
@@ -541,6 +546,7 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
   // ── Write to Supabase ────────────────────────────────────
 
   const writeToSupabase = useCallback(async (key, data, syncCount) => {
+    if (!supabase) return;
     try {
       await withRetry(async () => {
         // Get current max version for this module
