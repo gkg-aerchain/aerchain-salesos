@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/render-app-preview-JZk7t
+      - claude/aerchain-salesos-context-u1DeJ
       - main
 
 permissions:
