@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   RefreshCw, AlertCircle, Clock, Database,
   Loader2, Activity, FileText, DollarSign, X,
-  TrendingUp, Users, Wand2
+  TrendingUp, Users, Wand2, Download
 } from "lucide-react";
 import { supabase } from "./supabaseClient.js";
 
@@ -47,6 +47,41 @@ Return ONLY raw JSON:
 {"activeProposals":[{"client":"...","value":0,"stage":"...","submittedDate":"...","status":"...","contact":"..."}],"total":0,"totalValue":0,"syncedAt":"${now}"}`,
   };
   return prompts[key] || `Return ONLY raw JSON: {"message":"No sync configured","syncedAt":"${now}"}`;
+};
+
+// ═══════════════════════════════════════════════════════════
+// DUMMY DATA (for Demo mode)
+// ═══════════════════════════════════════════════════════════
+
+const DUMMY_DATA = {
+  "pricing-calc": {
+    data: {
+      standardModel: { per1BSpend: 300000, yoyEscalation: "10%", breakEven: "$500M-$1B" },
+      recentDeals: [
+        { client: "Tata Steel", y1Amount: 420000, spendUnderMgmt: "$2.1B", modules: "Sourcing, CLM, SXM" },
+        { client: "Hindalco", y1Amount: 285000, spendUnderMgmt: "$1.4B", modules: "Sourcing, Analytics" },
+        { client: "JSW Group", y1Amount: 510000, spendUnderMgmt: "$3.2B", modules: "Full Suite" },
+      ],
+    },
+    syncedAt: "2026-03-14T10:00:00Z",
+    lastSynced: "2026-03-14T10:00:00Z",
+    status: "🟢 Fresh",
+  },
+  proposals: {
+    data: {
+      activeProposals: [
+        { client: "Mahindra & Mahindra", value: 750000, stage: "Proposal", status: "Submitted", submittedDate: "2026-03-10", contact: "Rajesh Kumar" },
+        { client: "Larsen & Toubro", value: 1200000, stage: "Negotiation", status: "In Review", submittedDate: "2026-03-05", contact: "Priya Sharma" },
+        { client: "Reliance Industries", value: 2000000, stage: "Proposal", status: "Draft", submittedDate: "2026-03-12", contact: "Amit Patel" },
+        { client: "Adani Ports", value: 680000, stage: "Closed Won", status: "Submitted", submittedDate: "2026-02-28", contact: "Sneha Gupta" },
+      ],
+      total: 4,
+      totalValue: 4630000,
+    },
+    syncedAt: "2026-03-14T10:00:00Z",
+    lastSynced: "2026-03-14T10:00:00Z",
+    status: "🟢 Fresh",
+  },
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -444,6 +479,7 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
   const [syncLog, setSyncLog]             = useState([]);
   const [showLog, setShowLog]             = useState(true);
   const [lastGlobalSync, setLastGlobalSync] = useState(null);
+  const [showDummy, setShowDummy]         = useState(false);
 
   // Font injection
   useEffect(() => {
@@ -661,11 +697,38 @@ After updating, respond with only: {"success":true}`;
     addLog("🏁 Full sync complete", "success");
   }, [syncingAll, syncModule, addLog]);
 
+  // ── Download snapshot ────────────────────────────────────
+
+  const downloadSnapshot = useCallback(() => {
+    const styleContent = Array.from(document.querySelectorAll("style"))
+      .map(s => s.textContent).join("\n");
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerchain · SalesOS${showDummy ? " (Demo)" : ""}</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>${styleContent}</style>
+</head>
+<body style="margin:0;padding:0;">
+${document.getElementById("root").innerHTML}
+</body>
+</html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `aerchain-salesos-${showDummy ? "demo-" : ""}${new Date().toISOString().slice(0,10)}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [showDummy]);
+
   // ── Derived state ─────────────────────────────────────────
 
   const mod = MOD[selected] || {};
   const { Icon } = mod;
-  const mData = moduleData[selected];
+  const mData = showDummy ? DUMMY_DATA[selected] : moduleData[selected];
   const mStatus = mData?.status || "⬜ Never Synced";
   const mLastSync = mData?.lastSynced;
   const stale = isStale(mLastSync, mData?.staleAfterHrs || 4);
@@ -727,6 +790,25 @@ After updating, respond with only: {"success":true}`;
           {syncingAll ? "Syncing All…" : "Sync All"}
         </button>
 
+        {/* Demo toggle */}
+        <button onClick={() => setShowDummy(p=>!p)} style={{
+          background: showDummy ? "rgba(139,92,246,0.2)" : "none",
+          border: showDummy ? `1px solid rgba(139,92,246,0.4)` : "1px solid transparent",
+          borderRadius:6, padding:"4px 10px", cursor:"pointer",
+          color: showDummy ? T.accent : T.muted,
+          fontSize:11, fontWeight:500,
+          display:"flex", alignItems:"center", gap:5,
+          transition:"all 0.2s"
+        }}>
+          <Wand2 size={12} />
+          {showDummy ? "Demo ON" : "Demo"}
+        </button>
+
+        {/* Download snapshot */}
+        <button onClick={downloadSnapshot} title="Download HTML snapshot" style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, padding:4 }}>
+          <Download size={14} />
+        </button>
+
         {/* Log toggle */}
         <button onClick={() => setShowLog(p=>!p)} style={{ background:"none", border:"none", cursor:"pointer", color:showLog?T.accent:T.muted, padding:4 }}>
           <Activity size={15} />
@@ -737,6 +819,13 @@ After updating, respond with only: {"success":true}`;
           {loadingNotion ? <Spinner size={14}/> : <Database size={14}/>}
         </button>
       </div>
+
+      {/* DEMO BANNER */}
+      {showDummy && (
+        <div style={{ background:"rgba(139,92,246,0.1)", borderBottom:`1px solid rgba(139,92,246,0.2)`, padding:"4px 20px", fontSize:11, color:T.accent, textAlign:"center", flexShrink:0 }}>
+          Demo Mode — Showing sample data
+        </div>
+      )}
 
       {/* BODY */}
       <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
