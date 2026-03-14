@@ -293,7 +293,7 @@ function NotionAuditLink({ moduleKey, label = "Notion Log" }) {
 
 const tableStyle = {
   width: "100%", borderCollapse: "separate", borderSpacing: 0,
-  fontSize: 12, fontFamily: "'Montserrat',sans-serif",
+  fontSize: 12,
 };
 const thStyle = {
   textAlign: "left", padding: "8px 12px", color: T.muted, fontSize: 10,
@@ -319,7 +319,7 @@ function StatCard({ label, value, sub, icon: Ic, color = T.accent }) {
         {Ic && <Ic size={13} color={color} />}
         <span style={{ color: T.muted, fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</span>
       </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: T.text, fontFamily: "'Montserrat',sans-serif" }}>{value}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: T.text }}>{value}</div>
       {sub && <div style={{ color: T.muted, fontSize: 11, marginTop: 4 }}>{sub}</div>}
     </div>
   );
@@ -364,7 +364,7 @@ function PricingCalcView({ data }) {
                 {deals.map((d, i) => (
                   <tr key={i} className="table-row" style={{ transition: "background 0.1s" }}>
                     <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{d.client || "—"}</td>
-                    <td style={{ ...tdStyle, fontFamily: "'Montserrat',sans-serif", color: T.success }}>{fmt$(d.y1Amount)}</td>
+                    <td style={{ ...tdStyle, color: T.success }}>{fmt$(d.y1Amount)}</td>
                     <td style={{ ...tdStyle, color: T.muted }}>{d.spendUnderMgmt || "—"}</td>
                     <td style={{ ...tdStyle, maxWidth: 200 }}>{d.modules || "—"}</td>
                   </tr>
@@ -442,7 +442,7 @@ function ProposalsView({ data }) {
                 {proposals.map((p, i) => (
                   <tr key={i} className="table-row" style={{ transition: "background 0.1s" }}>
                     <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{p.client || "—"}</td>
-                    <td style={{ ...tdStyle, fontFamily: "'Montserrat',sans-serif", color: T.success }}>{fmt$(p.value)}</td>
+                    <td style={{ ...tdStyle, color: T.success }}>{fmt$(p.value)}</td>
                     <td style={tdStyle}>{stageBadge(p.stage)}</td>
                     <td style={tdStyle}>{statusBadge(p.status)}</td>
                     <td style={{ ...tdStyle, color: T.muted }}>{p.submittedDate || "—"}</td>
@@ -621,7 +621,7 @@ function SettingsView({ claudeMemory, onClearMemory }) {
 function GenericView({ data }) {
   return (
     <Card>
-      <pre style={{ color: T.text, fontSize: 11, fontFamily: "'Montserrat',sans-serif", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, lineHeight: 1.6 }}>
+      <pre style={{ color: T.text, fontSize: 11, whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, lineHeight: 1.6 }}>
         {JSON.stringify(data, null, 2)}
       </pre>
     </Card>
@@ -661,7 +661,6 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
   const [moduleData, setModuleData]     = useState({});
   const [syncing, setSyncing]           = useState(new Set());
   const [syncingAll, setSyncingAll]     = useState(false);
-  const [loadingData, setLoadingData]   = useState(false);
   const [syncLog, setSyncLog]           = useState([]);
   const [showLog, setShowLog]           = useState(true);
   const [lastGlobalSync, setLastGlobalSync] = useState(null);
@@ -877,19 +876,14 @@ ${document.getElementById("root").innerHTML}
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           {Icon && <Icon size={13} color={T.accent} />}
           <span style={{ fontSize:13, fontWeight:500 }}>{mod.label}</span>
-          {stale && mLastSync && <span style={{ fontSize:10, color:T.warn, background:T.warn+"22", padding:"2px 6px", borderRadius:4 }}>STALE</span>}
-          {!mLastSync && <span style={{ fontSize:10, color:T.muted, background:"rgba(255,255,255,0.06)", padding:"2px 6px", borderRadius:4 }}>NEVER SYNCED</span>}
+          {selected !== "settings" && stale && mLastSync && <span style={{ fontSize:10, color:T.warn, background:T.warn+"22", padding:"2px 6px", borderRadius:4 }}>STALE</span>}
+          {selected !== "settings" && !mLastSync && <span style={{ fontSize:10, color:T.muted, background:"rgba(255,255,255,0.06)", padding:"2px 6px", borderRadius:4 }}>NEVER SYNCED</span>}
         </div>
 
         <div style={{ flex:1 }} />
 
         {/* Status indicators */}
-        {loadingData && (
-          <div style={{ display:"flex", alignItems:"center", gap:6, color:T.muted, fontSize:12 }}>
-            <Spinner size={11} /> Loading…
-          </div>
-        )}
-        {anyStale && !loadingData && (
+        {anyStale && (
           <div style={{ display:"flex", alignItems:"center", gap:4, color:T.warn, fontSize:11 }}>
             <AlertCircle size={11} /> Some data is stale
           </div>
@@ -899,12 +893,12 @@ ${document.getElementById("root").innerHTML}
         )}
 
         {/* Sync All */}
-        <button onClick={syncAll} disabled={syncingAll || loadingData} style={{
+        <button onClick={syncAll} disabled={syncingAll} style={{
           background: syncingAll ? T.bgCard : `linear-gradient(135deg,${T.accent},#6d28d9)`,
           border: "none", borderRadius:7, padding:"6px 14px", color:"#fff", fontSize:12, fontWeight:600,
-          cursor: (syncingAll||loadingData) ? "default" : "pointer",
+          cursor: syncingAll ? "default" : "pointer",
           display:"flex", alignItems:"center", gap:6, transition:"opacity 0.2s",
-          opacity: (syncingAll||loadingData) ? 0.6 : 1
+          opacity: syncingAll ? 0.6 : 1
         }}>
           {syncingAll ? <Spinner size={12} /> : <RefreshCw size={12} />}
           {syncingAll ? "Syncing All…" : "Sync All"}
@@ -1045,34 +1039,28 @@ ${document.getElementById("root").innerHTML}
               </div>
             </div>
             <div style={{ flex:1 }} />
-            {stale && mLastSync && (
+            {selected !== "settings" && stale && mLastSync && (
               <div style={{ display:"flex", alignItems:"center", gap:4, color:T.warn, fontSize:11, background:T.warn+"15", padding:"4px 10px", borderRadius:6 }}>
                 <AlertCircle size={11} /> Data is stale — sync recommended
               </div>
             )}
             {/* Notion audit link */}
             <NotionAuditLink moduleKey={selected} />
-            <SyncBtn onClick={() => syncModule(selected)} loading={isSyncing} size={14}/>
+            {selected !== "settings" && <SyncBtn onClick={() => syncModule(selected)} loading={isSyncing} size={14}/>}
           </div>
 
           {/* Content */}
           <div style={{ flex:1, overflowY:"auto", padding:20 }}>
-            {loadingData && !mData ? (
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", gap:10, color:T.muted }}>
-                <Spinner size={16}/> Loading…
-              </div>
-            ) : (
-              <div style={{ animation:"fadeIn 0.2s ease" }}>
-                <ModuleContent
-                  moduleKey={selected}
-                  data={mData?.data}
-                  onSync={() => syncModule(selected)}
-                  syncing={isSyncing}
-                  claudeMemory={claudeMemory}
-                  onClearMemory={clearClaudeMemory}
-                />
-              </div>
-            )}
+            <div style={{ animation:"fadeIn 0.2s ease" }}>
+              <ModuleContent
+                moduleKey={selected}
+                data={mData?.data}
+                onSync={() => syncModule(selected)}
+                syncing={isSyncing}
+                claudeMemory={claudeMemory}
+                onClearMemory={clearClaudeMemory}
+              />
+            </div>
           </div>
         </div>
 
@@ -1098,7 +1086,7 @@ ${document.getElementById("root").innerHTML}
                     <div style={{ width:3, borderRadius:4, background:col, flexShrink:0, alignSelf:"stretch" }}/>
                     <div>
                       <div style={{ color:T.text, fontSize:11, lineHeight:1.4 }}>{entry.msg}</div>
-                      <div style={{ color:T.muted, fontSize:10, fontFamily:"'Montserrat',sans-serif", marginTop:1 }}>{entry.time.toLocaleTimeString()}</div>
+                      <div style={{ color:T.muted, fontSize:10, marginTop:1 }}>{entry.time.toLocaleTimeString()}</div>
                     </div>
                   </div>
                 );
@@ -1109,7 +1097,7 @@ ${document.getElementById("root").innerHTML}
             <div style={{ padding:"10px", borderTop:`1px solid ${T.border}`, flexShrink:0 }}>
               <div style={{ color:T.muted, fontSize:10, fontWeight:600, letterSpacing:1, marginBottom:8 }}>QUICK SYNC</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                {Object.keys(MOD).map(key => (
+                {Object.keys(MOD).filter(k => k !== "settings").map(key => (
                   <button key={key} onClick={() => syncModule(key)} disabled={syncing.has(key)} style={{
                     background: syncing.has(key) ? T.accentBg : T.bgCard,
                     border:`1px solid ${syncing.has(key) ? T.borderAcc : T.border}`,
@@ -1135,7 +1123,7 @@ ${document.getElementById("root").innerHTML}
         boxShadow:"0 0 12px rgba(139,92,246,0.25)",
       }}>
         <Wand2 size={14} color="#8b5cf6" />
-        <span style={{ fontSize:11, fontWeight:600, letterSpacing:"0.08em", color:"#8b5cf6", fontFamily:"'Montserrat',sans-serif" }}>Lumos</span>
+        <span style={{ fontSize:11, fontWeight:600, letterSpacing:"0.08em", color:"#8b5cf6" }}>Lumos</span>
       </div>
 
       {/* GLOBAL SYNC OVERLAY */}
