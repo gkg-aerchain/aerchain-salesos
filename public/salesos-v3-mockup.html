@@ -402,13 +402,13 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
     <div class="vdiv" style="margin:0 8px"></div>
 
     <!-- Demo toggle -->
-    <button class="btn-outline" style="padding:6px 12px;font-size:11px;gap:4px">
+    <button class="btn-outline" id="demo-toggle" onclick="toggleDemo()" style="padding:6px 12px;font-size:11px;gap:4px">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
       Demo
     </button>
 
     <!-- Download -->
-    <button class="icon-btn" title="Download snapshot">
+    <button class="icon-btn" title="Download snapshot" onclick="downloadSnapshot()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     </button>
 
@@ -495,21 +495,21 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
       </div>
 
       <!-- KPI Strip -->
-      <div class="kpi-strip">
+      <div class="kpi-strip" id="pricing-kpi">
         <div class="kpi-card">
           <div class="kpi-label">Standard Model (per $1B)</div>
-          <div class="kpi-value purple">$300K</div>
-          <div class="kpi-delta up">+10% YoY</div>
+          <div class="kpi-value purple">—</div>
+          <div class="kpi-delta flat">No data</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Break-even Threshold</div>
-          <div class="kpi-value green">$500M–$1B</div>
-          <div class="kpi-delta flat">Stable</div>
+          <div class="kpi-value green">—</div>
+          <div class="kpi-delta flat">No data</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Active Deals</div>
-          <div class="kpi-value amber">3</div>
-          <div class="kpi-delta up">+1 this week</div>
+          <div class="kpi-value amber">0</div>
+          <div class="kpi-delta flat">No data</div>
         </div>
       </div>
 
@@ -533,31 +533,14 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td style="font-weight:500">Tata Steel</td>
-                <td class="mono">$420,000</td>
-                <td class="mono muted">$2.1B</td>
-                <td><span class="pill purple">Sourcing, CLM, SXM</span></td>
-                <td><span class="pill green dot">Active</span></td>
-              </tr>
-              <tr>
-                <td style="font-weight:500">Hindalco</td>
-                <td class="mono">$285,000</td>
-                <td class="mono muted">$1.4B</td>
-                <td><span class="pill purple">Sourcing, Analytics</span></td>
-                <td><span class="pill green dot">Active</span></td>
-              </tr>
-              <tr>
-                <td style="font-weight:500">JSW Group</td>
-                <td class="mono">$510,000</td>
-                <td class="mono muted">$3.2B</td>
-                <td><span class="pill aerchain">Full Suite</span></td>
-                <td><span class="pill green dot">Active</span></td>
-              </tr>
+            <tbody id="pricing-tbody">
+              <tr><td colspan="5" style="text-align:center;color:var(--fg3);padding:30px;font-size:12px">No data — click <b>Demo</b> to load sample deals</td></tr>
             </tbody>
           </table>
         </div>
+
+        <!-- Pricing enrichment zone (populated by demo toggle) -->
+        <div id="pricing-extra" style="padding:0 24px 24px"></div>
       </div>
 
       <!-- ── Proposals View (below, as if scrolled) ── -->
@@ -569,21 +552,21 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
           </div>
         </div>
 
-        <div class="kpi-strip">
+        <div class="kpi-strip" id="proposals-kpi">
           <div class="kpi-card">
             <div class="kpi-label">Total Pipeline</div>
-            <div class="kpi-value purple">$4.63M</div>
-            <div class="kpi-delta up">+$680K closed</div>
+            <div class="kpi-value purple">—</div>
+            <div class="kpi-delta flat">No data</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Active Proposals</div>
-            <div class="kpi-value amber">4</div>
-            <div class="kpi-delta flat">3 open, 1 won</div>
+            <div class="kpi-value amber">0</div>
+            <div class="kpi-delta flat">No data</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-label">Win Rate</div>
-            <div class="kpi-value green">25%</div>
-            <div class="kpi-delta up">1 of 4</div>
+            <div class="kpi-value green">—</div>
+            <div class="kpi-delta flat">No data</div>
           </div>
         </div>
 
@@ -600,43 +583,15 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
                   <th>Submitted</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td style="font-weight:500">Mahindra & Mahindra</td>
-                  <td class="mono">$750,000</td>
-                  <td><span class="pill purple">Proposal</span></td>
-                  <td><span class="pill amber dot">Submitted</span></td>
-                  <td class="muted">Rajesh Kumar</td>
-                  <td class="mono muted" style="font-size:11px">10 Mar 2026</td>
-                </tr>
-                <tr>
-                  <td style="font-weight:500">Larsen & Toubro</td>
-                  <td class="mono">$1,200,000</td>
-                  <td><span class="pill amber">Negotiation</span></td>
-                  <td><span class="pill purple dot">In Review</span></td>
-                  <td class="muted">Priya Sharma</td>
-                  <td class="mono muted" style="font-size:11px">05 Mar 2026</td>
-                </tr>
-                <tr>
-                  <td style="font-weight:500">Reliance Industries</td>
-                  <td class="mono">$2,000,000</td>
-                  <td><span class="pill purple">Proposal</span></td>
-                  <td><span class="pill red dot">Draft</span></td>
-                  <td class="muted">Amit Patel</td>
-                  <td class="mono muted" style="font-size:11px">12 Mar 2026</td>
-                </tr>
-                <tr>
-                  <td style="font-weight:500">Adani Ports</td>
-                  <td class="mono">$680,000</td>
-                  <td><span class="pill green">Closed Won</span></td>
-                  <td><span class="pill green dot">Won</span></td>
-                  <td class="muted">Sneha Gupta</td>
-                  <td class="mono muted" style="font-size:11px">28 Feb 2026</td>
-                </tr>
+              <tbody id="proposals-tbody">
+                <tr><td colspan="6" style="text-align:center;color:var(--fg3);padding:30px;font-size:12px">No data — click <b>Demo</b> to load sample proposals</td></tr>
               </tbody>
             </table>
           </div>
         </div>
+
+        <!-- Proposals enrichment zone (populated by demo toggle) -->
+        <div id="proposals-extra" style="padding:0 24px 24px"></div>
       </div>
 
       <!-- ── Settings Preview ── -->
@@ -718,5 +673,367 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
     </div><!-- /main -->
   </div><!-- /body -->
 </div><!-- /shell -->
+
+<style>
+  #demo-toggle.on { background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.4); color: hsl(262 70% 72%); }
+  [data-theme="light"] #demo-toggle.on { background: rgba(124,58,237,0.10); border-color: rgba(124,58,237,0.3); color: hsl(262 65% 52%); }
+</style>
+
+<script>
+let demoOn = false;
+
+/* ═══════════════════════════════════════════════════
+   PRICING CALCULATOR — KPI + Deals Table
+   ═══════════════════════════════════════════════════ */
+const DEMO_PRICING_KPI = `
+  <div class="kpi-card"><div class="kpi-label">Standard Model (per $1B)</div><div class="kpi-value purple">$300K</div><div class="kpi-delta up">+10% YoY</div></div>
+  <div class="kpi-card"><div class="kpi-label">Break-even Threshold</div><div class="kpi-value green">$500M–$1B</div><div class="kpi-delta flat">Stable</div></div>
+  <div class="kpi-card"><div class="kpi-label">Active Deals</div><div class="kpi-value amber">3</div><div class="kpi-delta up">+1 this week</div></div>`;
+
+const EMPTY_PRICING_KPI = `
+  <div class="kpi-card"><div class="kpi-label">Standard Model (per $1B)</div><div class="kpi-value purple">—</div><div class="kpi-delta flat">No data</div></div>
+  <div class="kpi-card"><div class="kpi-label">Break-even Threshold</div><div class="kpi-value green">—</div><div class="kpi-delta flat">No data</div></div>
+  <div class="kpi-card"><div class="kpi-label">Active Deals</div><div class="kpi-value amber">0</div><div class="kpi-delta flat">No data</div></div>`;
+
+const DEMO_PRICING_ROWS = `
+  <tr><td style="font-weight:500">Tata Steel</td><td class="mono">$420,000</td><td class="mono muted">$2.1B</td><td><span class="pill purple">Sourcing, CLM, SXM</span></td><td><span class="pill green dot">Active</span></td></tr>
+  <tr><td style="font-weight:500">Hindalco</td><td class="mono">$285,000</td><td class="mono muted">$1.4B</td><td><span class="pill purple">Sourcing, Analytics</span></td><td><span class="pill green dot">Active</span></td></tr>
+  <tr><td style="font-weight:500">JSW Group</td><td class="mono">$510,000</td><td class="mono muted">$3.2B</td><td><span class="pill aerchain">Full Suite</span></td><td><span class="pill green dot">Active</span></td></tr>`;
+
+const EMPTY_PRICING_ROWS = `<tr><td colspan="5" style="text-align:center;color:var(--fg3);padding:30px;font-size:12px">No data — click <b>Demo</b> to load sample deals</td></tr>`;
+
+/* ═══════════════════════════════════════════════════
+   PRICING CALCULATOR — Enriched Extras
+   ═══════════════════════════════════════════════════ */
+const DEMO_PRICING_EXTRA = `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px">
+
+    <!-- Pricing Model Breakdown -->
+    <div style="background:var(--glass-1);border:1px solid var(--glass-border);border-radius:var(--r);padding:20px;box-shadow:var(--s-glass)">
+      <div style="font-size:13px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(262 75% 62%)" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        Standard Pricing Model
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:12px">
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--glass-border)">
+          <span style="color:var(--fg2)">Base Platform Fee</span>
+          <span style="font-family:JetBrains Mono,monospace;font-weight:500">$120,000</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--glass-border)">
+          <span style="color:var(--fg2)">Source-to-Pay Module</span>
+          <span style="font-family:JetBrains Mono,monospace;font-weight:500">$80,000</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--glass-border)">
+          <span style="color:var(--fg2)">e-Sourcing Module</span>
+          <span style="font-family:JetBrains Mono,monospace;font-weight:500">$60,000</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--glass-border)">
+          <span style="color:var(--fg2)">Contract Management</span>
+          <span style="font-family:JetBrains Mono,monospace;font-weight:500">$55,000</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--glass-border)">
+          <span style="color:var(--fg2)">Spend Analytics</span>
+          <span style="font-family:JetBrains Mono,monospace;font-weight:500">$45,000</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--glass-border)">
+          <span style="color:var(--fg2)">Implementation &amp; Onboarding</span>
+          <span style="font-family:JetBrains Mono,monospace;font-weight:500">$45,000</span>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:var(--fg2)">YoY Escalation</span>
+          <span class="pill amber" style="font-size:10px">10%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3-Year Projection -->
+    <div style="background:var(--glass-1);border:1px solid var(--glass-border);border-radius:var(--r);padding:20px;box-shadow:var(--s-glass)">
+      <div style="font-size:13px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(262 75% 62%)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        3-Year Projection (Tata Steel)
+      </div>
+      <table class="data-table" style="font-size:11px">
+        <thead>
+          <tr><th>Year</th><th>License</th><th>Escalation</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono" style="font-weight:500">Year 1</td><td class="mono">$420,000</td><td class="mono muted">—</td><td class="mono" style="font-weight:600">$420,000</td></tr>
+          <tr><td class="mono" style="font-weight:500">Year 2</td><td class="mono">$420,000</td><td class="mono" style="color:var(--amber)">+10%</td><td class="mono" style="font-weight:600">$462,000</td></tr>
+          <tr><td class="mono" style="font-weight:500">Year 3</td><td class="mono">$420,000</td><td class="mono" style="color:var(--amber)">+10%</td><td class="mono" style="font-weight:600">$508,200</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:14px;padding:12px 16px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:var(--rs);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;font-weight:500">3-Year TCV</span>
+        <span style="font-size:18px;font-weight:600;font-family:JetBrains Mono,monospace;color:hsl(262 75% 68%)">$1,390,200</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module Availability -->
+  <div style="background:var(--glass-1);border:1px solid var(--glass-border);border-radius:var(--r);padding:20px;box-shadow:var(--s-glass);margin-top:16px">
+    <div style="font-size:13px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(262 75% 62%)" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Module Availability
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+      <div style="padding:10px 14px;border-radius:var(--rs);background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.25);font-size:11px;display:flex;align-items:center;gap:8px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="hsl(262 70% 68%)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span style="color:var(--fg)">Source-to-Pay</span>
+        <span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--fg3)">$80K</span>
+      </div>
+      <div style="padding:10px 14px;border-radius:var(--rs);background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.25);font-size:11px;display:flex;align-items:center;gap:8px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="hsl(262 70% 68%)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span style="color:var(--fg)">e-Sourcing</span>
+        <span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--fg3)">$60K</span>
+      </div>
+      <div style="padding:10px 14px;border-radius:var(--rs);background:var(--glass-1);border:1px solid var(--glass-border);font-size:11px;display:flex;align-items:center;gap:8px">
+        <div style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--fg3)"></div>
+        <span style="color:var(--fg3)">Contract Mgmt</span>
+        <span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--fg3)">$55K</span>
+      </div>
+      <div style="padding:10px 14px;border-radius:var(--rs);background:var(--glass-1);border:1px solid var(--glass-border);font-size:11px;display:flex;align-items:center;gap:8px">
+        <div style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--fg3)"></div>
+        <span style="color:var(--fg3)">Supplier Portal</span>
+        <span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--fg3)">$35K</span>
+      </div>
+      <div style="padding:10px 14px;border-radius:var(--rs);background:var(--glass-1);border:1px solid var(--glass-border);font-size:11px;display:flex;align-items:center;gap:8px">
+        <div style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--fg3)"></div>
+        <span style="color:var(--fg3)">Spend Analytics</span>
+        <span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--fg3)">$45K</span>
+      </div>
+      <div style="padding:10px 14px;border-radius:var(--rs);background:var(--glass-1);border:1px solid var(--glass-border);font-size:11px;display:flex;align-items:center;gap:8px">
+        <div style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--fg3)"></div>
+        <span style="color:var(--fg3)">Invoice Automation</span>
+        <span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--fg3)">$40K</span>
+      </div>
+      <div style="padding:10px 14px;border-radius:var(--rs);background:var(--glass-1);border:1px solid var(--glass-border);font-size:11px;display:flex;align-items:center;gap:8px">
+        <div style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--fg3)"></div>
+        <span style="color:var(--fg3)">Catalog Mgmt</span>
+        <span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--fg3)">$30K</span>
+      </div>
+      <div style="padding:10px 14px;border-radius:var(--rs);background:var(--glass-1);border:1px solid var(--glass-border);font-size:11px;display:flex;align-items:center;gap:8px">
+        <div style="width:12px;height:12px;border-radius:3px;border:1.5px solid var(--fg3)"></div>
+        <span style="color:var(--fg3)">AP Automation</span>
+        <span style="margin-left:auto;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--fg3)">$50K</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Volume Discount Tiers -->
+  <div style="background:var(--glass-1);border:1px solid var(--glass-border);border-radius:var(--r);padding:20px;box-shadow:var(--s-glass);margin-top:16px">
+    <div style="font-size:13px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      Volume Discount Tiers
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div style="padding:14px;border-radius:var(--rs);background:var(--glass-1);border:1px solid var(--glass-border);text-align:center">
+        <div style="font-size:10px;color:var(--fg3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">Under $500M</div>
+        <div style="font-size:16px;font-weight:600;font-family:JetBrains Mono,monospace;color:var(--fg2)">$0</div>
+        <div style="font-size:10px;color:var(--fg3);margin-top:4px">No discount</div>
+      </div>
+      <div style="padding:14px;border-radius:var(--rs);background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);text-align:center">
+        <div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">$500M – $1B</div>
+        <div style="font-size:16px;font-weight:600;font-family:JetBrains Mono,monospace;color:var(--green)">−$8,000</div>
+        <div style="font-size:10px;color:var(--fg3);margin-top:4px">Mid-tier discount</div>
+      </div>
+      <div style="padding:14px;border-radius:var(--rs);background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);text-align:center">
+        <div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px">Over $1B</div>
+        <div style="font-size:16px;font-weight:600;font-family:JetBrains Mono,monospace;color:var(--green)">−$15,000</div>
+        <div style="font-size:10px;color:var(--fg3);margin-top:4px">Enterprise discount</div>
+      </div>
+    </div>
+  </div>`;
+
+/* ═══════════════════════════════════════════════════
+   PROPOSALS — KPI + Table
+   ═══════════════════════════════════════════════════ */
+const DEMO_PROPOSALS_KPI = `
+  <div class="kpi-card"><div class="kpi-label">Total Pipeline</div><div class="kpi-value purple">$4.63M</div><div class="kpi-delta up">+$680K closed</div></div>
+  <div class="kpi-card"><div class="kpi-label">Active Proposals</div><div class="kpi-value amber">4</div><div class="kpi-delta flat">3 open, 1 won</div></div>
+  <div class="kpi-card"><div class="kpi-label">Win Rate</div><div class="kpi-value green">25%</div><div class="kpi-delta up">1 of 4</div></div>`;
+
+const EMPTY_PROPOSALS_KPI = `
+  <div class="kpi-card"><div class="kpi-label">Total Pipeline</div><div class="kpi-value purple">—</div><div class="kpi-delta flat">No data</div></div>
+  <div class="kpi-card"><div class="kpi-label">Active Proposals</div><div class="kpi-value amber">0</div><div class="kpi-delta flat">No data</div></div>
+  <div class="kpi-card"><div class="kpi-label">Win Rate</div><div class="kpi-value green">—</div><div class="kpi-delta flat">No data</div></div>`;
+
+const DEMO_PROPOSALS_ROWS = `
+  <tr><td style="font-weight:500">Mahindra &amp; Mahindra</td><td class="mono">$750,000</td><td><span class="pill purple">Proposal</span></td><td><span class="pill amber dot">Submitted</span></td><td class="muted">Rajesh Kumar</td><td class="mono muted" style="font-size:11px">10 Mar 2026</td></tr>
+  <tr><td style="font-weight:500">Larsen &amp; Toubro</td><td class="mono">$1,200,000</td><td><span class="pill amber">Negotiation</span></td><td><span class="pill purple dot">In Review</span></td><td class="muted">Priya Sharma</td><td class="mono muted" style="font-size:11px">05 Mar 2026</td></tr>
+  <tr><td style="font-weight:500">Reliance Industries</td><td class="mono">$2,000,000</td><td><span class="pill purple">Proposal</span></td><td><span class="pill red dot">Draft</span></td><td class="muted">Amit Patel</td><td class="mono muted" style="font-size:11px">12 Mar 2026</td></tr>
+  <tr><td style="font-weight:500">Adani Ports</td><td class="mono">$680,000</td><td><span class="pill green">Closed Won</span></td><td><span class="pill green dot">Won</span></td><td class="muted">Sneha Gupta</td><td class="mono muted" style="font-size:11px">28 Feb 2026</td></tr>`;
+
+const EMPTY_PROPOSALS_ROWS = `<tr><td colspan="6" style="text-align:center;color:var(--fg3);padding:30px;font-size:12px">No data — click <b>Demo</b> to load sample proposals</td></tr>`;
+
+/* ═══════════════════════════════════════════════════
+   PROPOSALS — Enriched Extras
+   ═══════════════════════════════════════════════════ */
+const DEMO_PROPOSALS_EXTRA = `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px">
+
+    <!-- Pipeline Funnel -->
+    <div style="background:var(--glass-1);border:1px solid var(--glass-border);border-radius:var(--r);padding:20px;box-shadow:var(--s-glass)">
+      <div style="font-size:13px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(262 75% 62%)" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Pipeline by Stage
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px">
+            <span style="color:var(--fg2)">Draft</span>
+            <span style="font-family:JetBrains Mono,monospace;color:var(--fg3)">1 deal · $2.0M</span>
+          </div>
+          <div style="height:6px;border-radius:3px;background:var(--glass-2);overflow:hidden"><div style="width:43%;height:100%;background:var(--red);border-radius:3px"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px">
+            <span style="color:var(--fg2)">Proposal</span>
+            <span style="font-family:JetBrains Mono,monospace;color:var(--fg3)">1 deal · $750K</span>
+          </div>
+          <div style="height:6px;border-radius:3px;background:var(--glass-2);overflow:hidden"><div style="width:16%;height:100%;background:hsl(262 75% 62%);border-radius:3px"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px">
+            <span style="color:var(--fg2)">Negotiation</span>
+            <span style="font-family:JetBrains Mono,monospace;color:var(--fg3)">1 deal · $1.2M</span>
+          </div>
+          <div style="height:6px;border-radius:3px;background:var(--glass-2);overflow:hidden"><div style="width:26%;height:100%;background:var(--amber);border-radius:3px"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:11px">
+            <span style="color:var(--fg2)">Closed Won</span>
+            <span style="font-family:JetBrains Mono,monospace;color:var(--fg3)">1 deal · $680K</span>
+          </div>
+          <div style="height:6px;border-radius:3px;background:var(--glass-2);overflow:hidden"><div style="width:15%;height:100%;background:var(--green);border-radius:3px"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div style="background:var(--glass-1);border:1px solid var(--glass-border);border-radius:var(--r);padding:20px;box-shadow:var(--s-glass)">
+      <div style="font-size:13px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(262 75% 62%)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Recent Activity
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--glass-border)">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--green);margin-top:5px;flex-shrink:0;box-shadow:0 0 4px var(--green)"></div>
+          <div>
+            <div style="font-size:11px;color:var(--fg)"><span style="font-weight:500">Adani Ports</span> — Closed Won</div>
+            <div style="font-size:10px;color:var(--fg3);font-family:JetBrains Mono,monospace;margin-top:3px">28 Feb 2026 · $680,000</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--glass-border)">
+          <div style="width:6px;height:6px;border-radius:50%;background:hsl(262 75% 62%);margin-top:5px;flex-shrink:0;box-shadow:0 0 4px hsl(262 75% 62%)"></div>
+          <div>
+            <div style="font-size:11px;color:var(--fg)"><span style="font-weight:500">L&amp;T</span> — Moved to Negotiation</div>
+            <div style="font-size:10px;color:var(--fg3);font-family:JetBrains Mono,monospace;margin-top:3px">05 Mar 2026 · Priya Sharma</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--glass-border)">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--amber);margin-top:5px;flex-shrink:0;box-shadow:0 0 4px var(--amber)"></div>
+          <div>
+            <div style="font-size:11px;color:var(--fg)"><span style="font-weight:500">Mahindra</span> — Proposal Submitted</div>
+            <div style="font-size:10px;color:var(--fg3);font-family:JetBrains Mono,monospace;margin-top:3px">10 Mar 2026 · Rajesh Kumar</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;padding:10px 0">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--red);margin-top:5px;flex-shrink:0;box-shadow:0 0 4px var(--red)"></div>
+          <div>
+            <div style="font-size:11px;color:var(--fg)"><span style="font-weight:500">Reliance Industries</span> — Draft Created</div>
+            <div style="font-size:10px;color:var(--fg3);font-family:JetBrains Mono,monospace;margin-top:3px">12 Mar 2026 · Amit Patel · Full Suite</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Proposal Type Quick-create -->
+  <div style="background:var(--glass-1);border:1px solid var(--glass-border);border-radius:var(--r);padding:20px;box-shadow:var(--s-glass);margin-top:16px">
+    <div style="font-size:13px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="hsl(262 75% 62%)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Quick Create
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div style="padding:16px;border-radius:var(--rs);background:var(--glass-2);border:1px solid var(--glass-border);cursor:pointer;transition:all 0.15s;text-align:center" onmouseover="this.style.borderColor='rgba(124,58,237,0.3)'" onmouseout="this.style.borderColor='var(--glass-border)'">
+        <div style="font-size:22px;margin-bottom:8px">&#128203;</div>
+        <div style="font-size:12px;font-weight:500">Internal Briefing</div>
+        <div style="font-size:10px;color:var(--fg3);margin-top:4px">Team alignment doc</div>
+      </div>
+      <div style="padding:16px;border-radius:var(--rs);background:var(--glass-2);border:1px solid var(--glass-border);cursor:pointer;transition:all 0.15s;text-align:center" onmouseover="this.style.borderColor='rgba(124,58,237,0.3)'" onmouseout="this.style.borderColor='var(--glass-border)'">
+        <div style="font-size:22px;margin-bottom:8px">&#128295;</div>
+        <div style="font-size:12px;font-weight:500">Technical Proposal</div>
+        <div style="font-size:10px;color:var(--fg3);margin-top:4px">Architecture &amp; integration</div>
+      </div>
+      <div style="padding:16px;border-radius:var(--rs);background:var(--glass-2);border:1px solid var(--glass-border);cursor:pointer;transition:all 0.15s;text-align:center" onmouseover="this.style.borderColor='rgba(124,58,237,0.3)'" onmouseout="this.style.borderColor='var(--glass-border)'">
+        <div style="font-size:22px;margin-bottom:8px">&#128196;</div>
+        <div style="font-size:12px;font-weight:500">Full Commercial</div>
+        <div style="font-size:10px;color:var(--fg3);margin-top:4px">Technical + pricing + terms</div>
+      </div>
+    </div>
+  </div>`;
+
+/* ═══════════════════════════════════════════════════
+   TOGGLE FUNCTION
+   ═══════════════════════════════════════════════════ */
+function toggleDemo() {
+  demoOn = !demoOn;
+  document.getElementById('demo-toggle').classList.toggle('on', demoOn);
+
+  document.getElementById('pricing-kpi').innerHTML    = demoOn ? DEMO_PRICING_KPI    : EMPTY_PRICING_KPI;
+  document.getElementById('pricing-tbody').innerHTML   = demoOn ? DEMO_PRICING_ROWS   : EMPTY_PRICING_ROWS;
+  document.getElementById('pricing-extra').innerHTML   = demoOn ? DEMO_PRICING_EXTRA  : '';
+  document.getElementById('proposals-kpi').innerHTML   = demoOn ? DEMO_PROPOSALS_KPI  : EMPTY_PROPOSALS_KPI;
+  document.getElementById('proposals-tbody').innerHTML  = demoOn ? DEMO_PROPOSALS_ROWS  : EMPTY_PROPOSALS_ROWS;
+  document.getElementById('proposals-extra').innerHTML  = demoOn ? DEMO_PROPOSALS_EXTRA : '';
+}
+
+/* ═══════════════════════════════════════════════════
+   DOWNLOAD SNAPSHOT
+   Captures the current rendered page (including demo
+   data if toggled on) as a self-contained HTML file.
+   ═══════════════════════════════════════════════════ */
+function downloadSnapshot() {
+  // Clone the full document
+  var clone = document.documentElement.cloneNode(true);
+
+  // Remove the script block (no need for interactivity in export)
+  var scripts = clone.querySelectorAll('script');
+  scripts.forEach(function(s) { s.remove(); });
+
+  // Remove interactive buttons (demo toggle, download, theme, sync, settings, sync-log)
+  // Keep the topbar structure but disable onclick handlers
+  var btns = clone.querySelectorAll('[onclick]');
+  btns.forEach(function(b) { b.removeAttribute('onclick'); });
+  var hovers = clone.querySelectorAll('[onmouseover]');
+  hovers.forEach(function(el) { el.removeAttribute('onmouseover'); el.removeAttribute('onmouseout'); });
+
+  // Resolve CSS custom properties to computed values for the current theme
+  var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  clone.setAttribute('data-theme', theme);
+
+  // Build the full HTML string
+  var html = '<!DOCTYPE html>\n<html lang="en" data-theme="' + theme + '">' + clone.innerHTML + '</html>';
+
+  // Generate filename with timestamp
+  var now = new Date();
+  var ts = now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + '_' +
+    String(now.getHours()).padStart(2, '0') +
+    String(now.getMinutes()).padStart(2, '0');
+  var filename = 'aerchain-salesos-snapshot-' + (demoOn ? 'demo-' : '') + ts + '.html';
+
+  // Download
+  var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+</script>
 </body>
 </html>
