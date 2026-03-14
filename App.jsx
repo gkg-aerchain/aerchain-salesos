@@ -648,7 +648,7 @@ function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClear
 // MAIN APP
 // ═══════════════════════════════════════════════════════════
 
-export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }) {
+export default function AerchainSalesOS({ moduleFilter = null, appName = "Aerchain · SalesOS" }) {
   // System group (pinned) always shows — only filter non-system modules
   const visibleGroups = moduleFilter
     ? GROUPS.map(g => ({
