@@ -131,6 +131,40 @@
   /* Proposal sub-views */
   .proposal-sub { display: none; }
   .proposal-sub.active { display: block; }
+
+  /* Demo mode KPI strip */
+  .kpi-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+  .kpi-card { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px 20px; }
+  .kpi-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 6px; font-weight: 500; }
+  .kpi-value { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+  .kpi-value.purple { color: #8b5cf6; }
+  .kpi-value.green { color: #10b981; }
+  .kpi-value.amber { color: #f59e0b; }
+  .kpi-delta { font-size: 10px; font-family: 'JetBrains Mono', monospace; }
+  .kpi-delta.up { color: #10b981; }
+  .kpi-delta.flat { color: rgba(255,255,255,0.35); }
+
+  /* Demo badge pills */
+  .demo-pill { font-size: 10px; font-weight: 500; padding: 3px 8px; border-radius: 5px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+  .demo-pill.purple { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.25); }
+  .demo-pill.green { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
+  .demo-pill.amber { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
+  .demo-pill.red { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+  .demo-pill.aerchain { background: rgba(220,95,64,0.12); color: #DC5F40; border: 1px solid rgba(220,95,64,0.2); }
+  .demo-pill .dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+  .demo-pill.green .dot { background: #10b981; box-shadow: 0 0 4px #10b981; }
+  .demo-pill.amber .dot { background: #f59e0b; box-shadow: 0 0 4px #f59e0b; }
+  .demo-pill.purple .dot { background: #8b5cf6; box-shadow: 0 0 4px #8b5cf6; }
+  .demo-pill.red .dot { background: #ef4444; box-shadow: 0 0 4px #ef4444; }
+
+  /* Demo panel */
+  .demo-panel { display: none; animation: fadeIn 0.25s ease; }
+  .demo-panel.active { display: block; }
+  .demo-section-title { font-size: 14px; font-weight: 500; margin-bottom: 14px; }
+  .demo-table-wrap { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; }
+
+  /* Demo toggle active state */
+  #demo-toggle.on { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.4); color: #8b5cf6; }
 </style>
 </head>
 <body>
@@ -159,6 +193,11 @@
       </div>
     </div>
     <div style="flex:1"></div>
+    <button id="demo-toggle" onclick="toggleDemo()" style="padding:6px 14px;font-size:11px;font-weight:600;font-family:'Montserrat',sans-serif;background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.08);border-radius:7px;color:rgba(255,255,255,0.5);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+      Demo
+    </button>
+    <div style="width:1px;height:18px;background:rgba(255,255,255,0.08);margin:0 8px;"></div>
     <div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'JetBrains Mono',monospace;">PROTOTYPE &middot; Interactive HTML</div>
   </div>
 
@@ -472,6 +511,149 @@
 
         </div>
 
+        <!-- ============================================= -->
+        <!-- DEMO: PRICING CALCULATOR DATA -->
+        <!-- ============================================= -->
+        <div class="demo-panel" id="demo-pricing">
+          <div class="flex-col">
+            <div>
+              <div style="font-size:16px;font-weight:500;margin-bottom:4px;">Pricing Calculator</div>
+              <div style="color:rgba(255,255,255,0.5);font-size:12px;">Pricing intelligence and recent deal benchmarks</div>
+            </div>
+            <div class="kpi-strip">
+              <div class="kpi-card">
+                <div class="kpi-label">Standard Model (per $1B)</div>
+                <div class="kpi-value purple">$300K</div>
+                <div class="kpi-delta up">+10% YoY</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Break-even Threshold</div>
+                <div class="kpi-value green">$500M–$1B</div>
+                <div class="kpi-delta flat">Stable</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Active Deals</div>
+                <div class="kpi-value amber">3</div>
+                <div class="kpi-delta up">+1 this week</div>
+              </div>
+            </div>
+            <div>
+              <div class="demo-section-title">Recent Deals</div>
+              <div class="demo-table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr><th>Client</th><th>Y1 Amount</th><th>Spend Under Mgmt</th><th>Modules</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="font-weight:500;">Tata Steel</td>
+                      <td style="font-family:'JetBrains Mono',monospace;">$420,000</td>
+                      <td style="font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.5);">$2.1B</td>
+                      <td><span class="demo-pill purple">Sourcing, CLM, SXM</span></td>
+                      <td><span class="demo-pill green"><span class="dot"></span>Active</span></td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:500;">Hindalco</td>
+                      <td style="font-family:'JetBrains Mono',monospace;">$285,000</td>
+                      <td style="font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.5);">$1.4B</td>
+                      <td><span class="demo-pill purple">Sourcing, Analytics</span></td>
+                      <td><span class="demo-pill green"><span class="dot"></span>Active</span></td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:500;">JSW Group</td>
+                      <td style="font-family:'JetBrains Mono',monospace;">$510,000</td>
+                      <td style="font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.5);">$3.2B</td>
+                      <td><span class="demo-pill aerchain">Full Suite</span></td>
+                      <td><span class="demo-pill green"><span class="dot"></span>Active</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:10px;color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;">
+              <span style="width:5px;height:5px;border-radius:50%;background:#10b981;box-shadow:0 0 4px #10b981;display:inline-block;"></span>
+              Last synced: 14 Mar 2026, 10:00
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- DEMO: PROPOSAL GENERATOR DATA -->
+        <!-- ============================================= -->
+        <div class="demo-panel" id="demo-proposals">
+          <div class="flex-col">
+            <div>
+              <div style="font-size:16px;font-weight:500;margin-bottom:4px;">Proposal Generator</div>
+              <div style="color:rgba(255,255,255,0.5);font-size:12px;">Active proposals and pipeline value</div>
+            </div>
+            <div class="kpi-strip">
+              <div class="kpi-card">
+                <div class="kpi-label">Total Pipeline</div>
+                <div class="kpi-value purple">$4.63M</div>
+                <div class="kpi-delta up">+$680K closed</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Active Proposals</div>
+                <div class="kpi-value amber">4</div>
+                <div class="kpi-delta flat">3 open, 1 won</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Win Rate</div>
+                <div class="kpi-value green">25%</div>
+                <div class="kpi-delta up">1 of 4</div>
+              </div>
+            </div>
+            <div>
+              <div class="demo-section-title">Active Proposals</div>
+              <div class="demo-table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr><th>Client</th><th>Value</th><th>Stage</th><th>Status</th><th>Contact</th><th>Submitted</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="font-weight:500;">Mahindra &amp; Mahindra</td>
+                      <td style="font-family:'JetBrains Mono',monospace;">$750,000</td>
+                      <td><span class="demo-pill purple">Proposal</span></td>
+                      <td><span class="demo-pill amber"><span class="dot"></span>Submitted</span></td>
+                      <td style="color:rgba(255,255,255,0.5);">Rajesh Kumar</td>
+                      <td style="font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.5);font-size:11px;">10 Mar 2026</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:500;">Larsen &amp; Toubro</td>
+                      <td style="font-family:'JetBrains Mono',monospace;">$1,200,000</td>
+                      <td><span class="demo-pill amber">Negotiation</span></td>
+                      <td><span class="demo-pill purple"><span class="dot"></span>In Review</span></td>
+                      <td style="color:rgba(255,255,255,0.5);">Priya Sharma</td>
+                      <td style="font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.5);font-size:11px;">05 Mar 2026</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:500;">Reliance Industries</td>
+                      <td style="font-family:'JetBrains Mono',monospace;">$2,000,000</td>
+                      <td><span class="demo-pill purple">Proposal</span></td>
+                      <td><span class="demo-pill red"><span class="dot"></span>Draft</span></td>
+                      <td style="color:rgba(255,255,255,0.5);">Amit Patel</td>
+                      <td style="font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.5);font-size:11px;">12 Mar 2026</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:500;">Adani Ports</td>
+                      <td style="font-family:'JetBrains Mono',monospace;">$680,000</td>
+                      <td><span class="demo-pill green">Closed Won</span></td>
+                      <td><span class="demo-pill green"><span class="dot"></span>Won</span></td>
+                      <td style="color:rgba(255,255,255,0.5);">Sneha Gupta</td>
+                      <td style="font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.5);font-size:11px;">28 Feb 2026</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:10px;color:rgba(255,255,255,0.35);font-family:'JetBrains Mono',monospace;">
+              <span style="width:5px;height:5px;border-radius:50%;background:#10b981;box-shadow:0 0 4px #10b981;display:inline-block;"></span>
+              Last synced: 14 Mar 2026, 10:00
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -684,6 +866,54 @@ function renderSections() {
       <div class="check-box">${CHECK_SVG}</div><span>${s}</span>
     </div>`;
   });
+}
+
+// ═══════════════════════════════════════════════════════════
+// DEMO MODE
+// ═══════════════════════════════════════════════════════════
+
+let demoMode = false;
+
+function toggleDemo() {
+  demoMode = !demoMode;
+  const btn = document.getElementById('demo-toggle');
+  const viewPricing = document.getElementById('view-pricing');
+  const viewProposals = document.getElementById('view-proposals');
+  const demoPricing = document.getElementById('demo-pricing');
+  const demoProposals = document.getElementById('demo-proposals');
+  const navPricing = document.getElementById('nav-pricing');
+  const navProposals = document.getElementById('nav-proposals');
+
+  if (demoMode) {
+    btn.classList.add('on');
+    // Hide interactive views, show demo panels
+    viewPricing.classList.remove('active');
+    viewProposals.classList.remove('active');
+    demoPricing.classList.add('active');
+    demoProposals.classList.add('active');
+    // Disable nav switching
+    navPricing.onclick = null;
+    navProposals.onclick = null;
+    navPricing.classList.add('active');
+    navProposals.classList.add('active');
+    navPricing.style.opacity = '0.5';
+    navProposals.style.opacity = '0.5';
+    // Update header
+    document.getElementById('header-title').textContent = 'Demo Mode';
+    document.getElementById('header-icon').innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>';
+  } else {
+    btn.classList.remove('on');
+    // Hide demo panels, restore interactive views
+    demoPricing.classList.remove('active');
+    demoProposals.classList.remove('active');
+    navPricing.style.opacity = '1';
+    navProposals.style.opacity = '1';
+    // Restore nav switching
+    navPricing.onclick = function() { switchView('pricing'); };
+    navProposals.onclick = function() { switchView('proposals'); };
+    // Re-activate the pricing view by default
+    switchView('pricing');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
