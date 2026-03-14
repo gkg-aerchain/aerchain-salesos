@@ -5,8 +5,8 @@ import { pricingCalculatorDummy } from "./pricing-calculator.js";
 import { proposalGeneratorDummy } from "./proposal-generator.js";
 
 const DUMMY_DATA = {
-  "pricing-calc": pricingCalculatorDummy,
-  "proposals":    proposalGeneratorDummy,
+  "pricing-calculator":  pricingCalculatorDummy,
+  "proposal-generator":  proposalGeneratorDummy,
 };
 
 export default DUMMY_DATA;
