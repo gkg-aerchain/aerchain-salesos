@@ -5,6 +5,7 @@ import {
   TrendingUp, Users, Wand2, Download
 } from "lucide-react";
 import { supabase } from "./supabaseClient.js";
+import DUMMY_DATA from "./dummy-data-htmls/index.js";
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -26,8 +27,8 @@ const GROUPS = [
 ];
 
 const MOD = {
-  "pricing-calc": { label: "Pricing Calc", Icon: DollarSign, keys: ["notion"]           },
-  "proposals":    { label: "Proposals",    Icon: FileText,   keys: ["notion","hubspot"] },
+  "pricing-calc": { label: "Pricing Calculator",   Icon: DollarSign, keys: ["notion"]           },
+  "proposals":    { label: "Proposal Generator",    Icon: FileText,   keys: ["notion","hubspot"] },
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -47,41 +48,6 @@ Return ONLY raw JSON:
 {"activeProposals":[{"client":"...","value":0,"stage":"...","submittedDate":"...","status":"...","contact":"..."}],"total":0,"totalValue":0,"syncedAt":"${now}"}`,
   };
   return prompts[key] || `Return ONLY raw JSON: {"message":"No sync configured","syncedAt":"${now}"}`;
-};
-
-// ═══════════════════════════════════════════════════════════
-// DUMMY DATA (for Demo mode)
-// ═══════════════════════════════════════════════════════════
-
-const DUMMY_DATA = {
-  "pricing-calc": {
-    data: {
-      standardModel: { per1BSpend: 300000, yoyEscalation: "10%", breakEven: "$500M-$1B" },
-      recentDeals: [
-        { client: "Tata Steel", y1Amount: 420000, spendUnderMgmt: "$2.1B", modules: "Sourcing, CLM, SXM" },
-        { client: "Hindalco", y1Amount: 285000, spendUnderMgmt: "$1.4B", modules: "Sourcing, Analytics" },
-        { client: "JSW Group", y1Amount: 510000, spendUnderMgmt: "$3.2B", modules: "Full Suite" },
-      ],
-    },
-    syncedAt: "2026-03-14T10:00:00Z",
-    lastSynced: "2026-03-14T10:00:00Z",
-    status: "🟢 Fresh",
-  },
-  proposals: {
-    data: {
-      activeProposals: [
-        { client: "Mahindra & Mahindra", value: 750000, stage: "Proposal", status: "Submitted", submittedDate: "2026-03-10", contact: "Rajesh Kumar" },
-        { client: "Larsen & Toubro", value: 1200000, stage: "Negotiation", status: "In Review", submittedDate: "2026-03-05", contact: "Priya Sharma" },
-        { client: "Reliance Industries", value: 2000000, stage: "Proposal", status: "Draft", submittedDate: "2026-03-12", contact: "Amit Patel" },
-        { client: "Adani Ports", value: 680000, stage: "Closed Won", status: "Submitted", submittedDate: "2026-02-28", contact: "Sneha Gupta" },
-      ],
-      total: 4,
-      totalValue: 4630000,
-    },
-    syncedAt: "2026-03-14T10:00:00Z",
-    lastSynced: "2026-03-14T10:00:00Z",
-    status: "🟢 Fresh",
-  },
 };
 
 // ═══════════════════════════════════════════════════════════
