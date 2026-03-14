@@ -408,7 +408,7 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
     </button>
 
     <!-- Download -->
-    <button class="icon-btn" title="Download snapshot">
+    <button class="icon-btn" title="Download snapshot" onclick="downloadSnapshot()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
     </button>
 
@@ -986,6 +986,53 @@ function toggleDemo() {
   document.getElementById('proposals-kpi').innerHTML   = demoOn ? DEMO_PROPOSALS_KPI  : EMPTY_PROPOSALS_KPI;
   document.getElementById('proposals-tbody').innerHTML  = demoOn ? DEMO_PROPOSALS_ROWS  : EMPTY_PROPOSALS_ROWS;
   document.getElementById('proposals-extra').innerHTML  = demoOn ? DEMO_PROPOSALS_EXTRA : '';
+}
+
+/* ═══════════════════════════════════════════════════
+   DOWNLOAD SNAPSHOT
+   Captures the current rendered page (including demo
+   data if toggled on) as a self-contained HTML file.
+   ═══════════════════════════════════════════════════ */
+function downloadSnapshot() {
+  // Clone the full document
+  var clone = document.documentElement.cloneNode(true);
+
+  // Remove the script block (no need for interactivity in export)
+  var scripts = clone.querySelectorAll('script');
+  scripts.forEach(function(s) { s.remove(); });
+
+  // Remove interactive buttons (demo toggle, download, theme, sync, settings, sync-log)
+  // Keep the topbar structure but disable onclick handlers
+  var btns = clone.querySelectorAll('[onclick]');
+  btns.forEach(function(b) { b.removeAttribute('onclick'); });
+  var hovers = clone.querySelectorAll('[onmouseover]');
+  hovers.forEach(function(el) { el.removeAttribute('onmouseover'); el.removeAttribute('onmouseout'); });
+
+  // Resolve CSS custom properties to computed values for the current theme
+  var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+  clone.setAttribute('data-theme', theme);
+
+  // Build the full HTML string
+  var html = '<!DOCTYPE html>\n<html lang="en" data-theme="' + theme + '">' + clone.innerHTML + '</html>';
+
+  // Generate filename with timestamp
+  var now = new Date();
+  var ts = now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + '_' +
+    String(now.getHours()).padStart(2, '0') +
+    String(now.getMinutes()).padStart(2, '0');
+  var filename = 'aerchain-salesos-snapshot-' + (demoOn ? 'demo-' : '') + ts + '.html';
+
+  // Download
+  var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 </script>
 </body>
