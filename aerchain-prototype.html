@@ -59,7 +59,8 @@
   .module-check { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 7px; cursor: pointer; transition: all 0.15s; font-size: 13px; }
   .module-check.off { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
   .module-check.on { background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.4); color: #fff; }
-  .check-box { width: 18px; height: 18px; min-width: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; line-height: 1; }
+  .check-box { width: 18px; height: 18px; min-width: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; position: relative; }
+  .check-box svg { width: 12px; height: 12px; }
   .module-check.off .check-box { border: 1.5px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.03); }
   .module-check.on .check-box { background: #8b5cf6; border: 1.5px solid #8b5cf6; color: #fff; }
 
@@ -510,6 +511,14 @@ const ESCALATION = 0.10;
 let currentStep = 1;
 let selectedProposalType = "";
 
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+function toggleSection(el) {
+  el.classList.toggle('on');
+  el.classList.toggle('off');
+  el.querySelector('.check-box').innerHTML = el.classList.contains('on') ? CHECK_SVG : '';
+}
+
 // ═══════════════════════════════════════════════════════════
 // VIEW SWITCHING
 // ═══════════════════════════════════════════════════════════
@@ -545,7 +554,7 @@ function renderModules() {
   for (const [name, data] of Object.entries(MODULES_DATA)) {
     const div = document.createElement('div');
     div.className = 'module-check ' + (data.on ? 'on' : 'off');
-    div.innerHTML = `<div class="check-box">${data.on ? '&#10003;' : '&nbsp;'}</div><span style="margin-left:2px;">${name}</span>`;
+    div.innerHTML = `<div class="check-box">${data.on ? CHECK_SVG : ''}</div><span>${name}</span>`;
     div.onclick = () => { MODULES_DATA[name].on = !MODULES_DATA[name].on; renderModules(); recalc(); };
     grid.appendChild(div);
   }
@@ -645,7 +654,8 @@ function renderSteps() {
   STEP_LABELS.forEach((label, i) => {
     const n = i + 1;
     const cls = n === currentStep ? 'current' : n < currentStep ? 'done' : 'pending';
-    bar.innerHTML += `<div class="step ${cls}"><div class="step-num">${n < currentStep ? '&#10003;' : n}</div>${label}</div>`;
+    const stepContent = n < currentStep ? '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>' : n;
+    bar.innerHTML += `<div class="step ${cls}"><div class="step-num">${stepContent}</div>${label}</div>`;
   });
 }
 
@@ -670,8 +680,8 @@ function renderSections() {
   const list = document.getElementById('sections-list');
   list.innerHTML = '';
   SECTIONS.forEach(s => {
-    list.innerHTML += `<div class="module-check on" onclick="this.classList.toggle('on');this.classList.toggle('off');this.querySelector('.check-box').innerHTML=this.classList.contains('on')?'&#10003;':'';">
-      <div class="check-box">&#10003;</div><span>${s}</span>
+    list.innerHTML += `<div class="module-check on" onclick="toggleSection(this)">
+      <div class="check-box">${CHECK_SVG}</div><span>${s}</span>
     </div>`;
   });
 }
