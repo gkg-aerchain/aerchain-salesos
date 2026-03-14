@@ -13,8 +13,8 @@ import DUMMY_DATA from "./dummy-data-htmls/index.js";
 
 const NOTION_DB_URL = "https://www.notion.so/4044b29e0f85481db7e4dd6b1aa88a2c";
 const NOTION_PAGE_IDS = {
-  "pricing-calc": "32101f618de2813db745d7b46c936272",
-  "proposals":    "32101f618de2813f8ac5e65ed4ef7b14",
+  "pricing-calculator":  "32101f618de2813db745d7b46c936272",
+  "proposal-generator":  "32101f618de2813f8ac5e65ed4ef7b14",
 };
 
 const MCP = {
@@ -23,12 +23,12 @@ const MCP = {
 };
 
 const GROUPS = [
-  { id: "deal-desk", label: "DEAL DESK", modules: ["pricing-calc","proposals"] },
+  { id: "deal-desk", label: "DEAL DESK", modules: ["pricing-calculator","proposal-generator"] },
 ];
 
 const MOD = {
-  "pricing-calc": { label: "Pricing Calculator",   Icon: DollarSign, keys: ["notion"]           },
-  "proposals":    { label: "Proposal Generator",    Icon: FileText,   keys: ["notion","hubspot"] },
+  "pricing-calculator":  { label: "Pricing Calculator",   Icon: DollarSign, keys: ["notion"]           },
+  "proposal-generator":  { label: "Proposal Generator",    Icon: FileText,   keys: ["notion","hubspot"] },
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -38,12 +38,12 @@ const MOD = {
 const getSyncPrompt = (key) => {
   const now = new Date().toISOString();
   const prompts = {
-    "pricing-calc": `Use the Notion MCP to fetch pricing intelligence from the Aerchain Brain.
+    "pricing-calculator": `Use the Notion MCP to fetch pricing intelligence from the Aerchain Brain.
 Look for deal-level pricing in Section 4 Pipeline & Revenue Intelligence.
 Return ONLY raw JSON:
 {"standardModel":{"per1BSpend":300000,"yoyEscalation":"10%","breakEven":"$500M-$1B"},"recentDeals":[{"client":"...","y1Amount":0,"spendUnderMgmt":"...","modules":"..."}],"syncedAt":"${now}"}`,
 
-    proposals: `Use HubSpot MCP to list deals at Proposal or later stage. Use Notion MCP to check for active RFP submissions.
+    "proposal-generator": `Use HubSpot MCP to list deals at Proposal or later stage. Use Notion MCP to check for active RFP submissions.
 Return ONLY raw JSON:
 {"activeProposals":[{"client":"...","value":0,"stage":"...","submittedDate":"...","status":"...","contact":"..."}],"total":0,"totalValue":0,"syncedAt":"${now}"}`,
   };
@@ -422,8 +422,8 @@ function ModuleContent({ moduleKey, data, onSync, syncing }) {
   if (isEmpty) return <EmptyState moduleKey={moduleKey} onSync={onSync} loading={syncing} />;
 
   switch (moduleKey) {
-    case "pricing-calc": return <PricingCalcView data={data} />;
-    case "proposals":    return <ProposalsView data={data} />;
+    case "pricing-calculator": return <PricingCalcView data={data} />;
+    case "proposal-generator": return <ProposalsView data={data} />;
     default:             return <GenericView data={data} />;
   }
 }
@@ -437,7 +437,7 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
     ? GROUPS.map(g => ({ ...g, modules: g.modules.filter(m => moduleFilter.includes(m)) })).filter(g => g.modules.length > 0)
     : GROUPS;
 
-  const [selected, setSelected]           = useState(moduleFilter ? moduleFilter[0] : "pricing-calc");
+  const [selected, setSelected]           = useState(moduleFilter ? moduleFilter[0] : "pricing-calculator");
   const [moduleData, setModuleData]       = useState({});
   const [syncing, setSyncing]             = useState(new Set());
   const [syncingAll, setSyncingAll]       = useState(false);
