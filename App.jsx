@@ -22,7 +22,7 @@ const MCP = {
 };
 
 const GROUPS = [
-  { id: "pipeline", label: "PIPELINE", modules: ["pricing-calc","proposals"] },
+  { id: "deal-desk", label: "DEAL DESK", modules: ["pricing-calc","proposals"] },
 ];
 
 const MOD = {
