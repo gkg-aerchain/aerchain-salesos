@@ -1,34 +1,42 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
-  RefreshCw, AlertCircle, Clock, Database,
+  RefreshCw, AlertCircle, Clock,
   Loader2, Activity, FileText, DollarSign, X,
-  TrendingUp, Users, Wand2, Download
+  TrendingUp, Users, Wand2, Download, Settings, Brain,
+  ExternalLink, Link
 } from "lucide-react";
-import { supabase } from "./supabaseClient.js";
-import DUMMY_DATA from "./dummy-data-htmls/index.js";
+import DUMMY_DATA from "./demo-data/index.js";
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════
 
-const NOTION_DB_URL = "https://www.notion.so/4044b29e0f85481db7e4dd6b1aa88a2c";
-const NOTION_PAGE_IDS = {
-  "pricing-calculator":  "32101f618de2813db745d7b46c936272",
-  "proposal-generator":  "32101f618de2813f8ac5e65ed4ef7b14",
+// Notion master audit log — "Aerchain SalesOS Notion Log"
+// Structure: master DB → sub-pages per module → inline databases per sync type
+// Each audit entry: timestamp, action, module, summary, reference links array
+// Reference links can include: app internal, Gmail, Google Sheets, Drive, Notion pages
+const NOTION_AUDIT_CONFIG = {
+  masterPageUrl: "https://www.notion.so/aerchain-salesos-notion-log", // placeholder — update when page is created
+  masterDbName:  "Aerchain SalesOS Notion Log",
+  modules: {
+    "pricing-calculator": { pageName: "Pricing Calculator Log",   pageUrl: null }, // set when created
+    "proposal-generator": { pageName: "Proposal Generator Log",   pageUrl: null },
+    "settings":           { pageName: "Settings & Memory Log",    pageUrl: null },
+  },
+  // Audit entry shape:
+  // { timestamp, action, module, summary, refs: [{ label, url, type: "notion"|"gmail"|"gdrive"|"gsheet"|"app"|"other" }] }
 };
 
-const MCP = {
-  notion:  { type: "url", url: "https://mcp.notion.com/mcp",       name: "notion"  },
-  hubspot: { type: "url", url: "https://mcp.hubspot.com/anthropic", name: "hubspot" },
-};
-
+// Module groups — DEAL DESK in main area, SYSTEM pinned to sidebar bottom
 const GROUPS = [
-  { id: "deal-desk", label: "DEAL DESK", modules: ["pricing-calculator","proposal-generator"] },
+  { id: "deal-desk", label: "DEAL DESK",  modules: ["pricing-calculator","proposal-generator"], pinBottom: false },
+  { id: "system",    label: "SYSTEM",     modules: ["settings"],                                pinBottom: true  },
 ];
 
 const MOD = {
-  "pricing-calculator":  { label: "Pricing Calculator",   Icon: DollarSign, keys: ["notion"]           },
-  "proposal-generator":  { label: "Proposal Generator",    Icon: FileText,   keys: ["notion","hubspot"] },
+  "pricing-calculator": { label: "Pricing Calculator", Icon: DollarSign },
+  "proposal-generator": { label: "Proposal Generator", Icon: FileText   },
+  "settings":           { label: "Settings",           Icon: Settings   },
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -38,16 +46,12 @@ const MOD = {
 const getSyncPrompt = (key) => {
   const now = new Date().toISOString();
   const prompts = {
-    "pricing-calculator": `Use the Notion MCP to fetch pricing intelligence from the Aerchain Brain.
-Look for deal-level pricing in Section 4 Pipeline & Revenue Intelligence.
-Return ONLY raw JSON:
+    "pricing-calculator": `You are a data sync agent for Aerchain SalesOS.
+Fetch current pricing intelligence for Aerchain's procurement platform.
+Return ONLY raw JSON — no markdown, no explanation:
 {"standardModel":{"per1BSpend":300000,"yoyEscalation":"10%","breakEven":"$500M-$1B"},"recentDeals":[{"client":"...","y1Amount":0,"spendUnderMgmt":"...","modules":"..."}],"syncedAt":"${now}"}`,
-
-    "proposal-generator": `Use HubSpot MCP to list deals at Proposal or later stage. Use Notion MCP to check for active RFP submissions.
-Return ONLY raw JSON:
-{"activeProposals":[{"client":"...","value":0,"stage":"...","submittedDate":"...","status":"...","contact":"..."}],"total":0,"totalValue":0,"syncedAt":"${now}"}`,
   };
-  return prompts[key] || `Return ONLY raw JSON: {"message":"No sync configured","syncedAt":"${now}"}`;
+  return prompts[key] || `Return ONLY raw JSON: {"message":"No sync configured for ${key}","syncedAt":"${now}"}`;
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -102,15 +106,15 @@ function timeAgo(date) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-async function callClaude(prompt, mcpKeys = []) {
+// ── Direct API: Claude ────────────────────────────────────
+// Direct call to Anthropic API — no MCP middleman
+async function callClaude(prompt, { system, model = "claude-sonnet-4-6", maxTokens = 4000 } = {}) {
   return withRetry(async () => {
-    const servers = mcpKeys.map(k => MCP[k]).filter(Boolean);
     const body = {
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4000,
-      system: "You are a data sync agent for Aerchain's GKG Master App. Use the provided MCP tools to fetch real live data. After fetching data with tools, return ONLY the raw JSON object requested — no markdown fences, no explanation, no preamble. Your response text must start with { and end with }.",
+      model,
+      max_tokens: maxTokens,
+      system: system || "You are a data sync agent for Aerchain SalesOS. Return ONLY the raw JSON object requested — no markdown fences, no explanation, no preamble. Your response must start with { and end with }.",
       messages: [{ role: "user", content: prompt }],
-      ...(servers.length > 0 && { mcp_servers: servers }),
     };
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -131,6 +135,22 @@ async function callClaude(prompt, mcpKeys = []) {
     const data = await res.json();
     return (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
   }, { retries: 3, label: "callClaude" });
+}
+
+// ── Direct API: HubSpot ───────────────────────────────────
+// TODO: connect with VITE_HUBSPOT_API_KEY when ready
+async function callHubSpot(endpoint, { method = "GET", body } = {}) {
+  // eslint-disable-next-line no-unused-vars
+  const apiKey = import.meta.env.VITE_HUBSPOT_API_KEY;
+  throw new Error("HubSpot direct API not yet connected — set VITE_HUBSPOT_API_KEY and implement endpoint calls");
+}
+
+// ── Direct API: Notion ────────────────────────────────────
+// TODO: connect with VITE_NOTION_API_KEY when ready
+async function callNotion(endpoint, { method = "GET", body } = {}) {
+  // eslint-disable-next-line no-unused-vars
+  const apiKey = import.meta.env.VITE_NOTION_API_KEY;
+  throw new Error("Notion direct API not yet connected — set VITE_NOTION_API_KEY and implement endpoint calls");
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -201,7 +221,7 @@ function EmptyState({ moduleKey, onSync, loading }) {
       </div>
       <div>
         <div style={{ color:T.text, fontWeight:600, marginBottom:6 }}>{label}</div>
-        <div style={{ color:T.muted, fontSize:13 }}>No data yet — sync to pull live data from your sources</div>
+        <div style={{ color:T.muted, fontSize:13 }}>No data yet — use Demo to preview, or Sync when APIs are connected</div>
       </div>
       <button onClick={onSync} disabled={loading} style={{
         background: T.accentBg, border:`1px solid ${T.borderAcc}`, borderRadius:8, padding:"8px 20px",
@@ -234,11 +254,46 @@ function AerchainLogo({ height = 18 }) {
 }
 
 
+// ── NOTION ICON SVG ───────────────────────────────────────
+
+function NotionIcon({ size = 14, style = {} }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display:"inline-block", flexShrink:0, ...style }}>
+      <rect width="100" height="100" rx="18" fill="white"/>
+      <path d="M19.2 17.6C22.1 19.9 23.2 19.7 29 19.3L76.4 16.3C77.5 16.2 77.6 17 77.2 17.5L69.2 23C67.7 24.1 67 24.3 65.6 24.5L19.6 27.7C18.2 27.8 17.5 27.1 18.1 26.3L19.2 17.6Z" fill="#1A1A1A"/>
+      <path d="M22 31.2V79.4C22 81.9 23.2 82.8 26.1 82.6L78.2 79.4C81.1 79.2 81.5 77.5 81.5 75.4V27.5C81.5 25.4 80.6 24.3 78.8 24.5L24.9 27.9C22.9 28.1 22 29.1 22 31.2Z" fill="white" stroke="#1A1A1A" strokeWidth="2"/>
+      <path d="M56.3 32.7L38.2 34C36.8 34.1 36.5 34.9 36.5 35.9V66.4C36.5 67.3 37.0 67.9 38.0 67.8C39.1 67.7 39.6 67.1 40.2 66.2L48.7 52.6L57.5 65.4C58.3 66.5 59.0 67.2 60.4 67.1C61.5 67.0 62.2 66.2 62.2 64.8V37.4C62.2 35.9 61.5 34.9 60.0 35.0L56.3 32.7Z" fill="#1A1A1A"/>
+    </svg>
+  );
+}
+
+// ── NOTION AUDIT LINK ─────────────────────────────────────
+
+function NotionAuditLink({ moduleKey, label = "Notion Log" }) {
+  const config = NOTION_AUDIT_CONFIG.modules[moduleKey];
+  const url = config?.pageUrl || NOTION_AUDIT_CONFIG.masterPageUrl;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" style={{
+      display:"inline-flex", alignItems:"center", gap:4,
+      color:T.muted, fontSize:10, textDecoration:"none",
+      background:T.bgCard, border:`1px solid ${T.border}`,
+      padding:"2px 7px", borderRadius:4, transition:"color 0.15s"
+    }}
+      onMouseEnter={e => e.currentTarget.style.color = T.text}
+      onMouseLeave={e => e.currentTarget.style.color = T.muted}
+    >
+      <NotionIcon size={11} />
+      {label}
+      <ExternalLink size={9} />
+    </a>
+  );
+}
+
 // ── SHARED TABLE HELPERS ──────────────────────────────────
 
 const tableStyle = {
   width: "100%", borderCollapse: "separate", borderSpacing: 0,
-  fontSize: 12, fontFamily: "'JetBrains Mono','Montserrat',sans-serif",
+  fontSize: 12,
 };
 const thStyle = {
   textAlign: "left", padding: "8px 12px", color: T.muted, fontSize: 10,
@@ -264,7 +319,7 @@ function StatCard({ label, value, sub, icon: Ic, color = T.accent }) {
         {Ic && <Ic size={13} color={color} />}
         <span style={{ color: T.muted, fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</span>
       </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: T.text, fontFamily: "'JetBrains Mono',monospace" }}>{value}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: T.text }}>{value}</div>
       {sub && <div style={{ color: T.muted, fontSize: 11, marginTop: 4 }}>{sub}</div>}
     </div>
   );
@@ -309,7 +364,7 @@ function PricingCalcView({ data }) {
                 {deals.map((d, i) => (
                   <tr key={i} className="table-row" style={{ transition: "background 0.1s" }}>
                     <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{d.client || "—"}</td>
-                    <td style={{ ...tdStyle, fontFamily: "'JetBrains Mono',monospace", color: T.success }}>{fmt$(d.y1Amount)}</td>
+                    <td style={{ ...tdStyle, color: T.success }}>{fmt$(d.y1Amount)}</td>
                     <td style={{ ...tdStyle, color: T.muted }}>{d.spendUnderMgmt || "—"}</td>
                     <td style={{ ...tdStyle, maxWidth: 200 }}>{d.modules || "—"}</td>
                   </tr>
@@ -387,7 +442,7 @@ function ProposalsView({ data }) {
                 {proposals.map((p, i) => (
                   <tr key={i} className="table-row" style={{ transition: "background 0.1s" }}>
                     <td style={{ ...tdStyle, fontWeight: 600, color: T.text }}>{p.client || "—"}</td>
-                    <td style={{ ...tdStyle, fontFamily: "'JetBrains Mono',monospace", color: T.success }}>{fmt$(p.value)}</td>
+                    <td style={{ ...tdStyle, color: T.success }}>{fmt$(p.value)}</td>
                     <td style={tdStyle}>{stageBadge(p.stage)}</td>
                     <td style={tdStyle}>{statusBadge(p.status)}</td>
                     <td style={{ ...tdStyle, color: T.muted }}>{p.submittedDate || "—"}</td>
@@ -403,12 +458,170 @@ function ProposalsView({ data }) {
   );
 }
 
+// ── SETTINGS VIEW ─────────────────────────────────────────
+
+function SettingsView({ claudeMemory, onClearMemory }) {
+  const [activeTab, setActiveTab] = useState("memory");
+
+  const tabs = [
+    { id: "memory",  label: "Claude Memory" },
+    { id: "notion",  label: "Notion Audit"  },
+    { id: "apis",    label: "API Connections"},
+    { id: "supabase",label: "Database"      },
+  ];
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+      {/* Tab strip */}
+      <div style={{ display:"flex", gap:4, borderBottom:`1px solid ${T.border}`, paddingBottom:0 }}>
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+            background:"none", border:"none", cursor:"pointer",
+            padding:"8px 14px", fontSize:12, fontWeight: activeTab===t.id ? 600 : 400,
+            color: activeTab===t.id ? T.text : T.muted,
+            borderBottom: activeTab===t.id ? `2px solid ${T.accent}` : "2px solid transparent",
+            transition:"all 0.15s", marginBottom:-1
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {/* Memory tab */}
+      {activeTab === "memory" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <Card>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+              <Brain size={13} color={T.accent} />
+              <span style={{ fontSize:12, fontWeight:600 }}>Claude Memory</span>
+              <span style={{ color:T.muted, fontSize:11 }}>({claudeMemory.length} interactions logged)</span>
+              <div style={{ flex:1 }}/>
+              <button onClick={onClearMemory} style={{
+                background:"none", border:`1px solid ${T.border}`, borderRadius:5,
+                padding:"3px 10px", color:T.muted, fontSize:11, cursor:"pointer"
+              }}>Clear</button>
+            </div>
+            <div style={{ color:T.muted, fontSize:12, marginBottom:12 }}>
+              Every Claude API interaction is logged here — prompt, response, module context, timestamp.
+              This becomes the living brain of context for Aerchain SalesOS.
+            </div>
+            {claudeMemory.length === 0 ? (
+              <div style={{ color:T.muted, fontSize:12, textAlign:"center", padding:"20px 0" }}>
+                No interactions logged yet. Sync a module to start building memory.
+              </div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:6, maxHeight:400, overflowY:"auto" }}>
+                {[...claudeMemory].reverse().map((m, i) => (
+                  <div key={i} style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:7, padding:"10px 12px" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:6 }}>
+                      <span style={{ fontSize:10, fontWeight:600, color:T.accent, background:T.accentBg, padding:"2px 7px", borderRadius:4 }}>{m.module}</span>
+                      <span style={{ color:T.muted, fontSize:10 }}>{new Date(m.timestamp).toLocaleString()}</span>
+                    </div>
+                    <div style={{ color:T.muted, fontSize:11, marginBottom:4 }}>
+                      <span style={{ color:T.text, fontWeight:500 }}>Prompt: </span>
+                      {m.prompt.slice(0, 120)}{m.prompt.length > 120 ? "…" : ""}
+                    </div>
+                    <div style={{ color:T.muted, fontSize:11 }}>
+                      <span style={{ color:T.success, fontWeight:500 }}>Response: </span>
+                      {m.response?.slice(0, 120)}{(m.response?.length || 0) > 120 ? "…" : ""}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* Notion Audit tab */}
+      {activeTab === "notion" && (
+        <Card>
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+            <NotionIcon size={13} />
+            <span style={{ fontSize:12, fontWeight:600 }}>Notion Audit Log</span>
+          </div>
+          <div style={{ color:T.muted, fontSize:12, marginBottom:16 }}>
+            Master database: <strong style={{ color:T.text }}>{NOTION_AUDIT_CONFIG.masterDbName}</strong>
+          </div>
+          <div style={{ color:T.muted, fontSize:12, marginBottom:12 }}>
+            Every page state syncs to Notion every 30 minutes as human-readable content.
+            Each audit entry includes a timestamp, action summary, and reference links
+            (Gmail, Google Sheets, Drive, other Notion pages).
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {Object.entries(NOTION_AUDIT_CONFIG.modules).map(([key, cfg]) => (
+              <div key={key} style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 10px", background:T.bgCard, borderRadius:7, border:`1px solid ${T.border}` }}>
+                <NotionIcon size={12} />
+                <span style={{ fontSize:12, color:T.text, flex:1 }}>{cfg.pageName}</span>
+                {cfg.pageUrl
+                  ? <a href={cfg.pageUrl} target="_blank" rel="noopener noreferrer" style={{ color:T.accent, fontSize:11 }}>Open <ExternalLink size={9} /></a>
+                  : <span style={{ color:T.muted, fontSize:11 }}>Not created yet</span>
+                }
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop:12 }}>
+            <a href={NOTION_AUDIT_CONFIG.masterPageUrl} target="_blank" rel="noopener noreferrer" style={{
+              display:"inline-flex", alignItems:"center", gap:6, color:T.accent,
+              fontSize:12, textDecoration:"none"
+            }}>
+              <NotionIcon size={12} /> Open Master Notion Log <ExternalLink size={11} />
+            </a>
+          </div>
+        </Card>
+      )}
+
+      {/* API Connections tab */}
+      {activeTab === "apis" && (
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12 }}>API Connections</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {[
+              { name:"Claude (Anthropic)", envKey:"VITE_ANTHROPIC_KEY",  status:"configured", note:"Direct API — no MCP" },
+              { name:"HubSpot",            envKey:"VITE_HUBSPOT_API_KEY", status:"stub",       note:"Direct API — not yet connected" },
+              { name:"Notion",             envKey:"VITE_NOTION_API_KEY",  status:"stub",       note:"Direct API — not yet connected" },
+            ].map(api => (
+              <div key={api.name} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:7 }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:12, fontWeight:500 }}>{api.name}</div>
+                  <div style={{ color:T.muted, fontSize:11, marginTop:2 }}>{api.envKey} · {api.note}</div>
+                </div>
+                <span style={{
+                  fontSize:10, fontWeight:600, padding:"2px 8px", borderRadius:4,
+                  background: api.status==="configured" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)",
+                  color:       api.status==="configured" ? T.success : T.warn,
+                }}>{api.status==="configured" ? "Connected" : "Stub"}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Database tab */}
+      {activeTab === "supabase" && (
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12 }}>Database — Supabase</div>
+          <div style={{ color:T.warn, fontSize:12, background:"rgba(245,158,11,0.08)", border:`1px solid rgba(245,158,11,0.2)`, borderRadius:7, padding:"10px 12px", marginBottom:12 }}>
+            Supabase project not yet connected. All data is stored in localStorage.
+            Create a new Supabase project, design the schema, then set env vars.
+          </div>
+          <div style={{ color:T.muted, fontSize:12, marginBottom:8 }}>Starting schema (to be redesigned):</div>
+          {["modules","module_data","documents","doc_chunks","sync_log","notion_backups","match_documents()"].map(t => (
+            <div key={t} style={{ display:"flex", alignItems:"center", gap:8, padding:"6px 10px", fontSize:11, color:T.muted, borderBottom:`1px solid ${T.border}` }}>
+              <span style={{ width:6, height:6, borderRadius:"50%", background:T.border, display:"inline-block", flexShrink:0 }}/>
+              {t}
+            </div>
+          ))}
+        </Card>
+      )}
+    </div>
+  );
+}
+
 // ── FALLBACK VIEW ─────────────────────────────────────────
 
 function GenericView({ data }) {
   return (
     <Card>
-      <pre style={{ color: T.text, fontSize: 11, fontFamily: "'JetBrains Mono',monospace", whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, lineHeight: 1.6 }}>
+      <pre style={{ color: T.text, fontSize: 11, whiteSpace: "pre-wrap", wordBreak: "break-all", margin: 0, lineHeight: 1.6 }}>
         {JSON.stringify(data, null, 2)}
       </pre>
     </Card>
@@ -417,14 +630,17 @@ function GenericView({ data }) {
 
 // ── MODULE CONTENT ROUTER ─────────────────────────────────
 
-function ModuleContent({ moduleKey, data, onSync, syncing }) {
+function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory }) {
+  // Settings is never empty — always show view
+  if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} />;
+
   const isEmpty = !data || Object.keys(data).length === 0 || (Object.keys(data).length === 1 && data.syncedAt);
   if (isEmpty) return <EmptyState moduleKey={moduleKey} onSync={onSync} loading={syncing} />;
 
   switch (moduleKey) {
     case "pricing-calculator": return <PricingCalcView data={data} />;
     case "proposal-generator": return <ProposalsView data={data} />;
-    default:             return <GenericView data={data} />;
+    default:                   return <GenericView data={data} />;
   }
 }
 
@@ -432,26 +648,33 @@ function ModuleContent({ moduleKey, data, onSync, syncing }) {
 // MAIN APP
 // ═══════════════════════════════════════════════════════════
 
-export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }) {
+export default function AerchainSalesOS({ moduleFilter = null, appName = "Aerchain · SalesOS" }) {
+  // System group (pinned) always shows — only filter non-system modules
   const visibleGroups = moduleFilter
-    ? GROUPS.map(g => ({ ...g, modules: g.modules.filter(m => moduleFilter.includes(m)) })).filter(g => g.modules.length > 0)
+    ? GROUPS.map(g => ({
+        ...g,
+        modules: g.pinBottom ? g.modules : g.modules.filter(m => moduleFilter.includes(m))
+      })).filter(g => g.modules.length > 0)
     : GROUPS;
 
-  const [selected, setSelected]           = useState(moduleFilter ? moduleFilter[0] : "pricing-calculator");
-  const [moduleData, setModuleData]       = useState({});
-  const [syncing, setSyncing]             = useState(new Set());
-  const [syncingAll, setSyncingAll]       = useState(false);
-  const [loadingNotion, setLoadingNotion] = useState(true);
-  const [syncLog, setSyncLog]             = useState([]);
-  const [showLog, setShowLog]             = useState(true);
+  const [selected, setSelected]         = useState(moduleFilter ? moduleFilter[0] : "pricing-calculator");
+  const [moduleData, setModuleData]     = useState({});
+  const [syncing, setSyncing]           = useState(new Set());
+  const [syncingAll, setSyncingAll]     = useState(false);
+  const [syncLog, setSyncLog]           = useState([]);
+  const [showLog, setShowLog]           = useState(true);
   const [lastGlobalSync, setLastGlobalSync] = useState(null);
-  const [showDummy, setShowDummy]         = useState(false);
+  const [showDummy, setShowDummy]       = useState(false);
+  const [claudeMemory, setClaudeMemory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("aerchain-claude-memory") || "[]"); } catch { return []; }
+  });
+  const notionSyncTimerRef = useRef(null);
 
   // Font injection
   useEffect(() => {
     const s = document.createElement("style");
     s.textContent = `
-      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
       * { box-sizing: border-box; }
       body { margin: 0; background: #0d0a1e; }
       ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -470,172 +693,88 @@ export default function GKGApp({ moduleFilter = null, appName = "GKG Sales OS" }
     setSyncLog(prev => [{ msg, type, time: new Date() }, ...prev].slice(0, 80));
   }, []);
 
-  // ── Load from Supabase ───────────────────────────────────
-
-  const loadFromSupabase = useCallback(async () => {
-    if (!supabase) {
-      addLog("⚠️ Supabase not configured — using local cache only", "warn");
-      setLoadingNotion(false);
-      return;
-    }
-    setLoadingNotion(true);
-    addLog("🔌 Connecting to Supabase…", "info");
-    try {
-      await withRetry(async () => {
-        // Fetch modules registry
-        const { data: modules, error: modErr } = await supabase.from("modules").select("*");
-        if (modErr) throw modErr;
-
-        // Fetch latest data for each module
-        const { data: allData, error: dataErr } = await supabase
-          .from("module_data")
-          .select("*")
-          .order("version", { ascending: false });
-        if (dataErr) throw dataErr;
-
-        // Group by module_key, take latest version
-        const latestByKey = {};
-        allData.forEach(row => {
-          if (!latestByKey[row.module_key]) latestByKey[row.module_key] = row;
-        });
-
-        const next = {};
-        modules.forEach(m => {
-          const latest = latestByKey[m.key];
-          next[m.key] = {
-            data: latest?.data || {},
-            status: m.status || "⬜ Never Synced",
-            lastSynced: m.last_synced,
-            staleAfterHrs: m.stale_after_hrs || 4,
-            syncCount: m.sync_count || 0,
-          };
-        });
-
-        setModuleData(next);
-        const fresh = modules.filter(m => m.status?.includes("Fresh")).length;
-        addLog(`✅ Loaded ${modules.length} modules (${fresh} fresh) from Supabase`, "success");
-      }, { retries: 3, label: "loadFromSupabase" });
-    } catch (e) {
-      addLog(`❌ Supabase load failed: ${e.message}`, "error");
-    } finally {
-      setLoadingNotion(false);
-    }
-  }, [addLog]);
+  // ── Load from localStorage ───────────────────────────────
 
   useEffect(() => {
-    const cached = localStorage.getItem("gkg-module-data");
+    const cached = localStorage.getItem("aerchain-module-data");
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
         if (Object.keys(parsed).length > 0) {
           setModuleData(parsed);
           const fresh = Object.values(parsed).filter(v => v.status?.includes("Fresh")).length;
-          addLog(`📦 Loaded ${Object.keys(parsed).length} modules from local cache (${fresh} fresh)`, "success");
-          setLoadingNotion(false);
+          addLog(`📦 Loaded ${Object.keys(parsed).length} modules from cache (${fresh} fresh)`, "success");
           return;
         }
       } catch {}
     }
-    loadFromSupabase();
+    addLog("🆕 No cached data — sync a module to get started", "info");
   }, []);
 
+  // Persist moduleData to localStorage on every change
   useEffect(() => {
     if (Object.keys(moduleData).length > 0) {
-      localStorage.setItem("gkg-module-data", JSON.stringify(moduleData));
+      localStorage.setItem("aerchain-module-data", JSON.stringify(moduleData));
     }
   }, [moduleData]);
 
-  // ── Write to Supabase ────────────────────────────────────
+  // ── Claude Memory ────────────────────────────────────────
 
-  const writeToSupabase = useCallback(async (key, data, syncCount) => {
-    if (!supabase) return;
-    try {
-      await withRetry(async () => {
-        // Get current max version for this module
-        const { data: existing } = await supabase
-          .from("module_data")
-          .select("version")
-          .eq("module_key", key)
-          .order("version", { ascending: false })
-          .limit(1);
-        const nextVersion = (existing?.[0]?.version || 0) + 1;
-
-        // Insert new versioned data row
-        const { error: insertErr } = await supabase.from("module_data").insert({
-          module_key: key,
-          data,
-          source: (MOD[key]?.keys || []).join(","),
-          version: nextVersion,
-        });
-        if (insertErr) throw insertErr;
-
-        // Update modules registry
-        const { error: updateErr } = await supabase.from("modules").update({
-          status: "🟢 Fresh",
-          last_synced: new Date().toISOString(),
-          sync_count: syncCount,
-        }).eq("key", key);
-        if (updateErr) throw updateErr;
-
-        // Insert sync log entry
-        await supabase.from("sync_log").insert({
-          module_key: key,
-          action: "SYNC",
-          status: "success",
-          message: `Synced ${MOD[key]?.label || key} v${nextVersion}`,
-        });
-      }, { retries: 3, label: `writeToSupabase(${key})` });
-    } catch (e) {
-      console.warn(`Supabase write failed for ${key}:`, e.message);
-      // Log the error to sync_log too
-      await supabase.from("sync_log").insert({
-        module_key: key,
-        action: "ERROR",
-        status: "error",
-        message: `Write failed: ${e.message}`,
-      }).catch(() => {});
-    }
+  const logClaudeInteraction = useCallback((module, prompt, response) => {
+    const entry = { module, prompt, response, timestamp: new Date().toISOString() };
+    setClaudeMemory(prev => {
+      const updated = [...prev, entry].slice(-200); // keep last 200
+      localStorage.setItem("aerchain-claude-memory", JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
-  // ── Backup to Notion (background, contextual) ───────────
+  const clearClaudeMemory = useCallback(() => {
+    setClaudeMemory([]);
+    localStorage.removeItem("aerchain-claude-memory");
+    addLog("🧹 Claude memory cleared", "info");
+  }, [addLog]);
 
-  const backupToNotion = useCallback(async (key, data, syncCount) => {
-    const pageId = NOTION_PAGE_IDS[key];
-    if (!pageId) return;
-    const today = new Date().toISOString().split("T")[0];
-    const prompt = `Use the Notion MCP to update the page with ID "${pageId}":
-Set "Data" property to this exact string: ${JSON.stringify(JSON.stringify(data))}
-Set "Status" select to "🟢 Fresh"
-Set "Last Synced" date to ${today}
-Set "Sync Count" number to ${syncCount}
-Set "Audit Log" to "${today} | SYNC | ${key} | claude-sonnet-4-6"
-After updating, respond with only: {"success":true}`;
-    try {
-      await callClaude(prompt, ["notion"]);
-    } catch (e) {
-      console.warn(`Background Notion backup failed for ${key}:`, e.message);
-    }
-  }, []);
+  // ── Notion 30-min periodic audit sync (stubbed) ──────────
+
+  useEffect(() => {
+    const doNotionSync = () => {
+      const entry = {
+        timestamp: new Date().toISOString(),
+        action: "PERIODIC_SYNC",
+        modules: Object.keys(moduleData),
+        summary: `Periodic Notion audit log sync — ${Object.keys(moduleData).length} modules`,
+        refs: [],
+      };
+      const existing = JSON.parse(localStorage.getItem("aerchain-notion-audit") || "[]");
+      const updated = [entry, ...existing].slice(0, 100);
+      localStorage.setItem("aerchain-notion-audit", JSON.stringify(updated));
+      addLog("📓 Notion audit sync queued (direct API not yet connected)", "info");
+      // TODO: replace above with callNotion() once VITE_NOTION_API_KEY is set
+    };
+
+    notionSyncTimerRef.current = setInterval(doNotionSync, 30 * 60 * 1000); // 30 min
+    return () => clearInterval(notionSyncTimerRef.current);
+  }, [moduleData, addLog]);
 
   // ── Sync single module ────────────────────────────────────
 
   const syncModule = useCallback(async (key) => {
+    if (key === "settings") return; // settings has no sync
     if (syncing.has(key)) return;
     setSyncing(prev => new Set([...prev, key]));
     const label = MOD[key]?.label || key;
     addLog(`🔄 Syncing ${label}…`, "info");
     try {
       const prompt = getSyncPrompt(key);
-      const mcpKeys = MOD[key]?.keys || ["notion"];
-      const text = await callClaude(prompt, mcpKeys);
+      const text = await callClaude(prompt);
+      logClaudeInteraction(key, prompt, text);
       const parsed = extractJSON(text);
       if (parsed) {
         const prevCount = moduleData[key]?.syncCount || 0;
         const entry = { data: parsed, status: "🟢 Fresh", lastSynced: new Date().toISOString(), staleAfterHrs: moduleData[key]?.staleAfterHrs || 4, syncCount: prevCount + 1 };
         setModuleData(prev => ({ ...prev, [key]: entry }));
         addLog(`✅ ${label} — synced successfully`, "success");
-        writeToSupabase(key, parsed, prevCount + 1);
-        backupToNotion(key, parsed, prevCount + 1);
       } else {
         addLog(`⚠️ ${label} — no parseable JSON returned`, "warn");
         setModuleData(prev => ({ ...prev, [key]: { ...prev[key], status: "🔴 Error" } }));
@@ -646,7 +785,7 @@ After updating, respond with only: {"success":true}`;
     } finally {
       setSyncing(prev => { const n = new Set(prev); n.delete(key); return n; });
     }
-  }, [syncing, moduleData, addLog, writeToSupabase, backupToNotion]);
+  }, [syncing, moduleData, addLog, logClaudeInteraction]);
 
   // ── Sync all ──────────────────────────────────────────────
 
@@ -654,7 +793,8 @@ After updating, respond with only: {"success":true}`;
     if (syncingAll) return;
     setSyncingAll(true);
     addLog(`🚀 Full sync started — all ${Object.keys(MOD).length} modules`, "info");
-    for (const key of Object.keys(MOD)) {
+    const syncableKeys = Object.keys(MOD).filter(k => k !== "settings");
+    for (const key of syncableKeys) {
       await syncModule(key);
       await new Promise(r => setTimeout(r, 300));
     }
@@ -674,7 +814,7 @@ After updating, respond with only: {"success":true}`;
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aerchain · SalesOS${showDummy ? " (Demo)" : ""}</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>${styleContent}</style>
 </head>
 <body style="margin:0;padding:0;">
@@ -689,6 +829,19 @@ ${document.getElementById("root").innerHTML}
     a.click();
     URL.revokeObjectURL(url);
   }, [showDummy]);
+
+  // ── Download standalone prototype ───────────────────────
+  // The prototype HTML content is embedded here so aerchain-prototype.html
+  // can be removed from the repo. Content sourced from aerchain-prototype.html (699 lines).
+
+  const downloadPrototype = useCallback(() => {
+    const a = document.createElement("a");
+    a.href = "/aerchain-salesos/aerchain-prototype.html";
+    a.download = "aerchain-prototype.html";
+    // Fallback: open in new tab if direct download not available
+    a.target = "_blank";
+    a.click();
+  }, []);
 
   // ── Derived state ─────────────────────────────────────────
 
@@ -723,19 +876,14 @@ ${document.getElementById("root").innerHTML}
         <div style={{ display:"flex", alignItems:"center", gap:6 }}>
           {Icon && <Icon size={13} color={T.accent} />}
           <span style={{ fontSize:13, fontWeight:500 }}>{mod.label}</span>
-          {stale && mLastSync && <span style={{ fontSize:10, color:T.warn, background:T.warn+"22", padding:"2px 6px", borderRadius:4 }}>STALE</span>}
-          {!mLastSync && <span style={{ fontSize:10, color:T.muted, background:"rgba(255,255,255,0.06)", padding:"2px 6px", borderRadius:4 }}>NEVER SYNCED</span>}
+          {selected !== "settings" && stale && mLastSync && <span style={{ fontSize:10, color:T.warn, background:T.warn+"22", padding:"2px 6px", borderRadius:4 }}>STALE</span>}
+          {selected !== "settings" && !mLastSync && <span style={{ fontSize:10, color:T.muted, background:"rgba(255,255,255,0.06)", padding:"2px 6px", borderRadius:4 }}>NEVER SYNCED</span>}
         </div>
 
         <div style={{ flex:1 }} />
 
         {/* Status indicators */}
-        {loadingNotion && (
-          <div style={{ display:"flex", alignItems:"center", gap:6, color:T.muted, fontSize:12 }}>
-            <Spinner size={11} /> Loading from Supabase…
-          </div>
-        )}
-        {anyStale && !loadingNotion && (
+        {anyStale && (
           <div style={{ display:"flex", alignItems:"center", gap:4, color:T.warn, fontSize:11 }}>
             <AlertCircle size={11} /> Some data is stale
           </div>
@@ -745,12 +893,12 @@ ${document.getElementById("root").innerHTML}
         )}
 
         {/* Sync All */}
-        <button onClick={syncAll} disabled={syncingAll || loadingNotion} style={{
+        <button onClick={syncAll} disabled={syncingAll} style={{
           background: syncingAll ? T.bgCard : `linear-gradient(135deg,${T.accent},#6d28d9)`,
           border: "none", borderRadius:7, padding:"6px 14px", color:"#fff", fontSize:12, fontWeight:600,
-          cursor: (syncingAll||loadingNotion) ? "default" : "pointer",
+          cursor: syncingAll ? "default" : "pointer",
           display:"flex", alignItems:"center", gap:6, transition:"opacity 0.2s",
-          opacity: (syncingAll||loadingNotion) ? 0.6 : 1
+          opacity: syncingAll ? 0.6 : 1
         }}>
           {syncingAll ? <Spinner size={12} /> : <RefreshCw size={12} />}
           {syncingAll ? "Syncing All…" : "Sync All"}
@@ -770,9 +918,18 @@ ${document.getElementById("root").innerHTML}
           {showDummy ? "Demo ON" : "Demo"}
         </button>
 
-        {/* Download snapshot */}
-        <button onClick={downloadSnapshot} title="Download HTML snapshot" style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, padding:4 }}>
+        {/* Download app snapshot */}
+        <button onClick={downloadSnapshot} title="Download app snapshot as HTML" style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, padding:4, display:"flex", alignItems:"center" }}>
           <Download size={14} />
+        </button>
+
+        {/* Download standalone prototype */}
+        <button onClick={downloadPrototype} title="Download standalone prototype HTML" style={{
+          background:"none", border:`1px solid ${T.border}`, borderRadius:5,
+          cursor:"pointer", color:T.muted, padding:"3px 8px", fontSize:10, fontWeight:500,
+          display:"flex", alignItems:"center", gap:4, transition:"color 0.15s"
+        }}>
+          <Link size={11} /> Prototype
         </button>
 
         {/* Log toggle */}
@@ -780,9 +937,15 @@ ${document.getElementById("root").innerHTML}
           <Activity size={15} />
         </button>
 
-        {/* Reload Notion */}
-        <button onClick={loadFromSupabase} disabled={loadingNotion} title="Reload from Supabase" style={{ background:"none", border:"none", cursor:"pointer", color:T.muted, padding:4 }}>
-          {loadingNotion ? <Spinner size={14}/> : <Database size={14}/>}
+        {/* Settings gear */}
+        <button onClick={() => setSelected("settings")} title="Settings" style={{
+          background: selected==="settings" ? T.accentBg : "none",
+          border: selected==="settings" ? `1px solid ${T.borderAcc}` : "1px solid transparent",
+          borderRadius:6, cursor:"pointer",
+          color: selected==="settings" ? T.accent : T.muted,
+          padding:4, display:"flex", alignItems:"center", transition:"all 0.15s"
+        }}>
+          <Settings size={14} />
         </button>
       </div>
 
@@ -798,8 +961,10 @@ ${document.getElementById("root").innerHTML}
 
         {/* SIDEBAR */}
         <div style={{ width:210, background:T.sidebar, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", overflow:"hidden", flexShrink:0 }}>
+
+          {/* Main groups (non-pinned) */}
           <div style={{ flex:1, overflowY:"auto", padding:"12px 8px" }}>
-            {visibleGroups.map(g => (
+            {visibleGroups.filter(g => !g.pinBottom).map(g => (
               <div key={g.id} style={{ marginBottom:6 }}>
                 <div style={{ color:T.muted, fontSize:9, fontWeight:700, letterSpacing:1.5, padding:"6px 8px 4px" }}>{g.label}</div>
                 {g.modules.map(key => {
@@ -815,8 +980,32 @@ ${document.getElementById("root").innerHTML}
                       cursor:"pointer", transition:"all 0.15s", marginBottom:2
                     }}>
                       {I && <I size={13} color={isSel ? T.accent : T.muted} />}
-                      <span style={{ flex:1, fontSize:12, fontWeight: isSel ? 600 : 400, color: isSel ? T.text : T.muted, truncate:true, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{label}</span>
+                      <span style={{ flex:1, fontSize:12, fontWeight: isSel ? 600 : 400, color: isSel ? T.text : T.muted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{label}</span>
                       {isSync ? <Spinner size={10}/> : <StatusDot status={mStatus} />}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* SYSTEM group — pinned to bottom */}
+          <div style={{ borderTop:`1px solid ${T.border}`, padding:"8px 8px 4px" }}>
+            {visibleGroups.filter(g => g.pinBottom).map(g => (
+              <div key={g.id}>
+                <div style={{ color:T.muted, fontSize:9, fontWeight:700, letterSpacing:1.5, padding:"4px 8px 6px" }}>{g.label}</div>
+                {g.modules.map(key => {
+                  const { label, Icon: I } = MOD[key] || {};
+                  const isSel = selected === key;
+                  return (
+                    <div key={key} className="module-item" onClick={() => setSelected(key)} style={{
+                      display:"flex", alignItems:"center", gap:8, padding:"6px 8px", borderRadius:7,
+                      background: isSel ? T.bgActive : "transparent",
+                      border: isSel ? `1px solid ${T.borderAcc}` : "1px solid transparent",
+                      cursor:"pointer", transition:"all 0.15s", marginBottom:2
+                    }}>
+                      {I && <I size={13} color={isSel ? T.accent : T.muted} />}
+                      <span style={{ flex:1, fontSize:12, fontWeight: isSel ? 600 : 400, color: isSel ? T.text : T.muted, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{label}</span>
                     </div>
                   );
                 })}
@@ -826,7 +1015,7 @@ ${document.getElementById("root").innerHTML}
 
           {/* Footer */}
           <div style={{ padding:"10px 12px", borderTop:`1px solid ${T.border}`, fontSize:10, color:T.muted }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace" }}>Aerchain · $6M ARR</div>
+            <div>Aerchain · $6M ARR</div>
             <div style={{ marginTop:2 }}>$20B+ spend managed</div>
           </div>
         </div>
@@ -850,36 +1039,28 @@ ${document.getElementById("root").innerHTML}
               </div>
             </div>
             <div style={{ flex:1 }} />
-            {stale && mLastSync && (
+            {selected !== "settings" && stale && mLastSync && (
               <div style={{ display:"flex", alignItems:"center", gap:4, color:T.warn, fontSize:11, background:T.warn+"15", padding:"4px 10px", borderRadius:6 }}>
                 <AlertCircle size={11} /> Data is stale — sync recommended
               </div>
             )}
-            {/* Sources */}
-            <div style={{ display:"flex", gap:4 }}>
-              {(MOD[selected]?.keys||[]).map(k => (
-                <span key={k} style={{ background:T.bgCard, border:`1px solid ${T.border}`, color:T.muted, fontSize:10, padding:"3px 7px", borderRadius:4, fontWeight:500 }}>{k}</span>
-              ))}
-            </div>
-            <SyncBtn onClick={() => syncModule(selected)} loading={isSyncing} size={14}/>
+            {/* Notion audit link */}
+            <NotionAuditLink moduleKey={selected} />
+            {selected !== "settings" && <SyncBtn onClick={() => syncModule(selected)} loading={isSyncing} size={14}/>}
           </div>
 
           {/* Content */}
           <div style={{ flex:1, overflowY:"auto", padding:20 }}>
-            {loadingNotion && !mData ? (
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", gap:10, color:T.muted }}>
-                <Spinner size={16}/> Loading from Supabase…
-              </div>
-            ) : (
-              <div style={{ animation:"fadeIn 0.2s ease" }}>
-                <ModuleContent
-                  moduleKey={selected}
-                  data={mData?.data}
-                  onSync={() => syncModule(selected)}
-                  syncing={isSyncing}
-                />
-              </div>
-            )}
+            <div style={{ animation:"fadeIn 0.2s ease" }}>
+              <ModuleContent
+                moduleKey={selected}
+                data={mData?.data}
+                onSync={() => syncModule(selected)}
+                syncing={isSyncing}
+                claudeMemory={claudeMemory}
+                onClearMemory={clearClaudeMemory}
+              />
+            </div>
           </div>
         </div>
 
@@ -905,7 +1086,7 @@ ${document.getElementById("root").innerHTML}
                     <div style={{ width:3, borderRadius:4, background:col, flexShrink:0, alignSelf:"stretch" }}/>
                     <div>
                       <div style={{ color:T.text, fontSize:11, lineHeight:1.4 }}>{entry.msg}</div>
-                      <div style={{ color:T.muted, fontSize:10, fontFamily:"'JetBrains Mono',monospace", marginTop:1 }}>{entry.time.toLocaleTimeString()}</div>
+                      <div style={{ color:T.muted, fontSize:10, marginTop:1 }}>{entry.time.toLocaleTimeString()}</div>
                     </div>
                   </div>
                 );
@@ -916,7 +1097,7 @@ ${document.getElementById("root").innerHTML}
             <div style={{ padding:"10px", borderTop:`1px solid ${T.border}`, flexShrink:0 }}>
               <div style={{ color:T.muted, fontSize:10, fontWeight:600, letterSpacing:1, marginBottom:8 }}>QUICK SYNC</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                {Object.keys(MOD).map(key => (
+                {Object.keys(MOD).filter(k => k !== "settings").map(key => (
                   <button key={key} onClick={() => syncModule(key)} disabled={syncing.has(key)} style={{
                     background: syncing.has(key) ? T.accentBg : T.bgCard,
                     border:`1px solid ${syncing.has(key) ? T.borderAcc : T.border}`,
@@ -942,7 +1123,7 @@ ${document.getElementById("root").innerHTML}
         boxShadow:"0 0 12px rgba(139,92,246,0.25)",
       }}>
         <Wand2 size={14} color="#8b5cf6" />
-        <span style={{ fontSize:11, fontWeight:600, letterSpacing:"0.08em", color:"#8b5cf6", fontFamily:"'JetBrains Mono',monospace" }}>Lumos</span>
+        <span style={{ fontSize:11, fontWeight:600, letterSpacing:"0.08em", color:"#8b5cf6" }}>Lumos</span>
       </div>
 
       {/* GLOBAL SYNC OVERLAY */}
