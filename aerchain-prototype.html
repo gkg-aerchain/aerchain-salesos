@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aerchain · Pricing & Proposals — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: #0d0a1e; font-family: 'Montserrat', sans-serif; color: #fff; overflow: hidden; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 4px; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+  select option { background: #1a1530; }
+
+  /* Layout */
+  .app { display: flex; flex-direction: column; height: 100vh; }
+  .topbar { height: 56px; background: rgba(13,10,30,0.92); border-bottom: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px); display: flex; align-items: center; padding: 0 20px; gap: 16; flex-shrink: 0; z-index: 10; }
+  .body-wrap { display: flex; flex: 1; overflow: hidden; }
+  .sidebar { width: 220px; background: rgba(255,255,255,0.025); border-right: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 8px; }
+  .sidebar-footer { padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 10px; color: rgba(255,255,255,0.5); }
+  .main-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .main-header { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10; flex-shrink: 0; }
+  .main-content { flex: 1; overflow-y: auto; padding: 20px; }
+
+  /* Nav items */
+  .nav-label { color: rgba(255,255,255,0.5); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; padding: 6px 8px 4px; text-transform: uppercase; }
+  .nav-item { display: flex; align-items: center; gap: 8; padding: 8px 10px; border-radius: 7px; cursor: pointer; transition: all 0.15s; margin-bottom: 2px; border: 1px solid transparent; font-size: 12px; color: rgba(255,255,255,0.5); }
+  .nav-item:hover { background: rgba(255,255,255,0.06); }
+  .nav-item.active { background: rgba(139,92,246,0.18); border-color: rgba(139,92,246,0.4); color: #fff; font-weight: 600; }
+  .nav-item svg { flex-shrink: 0; }
+
+  /* Cards */
+  .card { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; }
+
+  /* Forms */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 8px 12px; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 7px; color: #fff;
+    font-size: 13px; font-family: 'Montserrat', sans-serif; outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: rgba(139,92,246,0.5); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+
+  /* Buttons */
+  .btn { padding: 8px 18px; border-radius: 7px; font-size: 12px; font-weight: 600; font-family: 'Montserrat', sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 6; transition: opacity 0.2s; border: none; }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; }
+  .btn-secondary { background: rgba(255,255,255,0.045); color: #fff; border: 1px solid rgba(255,255,255,0.08); }
+  .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+
+  /* Module check */
+  .module-check { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 7px; cursor: pointer; transition: all 0.15s; font-size: 13px; }
+  .module-check.off { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+  .module-check.on { background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.4); color: #fff; }
+  .check-box { width: 18px; height: 18px; min-width: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; position: relative; }
+  .check-box svg { width: 12px; height: 12px; }
+  .module-check.off .check-box { border: 1.5px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.03); }
+  .module-check.on .check-box { background: #8b5cf6; border: 1.5px solid #8b5cf6; color: #fff; }
+
+  /* Price row */
+  .price-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 13px; }
+  .price-row .label { color: rgba(255,255,255,0.5); }
+  .price-row .value { font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+  /* Section title */
+  .section-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+
+  /* Grid helpers */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .flex-col { display: flex; flex-direction: column; gap: 20px; }
+
+  /* Proposal type cards */
+  .type-card { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 12px; }
+  .type-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(139,92,246,0.3); }
+
+  /* Step indicator */
+  .step { display: flex; align-items: center; gap: 8; padding: 8px 16px; border-radius: 8px; font-size: 12px; }
+  .step.current { background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.4); color: #fff; font-weight: 600; }
+  .step.done { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
+  .step.pending { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); }
+  .step-num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+  .step.current .step-num { background: #8b5cf6; }
+  .step.done .step-num { background: #10b981; }
+  .step.pending .step-num { background: rgba(255,255,255,0.07); }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: 'JetBrains Mono', 'Montserrat', sans-serif; }
+  .data-table th { text-align: left; padding: 8px 12px; color: rgba(255,255,255,0.5); font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .data-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .data-table tr:hover { background: rgba(255,255,255,0.03); }
+
+  /* Badges */
+  .badge { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+
+  /* Year 1 highlight */
+  .y1-highlight { margin-top: 16px; padding: 16px; background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.4); border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+
+  /* Lumos marker */
+  .lumos { position: fixed; bottom: 16px; right: 16px; z-index: 200; display: flex; align-items: center; gap: 6; background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.4); backdrop-filter: blur(12px); border-radius: 8px; padding: 6px 12px; box-shadow: 0 0 12px rgba(139,92,246,0.25); }
+  .lumos span { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #8b5cf6; font-family: 'JetBrains Mono', monospace; }
+
+  /* Upload drop zone */
+  .drop-zone { border: 2px dashed rgba(255,255,255,0.08); border-radius: 8px; padding: 24px; text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; cursor: pointer; transition: border-color 0.2s; }
+  .drop-zone:hover { border-color: rgba(139,92,246,0.4); }
+
+  /* Manage bar */
+  .manage-bar { display: flex; align-items: center; gap: 12px; }
+
+  /* Module header icon */
+  .module-icon { width: 32px; height: 32px; border-radius: 9px; background: rgba(139,92,246,0.15); display: flex; align-items: center; justify-content: center; }
+
+  /* App badge */
+  .app-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 3px 9px; background: hsl(262 60% 50% / .12); border: 1px solid hsl(262 60% 50% / .18); border-radius: 6px; }
+  .app-badge .dot { width: 5px; height: 5px; border-radius: 50%; background: #8b5cf6; box-shadow: 0 0 6px #8b5cf6; display: inline-block; }
+
+  /* Sections check list */
+  .section-check-list { display: flex; flex-direction: column; gap: 6px; }
+
+  /* Hidden views */
+  .view { display: none; animation: fadeIn 0.2s ease; }
+  .view.active { display: block; }
+
+  /* Proposal sub-views */
+  .proposal-sub { display: none; }
+  .proposal-sub.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <!-- Aerchain Logo SVG -->
+      <svg height="18" viewBox="0 0 168 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3.7951 26.9895C3.61396 27.3937 3.43282 27.6616 3.254 27.7956C3.07286 27.9295 2.80115 27.9977 2.44119 27.9977H0.678569C0.225721 27.9977 0.000457764 27.852 0.000457764 27.5606C0.000457764 27.4478 0.056193 27.2574 0.169986 26.9895L10.3672 5.68021C10.7063 4.98698 10.9547 4.53109 11.1127 4.31959C11.2706 4.10575 11.4633 4 11.6886 4C11.893 4 12.0671 4.10575 12.2134 4.31959C12.3597 4.53344 12.6036 4.98698 12.9426 5.68021L23.242 26.9895C23.3558 27.2574 23.4116 27.4501 23.4116 27.5606C23.4116 27.852 23.1747 27.9977 22.7009 27.9977H20.8036C20.4413 27.9977 20.1766 27.9295 20.0071 27.7956C19.8375 27.6616 19.6518 27.3914 19.4474 26.9895L11.6212 10.2509L3.7951 26.9895Z" fill="white"/>
+        <path d="M40.5221 24.8957C40.6359 24.9991 40.6916 25.1989 40.6916 25.495V27.2433C40.6916 27.5418 40.6359 27.7415 40.5221 27.8426C40.4083 27.946 40.2179 27.9977 39.9462 27.9977H27.1062C26.8345 27.9977 26.644 27.946 26.5302 27.8426C26.4165 27.7392 26.3607 27.5394 26.3607 27.2433V4.75433C26.3607 4.45824 26.4165 4.25614 26.5302 4.1551C26.6417 4.0517 26.8345 4 27.1039 4H39.9113C40.183 4 40.3735 4.0517 40.4873 4.1551C40.6011 4.25849 40.6568 4.45824 40.6568 4.75433V6.50269C40.6568 6.80114 40.6011 7.00088 40.4873 7.10193C40.3735 7.20533 40.183 7.25703 39.9113 7.25703H30.153C29.9951 7.25703 29.8883 7.28523 29.8302 7.34162C29.7745 7.39802 29.7466 7.49672 29.7466 7.63302V13.9074C29.7466 14.0672 29.7745 14.1753 29.8302 14.234C29.886 14.2904 29.9928 14.3186 30.153 14.3186H38.7595C39.0312 14.3186 39.2216 14.3703 39.3354 14.4737C39.4492 14.5771 39.5049 14.7769 39.5049 15.0729V16.7861C39.5049 17.061 39.4492 17.2537 39.3354 17.3688C39.2216 17.484 39.0312 17.5404 38.7595 17.5404H30.153C29.9951 17.5404 29.8883 17.5686 29.8302 17.625C29.7745 17.6814 29.7466 17.7801 29.7466 17.9164V24.3623C29.7466 24.4986 29.7745 24.5973 29.8302 24.6537C29.886 24.7101 29.9928 24.7383 30.153 24.7383H39.9438C40.2156 24.7383 40.406 24.79 40.5198 24.8934L40.5221 24.8957Z" fill="white"/>
+        <path d="M48.7198 27.8449C48.606 27.9483 48.4156 28 48.1439 28H46.2466C45.9748 28 45.7844 27.9483 45.6706 27.8449C45.5568 27.7415 45.5011 27.5418 45.5011 27.2457V4.75433C45.5011 4.45824 45.5568 4.25614 45.6706 4.1551C45.7844 4.0517 45.9772 4 46.2466 4H52.7188C59.1562 4 62.3749 6.47919 62.3749 11.4399C62.3749 13.0849 61.9685 14.4408 61.1557 15.503C60.3429 16.5652 59.212 17.35 57.7675 17.8506L63.5941 26.9707C63.7753 27.2222 63.8659 27.4384 63.8659 27.6217C63.8659 27.758 63.8031 27.8567 63.6801 27.9131C63.5547 27.9695 63.3689 27.9977 63.1204 27.9977H61.1209C60.7377 27.9977 60.4544 27.9413 60.2733 27.8261C60.0921 27.711 59.8785 27.4619 59.63 27.0718L53.3969 17.061C53.2622 16.8777 53.1926 16.7179 53.1926 16.5816C53.1926 16.3983 53.3621 16.2949 53.7011 16.2738C57.1126 15.9095 58.8172 14.3656 58.8172 11.6444C58.8172 10.0911 58.2807 8.95369 57.2078 8.23225C56.1349 7.51317 54.5813 7.15128 52.5493 7.15128H49.2957C49.1378 7.15128 49.031 7.17948 48.9729 7.23588C48.9172 7.29227 48.8893 7.40272 48.8893 7.56252V27.241C48.8893 27.5394 48.8336 27.7392 48.7198 27.8402V27.8449Z" fill="white"/>
+        <path d="M84.5991 22.4471C84.8476 22.2473 85.0404 22.1486 85.1751 22.1486C85.2656 22.1486 85.3562 22.1815 85.4468 22.2473C85.5374 22.3131 85.6163 22.3907 85.6837 22.48L86.666 23.81C86.7798 23.944 86.8355 24.0991 86.8355 24.2753C86.8355 24.3646 86.8007 24.4586 86.7333 24.5573C86.666 24.656 86.5638 24.7618 86.4291 24.8722C85.2308 25.8686 83.8815 26.6394 82.3813 27.1822C80.8788 27.7251 79.3043 27.9977 77.6555 27.9977C75.4423 27.9977 73.415 27.4877 71.5734 26.4678C69.7318 25.448 68.2757 24.0309 67.2028 22.2121C66.1299 20.3956 65.5934 18.3558 65.5934 16.0952C65.5934 13.8345 66.1299 11.7525 67.2028 9.91247C68.2757 8.07246 69.7434 6.62724 71.6082 5.57446C73.4707 4.52639 75.5538 4 77.8575 4C79.4831 4 81.0367 4.27729 82.516 4.83188C83.9953 5.38647 85.3121 6.1408 86.464 7.09253C86.6892 7.24763 86.803 7.41447 86.803 7.59072C86.803 7.74581 86.7357 7.92206 86.5986 8.12181L85.6163 9.41898C85.4352 9.66337 85.254 9.78557 85.0752 9.78557C84.9405 9.78557 84.7478 9.69627 84.4993 9.52002C83.5286 8.78919 82.4766 8.21345 81.3479 7.79046C80.2193 7.36982 79.0326 7.15833 77.7902 7.15833C76.1855 7.15833 74.7247 7.53432 73.4033 8.28865C72.0819 9.04298 71.0369 10.0958 70.2682 11.447C69.4995 12.7982 69.1164 14.328 69.1164 16.0341C69.1164 17.7401 69.4949 19.1689 70.252 20.5225C71.009 21.8737 72.0471 22.9335 73.3685 23.6973C74.6899 24.461 76.1646 24.844 77.7902 24.844C80.3424 24.844 82.6113 24.0474 84.5991 22.4518V22.4471Z" fill="white"/>
+        <path d="M109.401 27.8449C109.288 27.9483 109.097 28 108.826 28H106.928C106.657 28 106.466 27.9483 106.352 27.8449C106.238 27.7415 106.183 27.5418 106.183 27.2457V17.6814C106.183 17.5451 106.155 17.4464 106.099 17.39C106.043 17.3336 105.934 17.3054 105.776 17.3054H94.562C94.4041 17.3054 94.2972 17.3336 94.2392 17.39C94.1834 17.4464 94.1556 17.5451 94.1556 17.6814V27.2457C94.1556 27.5441 94.0998 27.7439 93.986 27.8449C93.8722 27.9483 93.6818 28 93.4101 28H91.5128C91.2411 28 91.0507 27.9483 90.9369 27.8449C90.8231 27.7415 90.7673 27.5418 90.7673 27.2457V4.75433C90.7673 4.45824 90.8231 4.25614 90.9369 4.1551C91.0483 4.0517 91.2411 4 91.5105 4H93.4078C93.6795 4 93.8723 4.0517 93.9837 4.1551C94.0975 4.25849 94.1532 4.45824 94.1532 4.75433V13.6677C94.1532 13.804 94.1811 13.9074 94.2369 13.9755C94.2926 14.0437 94.3994 14.0789 94.5596 14.0789H105.774C105.932 14.0789 106.039 14.0437 106.097 13.9755C106.153 13.9074 106.18 13.804 106.18 13.6677V4.75433C106.18 4.45824 106.236 4.25614 106.35 4.1551C106.464 4.0517 106.657 4 106.928 4H108.826C109.095 4 109.288 4.0517 109.401 4.1551C109.515 4.25849 109.571 4.45824 109.571 4.75433V27.2457C109.571 27.5441 109.515 27.7439 109.401 27.8449Z" fill="white"/>
+        <path d="M164.252 4.1504C164.366 4.04935 164.558 4 164.828 4H166.725C166.997 4 167.189 4.04935 167.301 4.1504C167.415 4.24909 167.47 4.44414 167.47 4.73318V26.9049C167.47 27.6358 167.245 28.0023 166.792 28.0023C166.611 28.0023 166.421 27.9295 166.216 27.7862C166.012 27.6428 165.731 27.3702 165.369 26.9707L151.614 11.0498V26.9049C151.614 27.194 151.558 27.3867 151.444 27.4877C151.33 27.5864 151.14 27.6381 150.868 27.6381H148.971C148.699 27.6381 148.509 27.5888 148.395 27.4877C148.281 27.389 148.226 27.194 148.226 26.9049V5.09742C148.226 4.72143 148.281 4.44414 148.395 4.26554C148.509 4.0893 148.69 4 148.939 4C149.12 4 149.31 4.07285 149.514 4.2162C149.719 4.35954 149.988 4.63214 150.327 5.03163L164.082 20.9525V4.73083C164.082 4.44414 164.138 4.24909 164.252 4.14805V4.1504Z" fill="white"/>
+        <path d="M143.732 18.7083C143.72 18.6519 143.704 18.4944 143.699 18.4193C143.704 18.4357 143.73 18.6754 143.732 18.7083Z" fill="#DC5F40"/>
+        <path d="M141.613 11.08C142.698 10.9602 143.483 9.9732 143.364 8.87342C143.246 7.776 142.27 6.98171 141.184 7.10156C140.099 7.22141 139.314 8.20839 139.433 9.30816C139.551 10.4056 140.526 11.1999 141.613 11.08Z" fill="#DC5F40"/>
+        <path d="M143.857 20.6254C143.943 16.1699 142.092 10.7674 137.252 13.8364C136.846 13.9962 136.614 13.9398 136.4 13.6343C135.789 12.5158 135.32 11.3713 134.739 10.1964C130.371 -1.17501 125.383 5.32729 120.114 12.0575C108.347 27.4497 113.89 34.2669 132.438 20.75C133.086 20.2847 134.384 19.3118 134.851 19.2719C135.343 19.192 135.548 19.5962 135.919 20.4421C136.279 21.3093 136.878 22.5383 137.426 23.4148C140.592 29.6304 144.098 28.1899 143.859 20.6513V20.6254H143.857ZM129.909 18.3084C127.575 19.7842 125.36 21.5913 122.796 22.6699C121.679 23.1422 120.051 22.6205 119.649 21.7064C119.194 20.2894 120.822 18.2003 121.621 16.7292C122.547 15.0537 123.776 13.5638 124.953 12.0458C126.096 10.5489 127.647 8.32817 129.798 9.2987C131.523 10.2904 132.231 13.0328 133.218 14.6871C133.664 15.4039 133.65 15.9114 132.87 16.3438C131.925 16.9525 130.901 17.6457 129.928 18.299L129.909 18.3107V18.3084ZM142.556 21.2435C142.505 22.0965 142.345 25.323 141.27 23.7861C140.271 21.8874 139.175 19.521 138.197 17.4977C137.817 16.4637 140.192 16.0454 140.81 16.2216C142.535 16.8655 142.596 19.6197 142.556 21.2294V21.2458V21.2435Z" fill="#DC5F40"/>
+      </svg>
+      <div style="width:1px;height:18px;background:rgba(255,255,255,0.1)"></div>
+      <div class="app-badge">
+        <span class="dot"></span>
+        Pricing &amp; Proposals
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'JetBrains Mono',monospace;">PROTOTYPE &middot; Interactive HTML</div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body-wrap">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-nav">
+        <div class="nav-label">WORKSPACE</div>
+        <div class="nav-item active" id="nav-pricing" onclick="switchView('pricing')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>Pricing Calculator</span>
+        </div>
+        <div class="nav-item" id="nav-proposals" onclick="switchView('proposals')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>Proposal Generator</span>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <div style="font-family:'JetBrains Mono',monospace;">Aerchain &middot; $6M ARR</div>
+        <div style="margin-top:2px;">$20B+ spend managed</div>
+      </div>
+    </div>
+
+    <!-- MAIN PANEL -->
+    <div class="main-panel">
+      <div class="main-header">
+        <div class="module-icon" id="header-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div style="font-weight:600;font-size:15px;" id="header-title">Pricing Calculator</div>
+      </div>
+      <div class="main-content">
+
+        <!-- ============================================= -->
+        <!-- PRICING CALCULATOR VIEW -->
+        <!-- ============================================= -->
+        <div class="view active" id="view-pricing">
+          <div class="flex-col">
+            <div class="grid-2">
+              <!-- Client Info -->
+              <div class="card">
+                <div class="section-title">Client Information</div>
+                <div class="form-group">
+                  <label class="form-label">Company Name</label>
+                  <input class="form-input" id="companyName" placeholder="e.g. Tata Steel" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Annual Procurement Spend</label>
+                  <input class="form-input" id="spend" placeholder="e.g. 2000000000" oninput="recalc()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Contract Duration</label>
+                  <select class="form-select" id="duration" onchange="recalc()">
+                    <option value="1">1 Year</option>
+                    <option value="3" selected>3 Years</option>
+                    <option value="5">5 Years</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Region</label>
+                  <select class="form-select" id="region">
+                    <option>India</option>
+                    <option>Middle East (GCCC)</option>
+                    <option>Southeast Asia</option>
+                    <option>Global</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Modules -->
+              <div class="card">
+                <div class="section-title">Modules</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="modules-grid">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Pricing Breakdown -->
+            <div class="card">
+              <div style="font-size:14px;font-weight:600;margin-bottom:20px;">Pricing Breakdown</div>
+              <div id="pricing-rows">
+                <!-- populated by JS -->
+              </div>
+
+              <div class="y1-highlight">
+                <span style="font-size:14px;font-weight:600;">Year 1 Total</span>
+                <span style="font-size:22px;font-weight:700;color:#8b5cf6;font-family:'JetBrains Mono',monospace;" id="y1-total">$0</span>
+              </div>
+
+              <table class="data-table" style="margin-top:16px;">
+                <thead>
+                  <tr><th>Year</th><th>License</th><th>Escalation</th><th>Total</th></tr>
+                </thead>
+                <tbody id="year-table-body">
+                  <!-- populated by JS -->
+                </tbody>
+              </table>
+
+              <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+                <button class="btn btn-secondary" onclick="exportCSV()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export CSV
+                </button>
+                <button class="btn btn-primary" onclick="switchView('proposals')">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  Generate Proposal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- PROPOSAL GENERATOR VIEW -->
+        <!-- ============================================= -->
+        <div class="view" id="view-proposals">
+
+          <!-- Sub-view: Type selector -->
+          <div class="proposal-sub active" id="proposal-select">
+            <div class="flex-col">
+              <div>
+                <div style="font-size:18px;font-weight:600;margin-bottom:6px;">Create a Proposal</div>
+                <div style="color:rgba(255,255,255,0.5);font-size:13px;">Select the type of proposal you want to generate. Claude will create the output based on your inputs and configured instructions.</div>
+              </div>
+              <div class="grid-3">
+                <div class="type-card" onclick="selectProposalType('Internal Briefing Talk')">
+                  <div style="font-size:28px;">&#128203;</div>
+                  <div style="font-size:14px;font-weight:600;">Internal Briefing Talk</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;">Generate an internal briefing document for team alignment and stakeholder updates</div>
+                  <div style="margin-top:auto;padding-top:12px;">
+                    <button class="btn btn-primary" style="font-size:11px;padding:6px 14px;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Create
+                    </button>
+                  </div>
+                </div>
+                <div class="type-card" onclick="selectProposalType('Customer Technical Proposal')">
+                  <div style="font-size:28px;">&#128295;</div>
+                  <div style="font-size:14px;font-weight:600;">Customer Technical Proposal</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;">Technical solution proposal with architecture, integration details, and implementation plan</div>
+                  <div style="margin-top:auto;padding-top:12px;">
+                    <button class="btn btn-primary" style="font-size:11px;padding:6px 14px;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Create
+                    </button>
+                  </div>
+                </div>
+                <div class="type-card" onclick="selectProposalType('Customer Technical &amp; Commercial Proposal')">
+                  <div style="font-size:28px;">&#128196;</div>
+                  <div style="font-size:14px;font-weight:600;">Customer Technical &amp; Commercial Proposal</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;">Full proposal combining technical solution with pricing, terms, and commercial structure</div>
+                  <div style="margin-top:auto;padding-top:12px;">
+                    <button class="btn btn-primary" style="font-size:11px;padding:6px 14px;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Create
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="card manage-bar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:500;">Manage Proposal Types</div>
+                  <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:2px;">Add custom proposal types with tailored Claude instructions for your specific needs</div>
+                </div>
+                <button class="btn btn-secondary" style="font-size:11px;padding:6px 14px;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Type
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-view: Wizard steps -->
+          <div class="proposal-sub" id="proposal-wizard">
+            <div class="flex-col">
+              <!-- Back + title -->
+              <div style="display:flex;align-items:center;gap:12px;">
+                <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="backToTypes()">&#8592; Back</button>
+                <span style="font-size:13px;color:rgba(255,255,255,0.5);">Creating:</span>
+                <span style="font-size:14px;font-weight:600;" id="wizard-type-label"></span>
+              </div>
+
+              <!-- Steps bar -->
+              <div style="display:flex;gap:12px;" id="steps-bar">
+                <!-- populated by JS -->
+              </div>
+
+              <!-- Step 1: Input & Context -->
+              <div id="wizard-step-1" class="wizard-step">
+                <div class="grid-2">
+                  <div class="card">
+                    <div class="section-title">Client Details</div>
+                    <div class="form-group"><label class="form-label">Company / Recipient Name</label><input class="form-input" placeholder="e.g. Tata Steel"></div>
+                    <div class="form-group"><label class="form-label">Contact Person</label><input class="form-input" placeholder="e.g. Rajesh Kumar"></div>
+                    <div class="form-group"><label class="form-label">Title / Designation</label><input class="form-input" placeholder="e.g. VP Procurement"></div>
+                    <div class="form-group">
+                      <label class="form-label">Industry</label>
+                      <select class="form-select">
+                        <option>Manufacturing</option><option>FMCG</option><option>Pharma</option>
+                        <option>Oil &amp; Gas</option><option>Metals &amp; Mining</option><option>Automotive</option>
+                        <option>Technology</option><option>Other</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="section-title">Input &amp; Context</div>
+                    <div class="form-group">
+                      <label class="form-label">Paste context, notes, or brief</label>
+                      <textarea class="form-textarea" style="min-height:120px;" placeholder="Paste any relevant context here &#8212; meeting notes, email threads, RFP requirements, technical specs, etc. This will be used by Claude to generate the proposal."></textarea>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Attachments</label>
+                      <div class="drop-zone">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:8px;opacity:0.5;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <div>Drop files here or click to upload</div>
+                        <div style="font-size:11px;margin-top:4px;opacity:0.6;">PDF, DOCX, TXT, images &mdash; up to 10MB each</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 2: Configure -->
+              <div id="wizard-step-2" class="wizard-step" style="display:none;">
+                <div class="grid-2">
+                  <div class="card">
+                    <div class="section-title">Proposal Configuration</div>
+                    <div class="form-group"><label class="form-label">Proposal Template</label><select class="form-select"><option>Standard Enterprise</option><option>GCCC / Government</option><option>Mid-Market</option><option>Custom</option></select></div>
+                    <div class="form-group"><label class="form-label">Tone</label><select class="form-select"><option>Professional / Formal</option><option>Consultative</option><option>Technical</option><option>Executive Summary</option></select></div>
+                    <div class="form-group"><label class="form-label">Output Length</label><select class="form-select"><option>Concise (1-2 pages)</option><option>Standard (3-5 pages)</option><option>Detailed (6-10 pages)</option><option>Comprehensive (10+ pages)</option></select></div>
+                    <div class="form-group"><label class="form-label">Payment Terms</label><select class="form-select"><option>Annual Upfront</option><option>Quarterly</option><option>Monthly</option><option>Custom</option></select></div>
+                  </div>
+                  <div class="card">
+                    <div class="section-title">Additional Instructions</div>
+                    <div class="form-group">
+                      <label class="form-label">Special instructions for Claude</label>
+                      <textarea class="form-textarea" style="min-height:140px;" placeholder="e.g. Include 90-day pilot clause, reference GCCC compliance, emphasize ROI for CFO audience..."></textarea>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Sections to include</label>
+                      <div class="section-check-list" id="sections-list">
+                        <!-- populated by JS -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 3: Generate -->
+              <div id="wizard-step-3" class="wizard-step" style="display:none;">
+                <div class="card" style="text-align:center;padding:60px;">
+                  <div style="width:64px;height:64px;border-radius:16px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                  </div>
+                  <div style="font-size:18px;font-weight:600;margin-bottom:8px;">Ready to Generate</div>
+                  <div style="color:rgba(255,255,255,0.5);font-size:13px;max-width:400px;margin:0 auto 24px;line-height:1.6;" id="generate-desc">
+                    Claude will process your inputs and generate a proposal tailored to your specifications.
+                  </div>
+                  <button class="btn btn-primary" style="padding:12px 32px;font-size:14px;" onclick="goToStep(4)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+                    Generate Proposal
+                  </button>
+                </div>
+              </div>
+
+              <!-- Step 4: Review & Export -->
+              <div id="wizard-step-4" class="wizard-step" style="display:none;">
+                <div class="card">
+                  <div class="section-title">Proposal Preview</div>
+                  <div style="background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;">
+                    <div style="text-align:center;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:20px;">
+                      <div style="font-size:18px;font-weight:700;margin-bottom:4px;">Aerchain Proposal</div>
+                      <div style="color:rgba(255,255,255,0.5);font-size:12px;">Prepared for [Company] &middot; March 2026</div>
+                    </div>
+                    <div style="padding:16px 0;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.8;">
+                      <p style="color:#fff;font-weight:600;margin-bottom:12px;">Dear [Contact],</p>
+                      <p style="margin-bottom:12px;">Thank you for your interest in Aerchain's procurement intelligence platform. Based on our discussions and your requirements for managing over $2B in annual procurement spend, we are pleased to present this comprehensive proposal.</p>
+                      <p style="margin-bottom:12px;"><strong style="color:#fff;">Executive Summary:</strong> Aerchain offers a cloud-native, AI-powered procurement platform that delivers 15-30% savings on addressable spend through autonomous sourcing, intelligent contract management, and real-time spend analytics. Our platform currently manages over $20B in procurement spend across global enterprises.</p>
+                      <p style="margin-bottom:12px;"><strong style="color:#fff;">Solution Overview:</strong> Based on your requirements, we recommend deploying the Source-to-Pay and e-Sourcing modules, with optional Spend Analytics integration. Implementation timeline: 8-12 weeks including data migration, user training, and go-live support.</p>
+                      <p style="color:rgba(255,255,255,0.5);font-size:11px;font-style:italic;">[ Additional sections: Technical Architecture, Implementation Timeline, Pricing & Commercial Terms, Case Studies, T&Cs would follow... ]</p>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+                    <button class="btn btn-secondary">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copy Text
+                    </button>
+                    <button class="btn btn-secondary">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      Export PDF
+                    </button>
+                    <button class="btn btn-success">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                      Send via Email
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nav buttons -->
+              <div style="display:flex;justify-content:space-between;">
+                <button class="btn btn-secondary" id="prev-btn" onclick="prevStep()">&#8592; Previous</button>
+                <button class="btn btn-primary" id="next-btn" onclick="nextStep()">Next &#8594;</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lumos -->
+<div class="lumos">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h0"/><path d="M17.8 6.2 19 5"/><path d="M3 21l9-9"/><path d="M12.2 6.2 11 5"/></svg>
+  <span>Lumos</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+
+const MODULES_DATA = {
+  "Source-to-Pay":       { price: 80000, on: true },
+  "e-Sourcing":          { price: 60000, on: true },
+  "Contract Management": { price: 55000, on: false },
+  "Supplier Portal":     { price: 35000, on: false },
+  "Spend Analytics":     { price: 45000, on: false },
+  "Invoice Automation":  { price: 40000, on: false },
+  "Catalog Management":  { price: 30000, on: false },
+  "AP Automation":       { price: 50000, on: false },
+};
+
+const SECTIONS = [
+  "Executive Summary", "Solution Overview", "Technical Architecture",
+  "Implementation Timeline", "Pricing & Commercial Terms",
+  "Case Studies & References", "Terms & Conditions"
+];
+
+const BASE_FEE = 120000;
+const IMPLEMENTATION = 45000;
+const ESCALATION = 0.10;
+let currentStep = 1;
+let selectedProposalType = "";
+
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+function toggleSection(el) {
+  el.classList.toggle('on');
+  el.classList.toggle('off');
+  el.querySelector('.check-box').innerHTML = el.classList.contains('on') ? CHECK_SVG : '';
+}
+
+// ═══════════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════════════════════
+
+function switchView(view) {
+  document.getElementById('view-pricing').classList.remove('active');
+  document.getElementById('view-proposals').classList.remove('active');
+  document.getElementById('nav-pricing').classList.remove('active');
+  document.getElementById('nav-proposals').classList.remove('active');
+
+  document.getElementById('view-' + view).classList.add('active');
+  document.getElementById('nav-' + view).classList.add('active');
+
+  const icon = document.getElementById('header-icon');
+  const title = document.getElementById('header-title');
+
+  if (view === 'pricing') {
+    icon.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+    title.textContent = 'Pricing Calculator';
+  } else {
+    icon.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
+    title.textContent = 'Proposal Generator';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRICING CALCULATOR
+// ═══════════════════════════════════════════════════════════
+
+function renderModules() {
+  const grid = document.getElementById('modules-grid');
+  grid.innerHTML = '';
+  for (const [name, data] of Object.entries(MODULES_DATA)) {
+    const div = document.createElement('div');
+    div.className = 'module-check ' + (data.on ? 'on' : 'off');
+    div.innerHTML = `<div class="check-box">${data.on ? CHECK_SVG : ''}</div><span>${name}</span>`;
+    div.onclick = () => { MODULES_DATA[name].on = !MODULES_DATA[name].on; renderModules(); recalc(); };
+    grid.appendChild(div);
+  }
+}
+
+function recalc() {
+  const spendRaw = document.getElementById('spend').value.replace(/[^0-9.]/g, '');
+  const spendNum = parseFloat(spendRaw) || 0;
+  const years = parseInt(document.getElementById('duration').value) || 3;
+
+  const selected = Object.entries(MODULES_DATA).filter(([, d]) => d.on);
+  const modulesTotal = selected.reduce((sum, [, d]) => sum + d.price, 0);
+  const volumeDiscount = spendNum >= 1e9 ? 15000 : spendNum >= 500e6 ? 8000 : 0;
+  const year1 = BASE_FEE + modulesTotal + IMPLEMENTATION - volumeDiscount;
+
+  // Rows
+  const rowsDiv = document.getElementById('pricing-rows');
+  let html = `<div class="price-row"><span class="label">Base Platform Fee</span><span class="value">$${BASE_FEE.toLocaleString()}</span></div>`;
+  for (const [name, data] of selected) {
+    html += `<div class="price-row"><span class="label">${name} Module</span><span class="value">$${data.price.toLocaleString()}</span></div>`;
+  }
+  html += `<div class="price-row"><span class="label">Implementation & Onboarding</span><span class="value">$${IMPLEMENTATION.toLocaleString()}</span></div>`;
+  if (volumeDiscount > 0) {
+    html += `<div class="price-row"><span class="label">Volume Discount (spend > $${spendNum >= 1e9 ? '1B' : '500M'})</span><span class="value" style="color:#10b981;">-$${volumeDiscount.toLocaleString()}</span></div>`;
+  }
+  rowsDiv.innerHTML = html;
+
+  // Y1 total
+  document.getElementById('y1-total').textContent = '$' + year1.toLocaleString();
+
+  // Year table
+  const tbody = document.getElementById('year-table-body');
+  let thtml = '';
+  for (let i = 0; i < years; i++) {
+    const yearTotal = Math.round(year1 * Math.pow(1 + ESCALATION, i));
+    thtml += `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;">Year ${i + 1}</td>
+      <td style="font-family:'JetBrains Mono',monospace;">$${year1.toLocaleString()}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:${i === 0 ? 'rgba(255,255,255,0.5)' : '#f59e0b'};">${i === 0 ? '&mdash;' : '+10%'}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-weight:600;">$${yearTotal.toLocaleString()}</td>
+    </tr>`;
+  }
+  tbody.innerHTML = thtml;
+}
+
+function exportCSV() {
+  const years = parseInt(document.getElementById('duration').value) || 3;
+  const selected = Object.entries(MODULES_DATA).filter(([, d]) => d.on);
+  const spendRaw = document.getElementById('spend').value.replace(/[^0-9.]/g, '');
+  const spendNum = parseFloat(spendRaw) || 0;
+  const modulesTotal = selected.reduce((sum, [, d]) => sum + d.price, 0);
+  const volumeDiscount = spendNum >= 1e9 ? 15000 : spendNum >= 500e6 ? 8000 : 0;
+  const year1 = BASE_FEE + modulesTotal + IMPLEMENTATION - volumeDiscount;
+  const company = document.getElementById('companyName').value || 'Client';
+
+  let csv = 'Year,License,Escalation,Total\n';
+  for (let i = 0; i < years; i++) {
+    const yearTotal = Math.round(year1 * Math.pow(1 + ESCALATION, i));
+    csv += `Year ${i+1},$${year1.toLocaleString()},${i === 0 ? '—' : '+10%'},$${yearTotal.toLocaleString()}\n`;
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `aerchain-pricing-${company.toLowerCase().replace(/\s+/g,'-')}.csv`;
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROPOSAL GENERATOR
+// ═══════════════════════════════════════════════════════════
+
+function selectProposalType(type) {
+  selectedProposalType = type;
+  document.getElementById('wizard-type-label').textContent = type;
+  document.getElementById('generate-desc').textContent =
+    `Claude will process your inputs and generate a ${type.toLowerCase()} tailored to your specifications.`;
+
+  document.getElementById('proposal-select').classList.remove('active');
+  document.getElementById('proposal-wizard').classList.add('active');
+  currentStep = 1;
+  renderSteps();
+  showStep(1);
+}
+
+function backToTypes() {
+  document.getElementById('proposal-wizard').classList.remove('active');
+  document.getElementById('proposal-select').classList.add('active');
+  currentStep = 1;
+}
+
+const STEP_LABELS = ["Input & Context", "Configure", "Generate", "Review & Export"];
+
+function renderSteps() {
+  const bar = document.getElementById('steps-bar');
+  bar.innerHTML = '';
+  STEP_LABELS.forEach((label, i) => {
+    const n = i + 1;
+    const cls = n === currentStep ? 'current' : n < currentStep ? 'done' : 'pending';
+    const stepContent = n < currentStep ? '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><polyline points="20 6 9 17 4 12"/></svg>' : n;
+    bar.innerHTML += `<div class="step ${cls}"><div class="step-num">${stepContent}</div>${label}</div>`;
+  });
+}
+
+function showStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('wizard-step-' + i).style.display = i === n ? 'block' : 'none';
+  }
+  document.getElementById('prev-btn').style.opacity = n === 1 ? '0.4' : '1';
+  document.getElementById('next-btn').style.opacity = n === 4 ? '0.4' : '1';
+}
+
+function goToStep(n) {
+  currentStep = Math.max(1, Math.min(4, n));
+  renderSteps();
+  showStep(currentStep);
+}
+
+function nextStep() { if (currentStep < 4) goToStep(currentStep + 1); }
+function prevStep() { if (currentStep > 1) goToStep(currentStep - 1); }
+
+function renderSections() {
+  const list = document.getElementById('sections-list');
+  list.innerHTML = '';
+  SECTIONS.forEach(s => {
+    list.innerHTML += `<div class="module-check on" onclick="toggleSection(this)">
+      <div class="check-box">${CHECK_SVG}</div><span>${s}</span>
+    </div>`;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+
+renderModules();
+recalc();
+renderSections();
+</script>
+
+</body>
+</html>

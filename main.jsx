@@ -6,7 +6,7 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <App
       moduleFilter={["pricing-calc", "proposals"]}
-      appName="Aerchain · Pricing & Proposals"
+      appName="Aerchain · SalesOS"
     />
   </StrictMode>
 );
