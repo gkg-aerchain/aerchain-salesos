@@ -3,7 +3,7 @@ import {
   RefreshCw, AlertCircle, Clock,
   Loader2, Activity, FileText, DollarSign, X,
   TrendingUp, Users, Wand2, Download, Settings, Brain,
-  ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon, Palette
+  ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon, Monitor, Palette, Check
 } from "lucide-react";
 import DUMMY_DATA from "./demo-data/index.js";
 import DesignExtractorView from "./DesignExtractorView.jsx";
@@ -641,14 +641,42 @@ function ProposalsView({ data, onFilesSelected, uploadedFiles, processing, onPro
 
 // ── SETTINGS VIEW ─────────────────────────────────────────
 
-function SettingsView({ claudeMemory, onClearMemory }) {
+function SettingsView({ claudeMemory, onClearMemory, theme, setTheme }) {
   const [activeTab, setActiveTab] = useState("memory");
 
   const tabs = [
     { id: "memory",  label: "Claude Memory" },
+    { id: "theme",   label: "Theme"         },
     { id: "notion",  label: "Notion Audit"  },
     { id: "apis",    label: "API Connections"},
     { id: "supabase",label: "Database"      },
+  ];
+
+  const themeOptions = [
+    {
+      id: "dark",
+      name: "Dark Canvas",
+      desc: "Glassmorphic dark theme with purple accent orbs. Optimized for low-light environments.",
+      icon: Moon,
+      colors: ["hsl(265,30%,7%)", "hsl(262,75%,62%)", "rgba(255,255,255,0.04)", "rgba(255,255,255,0.88)"],
+      labels: ["Canvas", "Accent", "Surface", "Text"],
+    },
+    {
+      id: "light",
+      name: "Soft Lilac",
+      desc: "Warm purple-tinted light theme with frosted glass surfaces. Vibrant and expressive.",
+      icon: Sun,
+      colors: ["hsl(262,30%,92%)", "hsl(262,65%,52%)", "rgba(255,255,255,0.90)", "rgba(0,0,0,0.88)"],
+      labels: ["Canvas", "Accent", "Surface", "Text"],
+    },
+    {
+      id: "clean",
+      name: "Clean Enterprise",
+      desc: "Neutral white surfaces with gray borders. Matches the Aerchain procurement platform.",
+      icon: Monitor,
+      colors: ["#F8F9FC", "hsl(262,65%,52%)", "#FFFFFF", "#111827"],
+      labels: ["Canvas", "Accent", "Surface", "Text"],
+    },
   ];
 
   return (
@@ -708,6 +736,82 @@ function SettingsView({ claudeMemory, onClearMemory }) {
                 ))}
               </div>
             )}
+          </Card>
+        </div>
+      )}
+
+      {/* Theme tab */}
+      {activeTab === "theme" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <Card>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+              <Palette size={13} color={T.accent} />
+              <span style={{ fontSize:12, fontWeight:600 }}>Appearance</span>
+            </div>
+            <div style={{ color:T.muted, fontSize:12, marginBottom:16 }}>
+              Choose a visual theme. This affects colors, surfaces, and shadows. Layout and structure stay the same.
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {themeOptions.map(opt => {
+                const Icon = opt.icon;
+                const isSel = theme === opt.id;
+                return (
+                  <div key={opt.id} onClick={() => setTheme(opt.id)} style={{
+                    display:"flex", alignItems:"center", gap:14,
+                    padding:"14px 16px", borderRadius:10, cursor:"pointer",
+                    background: isSel ? T.accentBg : T.bgCard,
+                    border: `1px solid ${isSel ? T.borderAcc : T.border}`,
+                    transition:"all 0.15s",
+                  }}>
+                    {/* Selection indicator */}
+                    <div style={{
+                      width:20, height:20, borderRadius:"50%", flexShrink:0,
+                      border: isSel ? "none" : `2px solid ${T.border}`,
+                      background: isSel ? T.accent : "transparent",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                    }}>
+                      {isSel && <Check size={12} color="white" strokeWidth={3} />}
+                    </div>
+
+                    {/* Theme icon */}
+                    <div style={{
+                      width:36, height:36, borderRadius:8, flexShrink:0,
+                      background: T.accentBg,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                    }}>
+                      <Icon size={16} color={T.accent} />
+                    </div>
+
+                    {/* Name and description */}
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:600, color:T.text, marginBottom:2 }}>{opt.name}</div>
+                      <div style={{ fontSize:11, color:T.muted, lineHeight:1.4 }}>{opt.desc}</div>
+                    </div>
+
+                    {/* Color preview swatches */}
+                    <div style={{ display:"flex", gap:4, flexShrink:0 }}>
+                      {opt.colors.map((c, i) => (
+                        <div key={i} style={{ textAlign:"center" }}>
+                          <div style={{
+                            width:24, height:24, borderRadius:6,
+                            background:c, border:`1px solid ${T.border}`,
+                          }} />
+                          <div style={{ fontSize:8, color:T.mutedSoft, marginTop:2 }}>{opt.labels[i]}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card>
+            <div style={{ fontSize:11, color:T.muted, lineHeight:1.6 }}>
+              <strong style={{ color:T.text }}>Tip:</strong> You can also toggle themes quickly using the{" "}
+              {theme === "dark" ? <Sun size={10} style={{ verticalAlign:"middle" }} /> : theme === "light" ? <Monitor size={10} style={{ verticalAlign:"middle" }} /> : <Moon size={10} style={{ verticalAlign:"middle" }} />}
+              {" "}button in the top bar. It cycles through Dark → Light → Clean.
+            </div>
           </Card>
         </div>
       )}
@@ -811,10 +915,9 @@ function GenericView({ data }) {
 
 // ── MODULE CONTENT ROUTER ─────────────────────────────────
 
-function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess }) {
-  // Settings and Design Extractor are never empty — always show view
-  if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} />;
-  if (moduleKey === "design-extractor") return <DesignExtractorView />;
+function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme }) {
+  // Settings is never empty — always show view
+  if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} />;
 
   const isEmpty = !data || Object.keys(data).length === 0 || (Object.keys(data).length === 1 && data.syncedAt);
 
@@ -902,32 +1005,62 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
         --s-glow:       0 0 24px rgba(124,58,237,0.18);
       }
       :root[data-theme="light"] {
-        --canvas:       linear-gradient(145deg, hsl(220 20% 96%) 0%, hsl(220 15% 93%) 40%, hsl(220 10% 90%) 100%);
+        --canvas:       hsl(262 30% 92%);
         --primary:      hsl(262 65% 52%);
         --accent:       hsl(275 70% 55%);
-        --gp:           linear-gradient(135deg, hsl(262 65% 52%), hsl(275 70% 55%));
+        --gp:           linear-gradient(135deg, #DC5F40, hsl(262 65% 52%));
         --green:        hsl(152 55% 42%);
         --amber:        hsl(38 80% 48%);
         --red:          hsl(0 65% 52%);
-        --glass-1:      rgba(0,0,0,0.03);
-        --glass-2:      rgba(0,0,0,0.05);
-        --glass-border: rgba(0,0,0,0.10);
-        --fg:           rgba(0,0,0,0.85);
-        --fg2:          rgba(0,0,0,0.55);
-        --fg3:          rgba(0,0,0,0.35);
-        --logo-fg:      #0a0a0f;
-        --active-bg:    hsla(262,65%,52%,0.12);
-        --accent-bg:    hsla(262,65%,52%,0.10);
-        --accent-border:hsla(262,65%,52%,0.30);
-        --divider:      rgba(0,0,0,0.10);
-        --badge-bg:     rgba(0,0,0,0.05);
-        --topbar-bg:    rgba(255,255,255,0.75);
-        --sidebar-bg:   rgba(255,255,255,0.60);
-        --orb-1:        radial-gradient(circle, hsl(265 60% 80% / .20) 0%, transparent 70%);
-        --orb-2:        radial-gradient(circle, hsl(255 50% 80% / .15) 0%, transparent 70%);
-        --s-glass:      0 2px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04) inset;
-        --s-elevated:   0 12px 40px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06) inset;
-        --s-glow:       0 0 24px rgba(124,58,237,0.10);
+        --glass-1:      rgba(255,255,255,0.90);
+        --glass-2:      rgba(255,255,255,0.50);
+        --glass-border: rgba(124,58,237,0.10);
+        --fg:           rgba(0,0,0,0.88);
+        --fg2:          rgba(0,0,0,0.45);
+        --fg3:          rgba(80,40,180,0.40);
+        --logo-fg:      #1a1a2e;
+        --active-bg:    linear-gradient(135deg, rgba(124,58,237,0.12), rgba(220,95,64,0.08));
+        --accent-bg:    rgba(124,58,237,0.15);
+        --accent-border:rgba(124,58,237,0.15);
+        --divider:      rgba(124,58,237,0.10);
+        --badge-bg:     rgba(124,58,237,0.08);
+        --topbar-bg:    rgba(255,255,255,0.82);
+        --sidebar-bg:   rgba(255,255,255,0.55);
+        --orb-1:        radial-gradient(circle, hsla(262,50%,75%,0.25) 0%, transparent 70%);
+        --orb-2:        radial-gradient(circle, hsla(20,60%,70%,0.15) 0%, transparent 70%);
+        --s-glass:      0 2px 12px rgba(124,58,237,0.08), inset 0 0 0 1px rgba(255,255,255,0.5);
+        --s-elevated:   0 8px 24px rgba(124,58,237,0.10), inset 0 0 0 1px rgba(255,255,255,0.5);
+        --s-glow:       0 0 16px rgba(124,58,237,0.12);
+      }
+
+      /* Clean Enterprise theme — matches Aerchain procurement platform */
+      :root[data-theme="clean"] {
+        --canvas:       #F8F9FC;
+        --primary:      hsl(262 65% 52%);
+        --accent:       hsl(275 70% 55%);
+        --gp:           linear-gradient(135deg, hsl(262 65% 52%), hsl(280 60% 58%));
+        --green:        hsl(152 55% 42%);
+        --amber:        hsl(38 80% 48%);
+        --red:          hsl(0 65% 52%);
+        --glass-1:      #FFFFFF;
+        --glass-2:      #F3F4F6;
+        --glass-border: #E5E7EB;
+        --fg:           #111827;
+        --fg2:          #6B7280;
+        --fg3:          #9CA3AF;
+        --logo-fg:      #1a1a2e;
+        --active-bg:    rgba(124,58,237,0.08);
+        --accent-bg:    rgba(124,58,237,0.08);
+        --accent-border:rgba(124,58,237,0.25);
+        --divider:      #E5E7EB;
+        --badge-bg:     #F3F4F6;
+        --topbar-bg:    #FFFFFF;
+        --sidebar-bg:   #FFFFFF;
+        --orb-1:        radial-gradient(circle, transparent 0%, transparent 70%);
+        --orb-2:        radial-gradient(circle, transparent 0%, transparent 70%);
+        --s-glass:      0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+        --s-elevated:   0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+        --s-glow:       0 0 0 transparent;
       }
 
       ::selection { background: hsla(262,80%,55%,0.30); }
@@ -937,6 +1070,8 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
       ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.20); }
       [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
       [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.20); }
+      [data-theme="clean"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.10); }
+      [data-theme="clean"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.18); }
 
       @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
       @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
@@ -1300,8 +1435,8 @@ ${document.getElementById("root").innerHTML}
         </button>
 
         {/* Theme toggle */}
-        <button className="icon-btn" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} title="Toggle theme">
-          {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+        <button className="icon-btn" onClick={() => setTheme(t => t === "dark" ? "light" : t === "light" ? "clean" : "dark")} title={`Theme: ${theme}`}>
+          {theme === "dark" ? <Sun size={14} /> : theme === "light" ? <Monitor size={14} /> : <Moon size={14} />}
         </button>
 
         {/* Settings gear */}
@@ -1428,6 +1563,8 @@ ${document.getElementById("root").innerHTML}
                 uploadedFiles={uploadedFiles[selected]}
                 processing={processing.has(selected)}
                 onProcess={() => handleProcess(selected)}
+                theme={theme}
+                setTheme={setTheme}
               />
             </div>
           </div>

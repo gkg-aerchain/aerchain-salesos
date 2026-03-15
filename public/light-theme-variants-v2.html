@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerchain SalesOS — Light Theme Variants v2 (Based on Variant E)</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Montserrat', sans-serif; background: #f0f0f5; color: #1a1a2e; padding: 32px; }
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.subtitle { color: rgba(0,0,0,0.55); font-size: 13px; margin-bottom: 32px; line-height: 1.5; }
+.variant-label { font-size: 16px; font-weight: 700; margin: 48px 0 6px; }
+.variant-desc { color: rgba(0,0,0,0.55); font-size: 12px; margin-bottom: 16px; line-height: 1.6; max-width: 900px; }
+
+.preview {
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 48px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+}
+.topbar {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.topbar .logo { font-weight: 800; font-size: 14px; letter-spacing: 0.5px; }
+.topbar .badge { font-size: 9px; font-weight: 600; padding: 3px 8px; border-radius: 5px; letter-spacing: 0.1em; text-transform: uppercase; }
+.topbar .spacer { flex: 1; }
+.topbar .btn { padding: 5px 10px; border-radius: 6px; border: none; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.body-wrap { display: flex; min-height: 440px; }
+.sidebar { width: 180px; padding: 14px 8px; display: flex; flex-direction: column; gap: 2px; }
+.sidebar .group-label { font-size: 9px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; padding: 10px 10px 6px; }
+.sidebar .nav-item { padding: 8px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.sidebar .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; }
+.main { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.main-header { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; }
+.main-header .icon-box { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.main-header .title { font-size: 15px; font-weight: 600; }
+.main-header .meta { font-size: 11px; margin-top: 2px; }
+.kpi-row { display: flex; gap: 12px; }
+.kpi { flex: 1; padding: 14px 16px; border-radius: 12px; }
+.kpi .label { font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+.kpi .value { font-size: 22px; font-weight: 700; }
+.kpi .sub { font-size: 11px; margin-top: 3px; }
+.card { border-radius: 12px; padding: 14px 16px; }
+.table-header { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 12px; display: flex; }
+.table-header > span { flex: 1; }
+.table-row { padding: 10px 12px; font-size: 12px; display: flex; gap: 16px; }
+.table-row > span { flex: 1; }
+.upload-zone { border-radius: 10px; padding: 24px; text-align: center; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Light Theme Variants v2 — Based on Variant E (Dual-Accent)</h1>
+<p class="subtitle">Baseline: Variant E's dual-accent (purple + Aerchain orange), gradient canvas, left-border KPI accents. These 5 explore solid color canvases, different glass effects, and deeper/more vibrant backgrounds.</p>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VARIANT E1: Soft Lilac Canvas
+     ═══════════════════════════════════════════════════════════ -->
+<div class="variant-label">E1 — Soft Lilac Canvas</div>
+<p class="variant-desc">Solid lilac canvas (hsl 262, 30%, 92%) replacing the gradient. Cards use frosted white glass at 90% opacity with a purple-tinted inset shadow. The purple canvas gives the entire app a cohesive brand feel while white glass cards pop clearly. Sidebar has a stronger frosted effect.</p>
+<div class="preview">
+  <div class="topbar" style="background: rgba(255,255,255,0.82); border-bottom: 1px solid rgba(124,58,237,0.10); backdrop-filter: blur(20px); box-shadow: 0 1px 0 rgba(124,58,237,0.05);">
+    <span class="logo" style="color: #1a1a2e;">AERCH<span style="color:#DC5F40;">A</span>N</span>
+    <div style="width:1px; height:18px; background:rgba(124,58,237,0.15);"></div>
+    <span class="badge" style="background: linear-gradient(135deg, #DC5F40, hsl(262 65% 52%)); color: white;">SalesOS</span>
+    <span style="font-size:12px; color: rgba(0,0,0,0.60);">$ Pricing Calculator</span>
+    <span class="spacer"></span>
+    <span class="btn" style="background: linear-gradient(135deg, hsl(262 65% 52%), #DC5F40); color: white; box-shadow: 0 4px 12px rgba(124,58,237,0.25);">Sync All</span>
+    <span class="btn" style="background: rgba(220,95,64,0.10); color: #DC5F40; border: 1px solid rgba(220,95,64,0.20);">Demo ON</span>
+  </div>
+  <div style="background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(220,95,64,0.06)); color: hsl(262 65% 45%); text-align: center; font-size: 11px; padding: 4px; border-bottom: 1px solid rgba(124,58,237,0.08);">Demo Mode — Showing sample data</div>
+  <div class="body-wrap" style="background: hsl(262 30% 92%);">
+    <div class="sidebar" style="background: rgba(255,255,255,0.55); backdrop-filter: blur(24px); border-right: 1px solid rgba(124,58,237,0.10);">
+      <div class="group-label" style="color: rgba(80,40,180,0.45);">DEAL DESK</div>
+      <div class="nav-item" style="background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(220,95,64,0.08)); box-shadow: inset 3px 0 0 #DC5F40; font-weight: 600; color: rgba(0,0,0,0.80);">
+        <span style="color: #DC5F40;">$</span> Pricing Calculator <span class="spacer"></span> <span class="dot" style="background: hsl(152 55% 42%);"></span>
+      </div>
+      <div class="nav-item" style="color: rgba(0,0,0,0.45);">
+        Proposal Generator <span class="spacer"></span> <span class="dot" style="background: rgba(0,0,0,0.15);"></span>
+      </div>
+      <div style="flex:1;"></div>
+      <div class="group-label" style="color: rgba(80,40,180,0.35); border-top: 1px solid rgba(124,58,237,0.08); margin-top:8px; padding-top:12px;">SYSTEM</div>
+      <div class="nav-item" style="color: rgba(0,0,0,0.45);">Settings</div>
+    </div>
+    <div class="main">
+      <div class="main-header" style="border-bottom: 1px solid rgba(124,58,237,0.10);">
+        <div class="icon-box" style="background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(220,95,64,0.10)); color: #DC5F40;">$</div>
+        <div>
+          <div class="title" style="color: rgba(0,0,0,0.88);">Pricing Calculator</div>
+          <div class="meta" style="color: rgba(0,0,0,0.45);">Fresh · 23h ago</div>
+        </div>
+      </div>
+      <div class="upload-zone" style="border: 2px dashed rgba(124,58,237,0.18); background: rgba(255,255,255,0.50); color: rgba(0,0,0,0.40); backdrop-filter: blur(8px);">
+        Drop files here or click to browse
+      </div>
+      <div class="kpi-row">
+        <div class="kpi" style="background: rgba(255,255,255,0.90); border: 1px solid rgba(124,58,237,0.08); box-shadow: 0 2px 12px rgba(124,58,237,0.08), inset 0 0 0 1px rgba(255,255,255,0.5); border-left: 3px solid hsl(262 65% 52%); backdrop-filter: blur(8px);">
+          <div class="label" style="color: hsl(262 65% 52%);">$ PER $1B SPEND</div>
+          <div class="value" style="color: rgba(0,0,0,0.88);">$300K</div>
+          <div class="sub" style="color: rgba(0,0,0,0.45);">Annual platform fee</div>
+        </div>
+        <div class="kpi" style="background: rgba(255,255,255,0.90); border: 1px solid rgba(124,58,237,0.08); box-shadow: 0 2px 12px rgba(124,58,237,0.08), inset 0 0 0 1px rgba(255,255,255,0.5); border-left: 3px solid #DC5F40; backdrop-filter: blur(8px);">
+          <div class="label" style="color: #DC5F40;">YOY ESCALATION</div>
+          <div class="value" style="color: rgba(0,0,0,0.88);">10%</div>
+          <div class="sub" style="color: rgba(0,0,0,0.45);">Contract renewal rate</div>
+        </div>
+        <div class="kpi" style="background: rgba(255,255,255,0.90); border: 1px solid rgba(124,58,237,0.08); box-shadow: 0 2px 12px rgba(124,58,237,0.08), inset 0 0 0 1px rgba(255,255,255,0.5); border-left: 3px solid hsl(152 55% 42%); backdrop-filter: blur(8px);">
+          <div class="label" style="color: hsl(152 55% 42%);">BREAK-EVEN</div>
+          <div class="value" style="color: rgba(0,0,0,0.88);">$500M-$1B</div>
+          <div class="sub" style="color: rgba(0,0,0,0.45);">Spend under mgmt threshold</div>
+        </div>
+      </div>
+      <div class="card" style="background: rgba(255,255,255,0.90); border: 1px solid rgba(124,58,237,0.08); box-shadow: 0 2px 12px rgba(124,58,237,0.08), inset 0 0 0 1px rgba(255,255,255,0.5); backdrop-filter: blur(8px);">
+        <div style="font-size:12px; font-weight:600; margin-bottom:8px; color: rgba(0,0,0,0.88);">Recent Deals (3)</div>
+        <div class="table-header" style="color: rgba(80,40,180,0.40); border-bottom: 1px solid rgba(124,58,237,0.08);"><span>CLIENT</span><span>Y1 AMOUNT</span><span>SPEND UNDER MGMT</span><span>MODULES</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(124,58,237,0.05); color: rgba(0,0,0,0.60);"><span style="font-weight:600; color:rgba(0,0,0,0.85);">Tata Steel</span><span style="color:hsl(152 55% 42%)">$420K</span><span>$2.1B</span><span>Sourcing, CLM, SXM</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(124,58,237,0.05); color: rgba(0,0,0,0.60);"><span style="font-weight:600; color:rgba(0,0,0,0.85);">Hindalco</span><span style="color:hsl(152 55% 42%)">$285K</span><span>$1.4B</span><span>Sourcing, Analytics</span></div>
+        <div class="table-row" style="color: rgba(0,0,0,0.60);"><span style="font-weight:600; color:rgba(0,0,0,0.85);">JSW Group</span><span style="color:hsl(152 55% 42%)">$510K</span><span>$3.2B</span><span>Full Suite</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VARIANT E2: Deep Navy Canvas
+     ═══════════════════════════════════════════════════════════ -->
+<div class="variant-label">E2 — Deep Navy Canvas</div>
+<p class="variant-desc">Solid dark navy (hsl 225, 35%, 22%) canvas — almost like a "dark-but-blue" mode. White text, high contrast. Cards use translucent white glass at 8% opacity. Both accents glow against the dark blue. A professional, corporate-premium aesthetic that's neither pure dark nor pure light.</p>
+<div class="preview">
+  <div class="topbar" style="background: rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px);">
+    <span class="logo" style="color: rgba(255,255,255,0.90);">AERCH<span style="color:#DC5F40;">A</span>N</span>
+    <div style="width:1px; height:18px; background:rgba(255,255,255,0.10);"></div>
+    <span class="badge" style="background: linear-gradient(135deg, #DC5F40, hsl(262 75% 62%)); color: white;">SalesOS</span>
+    <span style="font-size:12px; color: rgba(255,255,255,0.55);">$ Pricing Calculator</span>
+    <span class="spacer"></span>
+    <span class="btn" style="background: linear-gradient(135deg, hsl(262 75% 62%), #DC5F40); color: white; box-shadow: 0 4px 16px rgba(220,95,64,0.30);">Sync All</span>
+    <span class="btn" style="background: rgba(220,95,64,0.12); color: #DC5F40; border: 1px solid rgba(220,95,64,0.25);">Demo ON</span>
+  </div>
+  <div style="background: rgba(220,95,64,0.08); color: #DC5F40; text-align: center; font-size: 11px; padding: 4px; border-bottom: 1px solid rgba(220,95,64,0.12);">Demo Mode — Showing sample data</div>
+  <div class="body-wrap" style="background: hsl(225 35% 22%);">
+    <div class="sidebar" style="background: rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.07); backdrop-filter: blur(20px);">
+      <div class="group-label" style="color: rgba(255,255,255,0.30);">DEAL DESK</div>
+      <div class="nav-item" style="background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(220,95,64,0.10)); box-shadow: inset 3px 0 0 #DC5F40; font-weight: 600; color: rgba(255,255,255,0.85);">
+        <span style="color: #DC5F40;">$</span> Pricing Calculator <span class="spacer"></span> <span class="dot" style="background: hsl(152 60% 52%);"></span>
+      </div>
+      <div class="nav-item" style="color: rgba(255,255,255,0.40);">
+        Proposal Generator <span class="spacer"></span> <span class="dot" style="background: rgba(255,255,255,0.15);"></span>
+      </div>
+      <div style="flex:1;"></div>
+      <div class="group-label" style="color: rgba(255,255,255,0.25); border-top: 1px solid rgba(255,255,255,0.06); margin-top:8px; padding-top:12px;">SYSTEM</div>
+      <div class="nav-item" style="color: rgba(255,255,255,0.40);">Settings</div>
+    </div>
+    <div class="main">
+      <div class="main-header" style="border-bottom: 1px solid rgba(255,255,255,0.07);">
+        <div class="icon-box" style="background: linear-gradient(135deg, rgba(124,58,237,0.20), rgba(220,95,64,0.15)); color: #DC5F40;">$</div>
+        <div>
+          <div class="title" style="color: rgba(255,255,255,0.90);">Pricing Calculator</div>
+          <div class="meta" style="color: rgba(255,255,255,0.40);">Fresh · 23h ago</div>
+        </div>
+      </div>
+      <div class="upload-zone" style="border: 2px dashed rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.35);">
+        Drop files here or click to browse
+      </div>
+      <div class="kpi-row">
+        <div class="kpi" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 2px 16px rgba(0,0,0,0.20); border-left: 3px solid hsl(262 75% 62%); backdrop-filter: blur(12px);">
+          <div class="label" style="color: hsl(262 75% 72%);">$ PER $1B SPEND</div>
+          <div class="value" style="color: rgba(255,255,255,0.92);">$300K</div>
+          <div class="sub" style="color: rgba(255,255,255,0.40);">Annual platform fee</div>
+        </div>
+        <div class="kpi" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 2px 16px rgba(0,0,0,0.20); border-left: 3px solid #DC5F40; backdrop-filter: blur(12px);">
+          <div class="label" style="color: #DC5F40;">YOY ESCALATION</div>
+          <div class="value" style="color: rgba(255,255,255,0.92);">10%</div>
+          <div class="sub" style="color: rgba(255,255,255,0.40);">Contract renewal rate</div>
+        </div>
+        <div class="kpi" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 2px 16px rgba(0,0,0,0.20); border-left: 3px solid hsl(152 60% 52%); backdrop-filter: blur(12px);">
+          <div class="label" style="color: hsl(152 60% 58%);">BREAK-EVEN</div>
+          <div class="value" style="color: rgba(255,255,255,0.92);">$500M-$1B</div>
+          <div class="sub" style="color: rgba(255,255,255,0.40);">Spend under mgmt threshold</div>
+        </div>
+      </div>
+      <div class="card" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 2px 16px rgba(0,0,0,0.20); backdrop-filter: blur(12px);">
+        <div style="font-size:12px; font-weight:600; margin-bottom:8px; color: rgba(255,255,255,0.90);">Recent Deals (3)</div>
+        <div class="table-header" style="color: rgba(255,255,255,0.30); border-bottom: 1px solid rgba(255,255,255,0.06);"><span>CLIENT</span><span>Y1 AMOUNT</span><span>SPEND UNDER MGMT</span><span>MODULES</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(255,255,255,0.04); color: rgba(255,255,255,0.50);"><span style="font-weight:600; color:rgba(255,255,255,0.88);">Tata Steel</span><span style="color:hsl(152 60% 55%)">$420K</span><span>$2.1B</span><span>Sourcing, CLM, SXM</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(255,255,255,0.04); color: rgba(255,255,255,0.50);"><span style="font-weight:600; color:rgba(255,255,255,0.88);">Hindalco</span><span style="color:hsl(152 60% 55%)">$285K</span><span>$1.4B</span><span>Sourcing, Analytics</span></div>
+        <div class="table-row" style="color: rgba(255,255,255,0.50);"><span style="font-weight:600; color:rgba(255,255,255,0.88);">JSW Group</span><span style="color:hsl(152 60% 55%)">$510K</span><span>$3.2B</span><span>Full Suite</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VARIANT E3: Lavender Mist + Heavy Glass
+     ═══════════════════════════════════════════════════════════ -->
+<div class="variant-label">E3 — Lavender Mist + Heavy Glass</div>
+<p class="variant-desc">Soft lavender canvas (hsl 265, 40%, 90%) with thick frosted glass cards at 70% white opacity and strong blur(30px). Cards have elevated shadows that make them float. The glass effect is the star here — surfaces feel like frosted crystal panes over a tinted backdrop. Purple-dominant with orange as the spark color.</p>
+<div class="preview">
+  <div class="topbar" style="background: rgba(255,255,255,0.70); border-bottom: 1px solid rgba(124,58,237,0.08); backdrop-filter: blur(30px); box-shadow: 0 2px 8px rgba(124,58,237,0.06);">
+    <span class="logo" style="color: #1a1a2e;">AERCH<span style="color:#DC5F40;">A</span>N</span>
+    <div style="width:1px; height:18px; background:rgba(124,58,237,0.12);"></div>
+    <span class="badge" style="background: linear-gradient(135deg, #DC5F40, hsl(262 65% 52%)); color: white;">SalesOS</span>
+    <span style="font-size:12px; color: rgba(0,0,0,0.55);">$ Pricing Calculator</span>
+    <span class="spacer"></span>
+    <span class="btn" style="background: linear-gradient(135deg, hsl(262 65% 52%), #DC5F40); color: white; box-shadow: 0 4px 16px rgba(124,58,237,0.20);">Sync All</span>
+    <span class="btn" style="background: rgba(220,95,64,0.08); color: #DC5F40; border: 1px solid rgba(220,95,64,0.18);">Demo ON</span>
+  </div>
+  <div style="background: linear-gradient(135deg, rgba(124,58,237,0.06), rgba(220,95,64,0.04)); color: hsl(262 55% 45%); text-align: center; font-size: 11px; padding: 4px;">Demo Mode — Showing sample data</div>
+  <div class="body-wrap" style="background: hsl(265 40% 90%); position: relative;">
+    <div style="position:absolute; width:400px; height:400px; top:-100px; right:-50px; background:radial-gradient(circle, hsla(262,50%,75%,0.25) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+    <div style="position:absolute; width:300px; height:300px; bottom:-80px; left:80px; background:radial-gradient(circle, hsla(20,60%,70%,0.15) 0%, transparent 70%); border-radius:50%; pointer-events:none;"></div>
+    <div class="sidebar" style="background: rgba(255,255,255,0.50); backdrop-filter: blur(30px); border-right: 1px solid rgba(124,58,237,0.08); position:relative; z-index:1;">
+      <div class="group-label" style="color: rgba(80,40,180,0.40);">DEAL DESK</div>
+      <div class="nav-item" style="background: linear-gradient(135deg, rgba(124,58,237,0.14), rgba(220,95,64,0.08)); box-shadow: inset 3px 0 0 #DC5F40; font-weight: 600; color: rgba(0,0,0,0.80);">
+        <span style="color: #DC5F40;">$</span> Pricing Calculator <span class="spacer"></span> <span class="dot" style="background: hsl(152 55% 42%);"></span>
+      </div>
+      <div class="nav-item" style="color: rgba(0,0,0,0.42);">
+        Proposal Generator <span class="spacer"></span> <span class="dot" style="background: rgba(0,0,0,0.12);"></span>
+      </div>
+      <div style="flex:1;"></div>
+      <div class="group-label" style="color: rgba(80,40,180,0.30); border-top: 1px solid rgba(124,58,237,0.08); margin-top:8px; padding-top:12px;">SYSTEM</div>
+      <div class="nav-item" style="color: rgba(0,0,0,0.42);">Settings</div>
+    </div>
+    <div class="main" style="position:relative; z-index:1;">
+      <div class="main-header" style="border-bottom: 1px solid rgba(124,58,237,0.08);">
+        <div class="icon-box" style="background: linear-gradient(135deg, rgba(124,58,237,0.18), rgba(220,95,64,0.12)); color: #DC5F40; box-shadow: 0 2px 8px rgba(124,58,237,0.10);">$</div>
+        <div>
+          <div class="title" style="color: rgba(0,0,0,0.88);">Pricing Calculator</div>
+          <div class="meta" style="color: rgba(0,0,0,0.42);">Fresh · 23h ago</div>
+        </div>
+      </div>
+      <div class="upload-zone" style="border: 2px dashed rgba(124,58,237,0.15); background: rgba(255,255,255,0.40); color: rgba(0,0,0,0.38); backdrop-filter: blur(16px);">
+        Drop files here or click to browse
+      </div>
+      <div class="kpi-row">
+        <div class="kpi" style="background: rgba(255,255,255,0.70); border: 1px solid rgba(124,58,237,0.06); box-shadow: 0 8px 24px rgba(124,58,237,0.10); border-left: 3px solid hsl(262 65% 52%); backdrop-filter: blur(30px);">
+          <div class="label" style="color: hsl(262 65% 52%);">$ PER $1B SPEND</div>
+          <div class="value" style="color: rgba(0,0,0,0.88);">$300K</div>
+          <div class="sub" style="color: rgba(0,0,0,0.42);">Annual platform fee</div>
+        </div>
+        <div class="kpi" style="background: rgba(255,255,255,0.70); border: 1px solid rgba(124,58,237,0.06); box-shadow: 0 8px 24px rgba(124,58,237,0.10); border-left: 3px solid #DC5F40; backdrop-filter: blur(30px);">
+          <div class="label" style="color: #DC5F40;">YOY ESCALATION</div>
+          <div class="value" style="color: rgba(0,0,0,0.88);">10%</div>
+          <div class="sub" style="color: rgba(0,0,0,0.42);">Contract renewal rate</div>
+        </div>
+        <div class="kpi" style="background: rgba(255,255,255,0.70); border: 1px solid rgba(124,58,237,0.06); box-shadow: 0 8px 24px rgba(124,58,237,0.10); border-left: 3px solid hsl(152 55% 42%); backdrop-filter: blur(30px);">
+          <div class="label" style="color: hsl(152 55% 42%);">BREAK-EVEN</div>
+          <div class="value" style="color: rgba(0,0,0,0.88);">$500M-$1B</div>
+          <div class="sub" style="color: rgba(0,0,0,0.42);">Spend under mgmt threshold</div>
+        </div>
+      </div>
+      <div class="card" style="background: rgba(255,255,255,0.70); border: 1px solid rgba(124,58,237,0.06); box-shadow: 0 8px 24px rgba(124,58,237,0.10); backdrop-filter: blur(30px);">
+        <div style="font-size:12px; font-weight:600; margin-bottom:8px; color: rgba(0,0,0,0.88);">Recent Deals (3)</div>
+        <div class="table-header" style="color: rgba(80,40,180,0.38); border-bottom: 1px solid rgba(124,58,237,0.06);"><span>CLIENT</span><span>Y1 AMOUNT</span><span>SPEND UNDER MGMT</span><span>MODULES</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(124,58,237,0.04); color: rgba(0,0,0,0.55);"><span style="font-weight:600; color:rgba(0,0,0,0.85);">Tata Steel</span><span style="color:hsl(152 55% 42%)">$420K</span><span>$2.1B</span><span>Sourcing, CLM, SXM</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(124,58,237,0.04); color: rgba(0,0,0,0.55);"><span style="font-weight:600; color:rgba(0,0,0,0.85);">Hindalco</span><span style="color:hsl(152 55% 42%)">$285K</span><span>$1.4B</span><span>Sourcing, Analytics</span></div>
+        <div class="table-row" style="color: rgba(0,0,0,0.55);"><span style="font-weight:600; color:rgba(0,0,0,0.85);">JSW Group</span><span style="color:hsl(152 55% 42%)">$510K</span><span>$3.2B</span><span>Full Suite</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VARIANT E4: Midnight Indigo
+     ═══════════════════════════════════════════════════════════ -->
+<div class="variant-label">E4 — Midnight Indigo</div>
+<p class="variant-desc">Deep indigo-purple solid canvas (hsl 255, 30%, 16%). This is a "colored dark mode" — dark but distinctly purple, not the neutral black of the standard dark theme. Orange and purple both pop vibrantly. Cards use 5% white glass. Sidebar active state glows. All accent colors are boosted for maximum vibrancy.</p>
+<div class="preview">
+  <div class="topbar" style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(124,58,237,0.12); backdrop-filter: blur(20px);">
+    <span class="logo" style="color: rgba(255,255,255,0.88);">AERCH<span style="color:#DC5F40;">A</span>N</span>
+    <div style="width:1px; height:18px; background:rgba(124,58,237,0.20);"></div>
+    <span class="badge" style="background: linear-gradient(135deg, #DC5F40, hsl(262 75% 62%)); color: white; box-shadow: 0 0 12px rgba(220,95,64,0.25);">SalesOS</span>
+    <span style="font-size:12px; color: rgba(255,255,255,0.50);">$ Pricing Calculator</span>
+    <span class="spacer"></span>
+    <span class="btn" style="background: linear-gradient(135deg, hsl(262 75% 62%), #DC5F40); color: white; box-shadow: 0 4px 20px rgba(220,95,64,0.35);">Sync All</span>
+    <span class="btn" style="background: rgba(220,95,64,0.15); color: #e8734f; border: 1px solid rgba(220,95,64,0.30);">Demo ON</span>
+  </div>
+  <div style="background: rgba(220,95,64,0.10); color: #e8734f; text-align: center; font-size: 11px; padding: 4px; border-bottom: 1px solid rgba(220,95,64,0.15);">Demo Mode — Showing sample data</div>
+  <div class="body-wrap" style="background: hsl(255 30% 16%);">
+    <div class="sidebar" style="background: rgba(255,255,255,0.03); border-right: 1px solid rgba(124,58,237,0.12); backdrop-filter: blur(20px);">
+      <div class="group-label" style="color: rgba(200,170,255,0.40);">DEAL DESK</div>
+      <div class="nav-item" style="background: linear-gradient(135deg, rgba(124,58,237,0.20), rgba(220,95,64,0.12)); box-shadow: inset 3px 0 0 #DC5F40, 0 0 12px rgba(124,58,237,0.10); font-weight: 600; color: rgba(255,255,255,0.88);">
+        <span style="color: #DC5F40;">$</span> Pricing Calculator <span class="spacer"></span> <span class="dot" style="background: hsl(152 65% 55%); box-shadow: 0 0 6px hsl(152 65% 55%);"></span>
+      </div>
+      <div class="nav-item" style="color: rgba(255,255,255,0.35);">
+        Proposal Generator <span class="spacer"></span> <span class="dot" style="background: rgba(255,255,255,0.12);"></span>
+      </div>
+      <div style="flex:1;"></div>
+      <div class="group-label" style="color: rgba(200,170,255,0.30); border-top: 1px solid rgba(124,58,237,0.10); margin-top:8px; padding-top:12px;">SYSTEM</div>
+      <div class="nav-item" style="color: rgba(255,255,255,0.35);">Settings</div>
+    </div>
+    <div class="main">
+      <div class="main-header" style="border-bottom: 1px solid rgba(124,58,237,0.12);">
+        <div class="icon-box" style="background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(220,95,64,0.18)); color: #DC5F40; box-shadow: 0 0 16px rgba(124,58,237,0.15);">$</div>
+        <div>
+          <div class="title" style="color: rgba(255,255,255,0.92);">Pricing Calculator</div>
+          <div class="meta" style="color: rgba(255,255,255,0.38);">Fresh · 23h ago</div>
+        </div>
+      </div>
+      <div class="upload-zone" style="border: 2px dashed rgba(124,58,237,0.18); background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.30);">
+        Drop files here or click to browse
+      </div>
+      <div class="kpi-row">
+        <div class="kpi" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(124,58,237,0.12); box-shadow: 0 4px 20px rgba(0,0,0,0.25); border-left: 3px solid hsl(262 75% 65%); backdrop-filter: blur(12px);">
+          <div class="label" style="color: hsl(262 80% 75%);">$ PER $1B SPEND</div>
+          <div class="value" style="color: rgba(255,255,255,0.95);">$300K</div>
+          <div class="sub" style="color: rgba(255,255,255,0.38);">Annual platform fee</div>
+        </div>
+        <div class="kpi" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(124,58,237,0.12); box-shadow: 0 4px 20px rgba(0,0,0,0.25); border-left: 3px solid #DC5F40; backdrop-filter: blur(12px);">
+          <div class="label" style="color: #e8734f;">YOY ESCALATION</div>
+          <div class="value" style="color: rgba(255,255,255,0.95);">10%</div>
+          <div class="sub" style="color: rgba(255,255,255,0.38);">Contract renewal rate</div>
+        </div>
+        <div class="kpi" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(124,58,237,0.12); box-shadow: 0 4px 20px rgba(0,0,0,0.25); border-left: 3px solid hsl(152 65% 55%); backdrop-filter: blur(12px);">
+          <div class="label" style="color: hsl(152 65% 60%);">BREAK-EVEN</div>
+          <div class="value" style="color: rgba(255,255,255,0.95);">$500M-$1B</div>
+          <div class="sub" style="color: rgba(255,255,255,0.38);">Spend under mgmt threshold</div>
+        </div>
+      </div>
+      <div class="card" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(124,58,237,0.12); box-shadow: 0 4px 20px rgba(0,0,0,0.25); backdrop-filter: blur(12px);">
+        <div style="font-size:12px; font-weight:600; margin-bottom:8px; color: rgba(255,255,255,0.92);">Recent Deals (3)</div>
+        <div class="table-header" style="color: rgba(200,170,255,0.35); border-bottom: 1px solid rgba(124,58,237,0.08);"><span>CLIENT</span><span>Y1 AMOUNT</span><span>SPEND UNDER MGMT</span><span>MODULES</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(255,255,255,0.04); color: rgba(255,255,255,0.45);"><span style="font-weight:600; color:rgba(255,255,255,0.90);">Tata Steel</span><span style="color:hsl(152 65% 58%)">$420K</span><span>$2.1B</span><span>Sourcing, CLM, SXM</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(255,255,255,0.04); color: rgba(255,255,255,0.45);"><span style="font-weight:600; color:rgba(255,255,255,0.90);">Hindalco</span><span style="color:hsl(152 65% 58%)">$285K</span><span>$1.4B</span><span>Sourcing, Analytics</span></div>
+        <div class="table-row" style="color: rgba(255,255,255,0.45);"><span style="font-weight:600; color:rgba(255,255,255,0.90);">JSW Group</span><span style="color:hsl(152 65% 58%)">$510K</span><span>$3.2B</span><span>Full Suite</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     VARIANT E5: Warm Violet Gradient + Solid White Cards
+     ═══════════════════════════════════════════════════════════ -->
+<div class="variant-label">E5 — Warm Violet Gradient + Solid White Cards</div>
+<p class="variant-desc">A warm-toned violet gradient canvas (lavender → blush) with fully opaque white cards for maximum contrast. No transparency on cards — just clean white with colored left-border accents and crisp shadows. The warmth comes from the canvas and orange accent, while cards feel "on top" and distinct. Best readability of all variants.</p>
+<div class="preview">
+  <div class="topbar" style="background: white; border-bottom: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 4px rgba(124,58,237,0.06);">
+    <span class="logo" style="color: #1a1a2e;">AERCH<span style="color:#DC5F40;">A</span>N</span>
+    <div style="width:1px; height:18px; background:rgba(0,0,0,0.08);"></div>
+    <span class="badge" style="background: linear-gradient(135deg, #DC5F40, hsl(262 65% 52%)); color: white;">SalesOS</span>
+    <span style="font-size:12px; color: rgba(0,0,0,0.60);">$ Pricing Calculator</span>
+    <span class="spacer"></span>
+    <span class="btn" style="background: linear-gradient(135deg, hsl(262 65% 52%), #DC5F40); color: white; box-shadow: 0 4px 12px rgba(124,58,237,0.20);">Sync All</span>
+    <span class="btn" style="background: rgba(220,95,64,0.08); color: #DC5F40; border: 1px solid rgba(220,95,64,0.18);">Demo ON</span>
+  </div>
+  <div style="background: linear-gradient(135deg, rgba(124,58,237,0.06), rgba(220,95,64,0.04)); color: hsl(262 55% 45%); text-align: center; font-size: 11px; padding: 4px; border-bottom: 1px solid rgba(0,0,0,0.04);">Demo Mode — Showing sample data</div>
+  <div class="body-wrap" style="background: linear-gradient(145deg, hsl(262 35% 92%) 0%, hsl(280 25% 91%) 50%, hsl(15 30% 93%) 100%);">
+    <div class="sidebar" style="background: rgba(255,255,255,0.75); border-right: 1px solid rgba(0,0,0,0.06); backdrop-filter: blur(16px);">
+      <div class="group-label" style="color: rgba(80,40,180,0.40);">DEAL DESK</div>
+      <div class="nav-item" style="background: linear-gradient(135deg, rgba(124,58,237,0.10), rgba(220,95,64,0.06)); box-shadow: inset 3px 0 0 #DC5F40; font-weight: 600; color: rgba(0,0,0,0.80);">
+        <span style="color: #DC5F40;">$</span> Pricing Calculator <span class="spacer"></span> <span class="dot" style="background: hsl(152 55% 42%);"></span>
+      </div>
+      <div class="nav-item" style="color: rgba(0,0,0,0.42);">
+        Proposal Generator <span class="spacer"></span> <span class="dot" style="background: rgba(0,0,0,0.12);"></span>
+      </div>
+      <div style="flex:1;"></div>
+      <div class="group-label" style="color: rgba(80,40,180,0.30); border-top: 1px solid rgba(0,0,0,0.05); margin-top:8px; padding-top:12px;">SYSTEM</div>
+      <div class="nav-item" style="color: rgba(0,0,0,0.42);">Settings</div>
+    </div>
+    <div class="main">
+      <div class="main-header" style="border-bottom: 1px solid rgba(0,0,0,0.06);">
+        <div class="icon-box" style="background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(220,95,64,0.10)); color: #DC5F40;">$</div>
+        <div>
+          <div class="title" style="color: rgba(0,0,0,0.88);">Pricing Calculator</div>
+          <div class="meta" style="color: rgba(0,0,0,0.42);">Fresh · 23h ago</div>
+        </div>
+      </div>
+      <div class="upload-zone" style="border: 2px dashed rgba(220,95,64,0.18); background: white; color: rgba(0,0,0,0.38); box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+        Drop files here or click to browse
+      </div>
+      <div class="kpi-row">
+        <div class="kpi" style="background: white; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 16px rgba(124,58,237,0.08); border-left: 3px solid hsl(262 65% 52%);">
+          <div class="label" style="color: hsl(262 65% 52%);">$ PER $1B SPEND</div>
+          <div class="value" style="color: rgba(0,0,0,0.90);">$300K</div>
+          <div class="sub" style="color: rgba(0,0,0,0.42);">Annual platform fee</div>
+        </div>
+        <div class="kpi" style="background: white; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 16px rgba(220,95,64,0.08); border-left: 3px solid #DC5F40;">
+          <div class="label" style="color: #DC5F40;">YOY ESCALATION</div>
+          <div class="value" style="color: rgba(0,0,0,0.90);">10%</div>
+          <div class="sub" style="color: rgba(0,0,0,0.42);">Contract renewal rate</div>
+        </div>
+        <div class="kpi" style="background: white; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 16px rgba(61,186,122,0.08); border-left: 3px solid hsl(152 55% 42%);">
+          <div class="label" style="color: hsl(152 55% 42%);">BREAK-EVEN</div>
+          <div class="value" style="color: rgba(0,0,0,0.90);">$500M-$1B</div>
+          <div class="sub" style="color: rgba(0,0,0,0.42);">Spend under mgmt threshold</div>
+        </div>
+      </div>
+      <div class="card" style="background: white; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+        <div style="font-size:12px; font-weight:600; margin-bottom:8px; color: rgba(0,0,0,0.88);">Recent Deals (3)</div>
+        <div class="table-header" style="color: rgba(80,40,180,0.35); border-bottom: 1px solid rgba(0,0,0,0.05);"><span>CLIENT</span><span>Y1 AMOUNT</span><span>SPEND UNDER MGMT</span><span>MODULES</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(0,0,0,0.04); color: rgba(0,0,0,0.58);"><span style="font-weight:600; color:rgba(0,0,0,0.88);">Tata Steel</span><span style="color:hsl(152 55% 42%)">$420K</span><span>$2.1B</span><span>Sourcing, CLM, SXM</span></div>
+        <div class="table-row" style="border-bottom: 1px solid rgba(0,0,0,0.04); color: rgba(0,0,0,0.58);"><span style="font-weight:600; color:rgba(0,0,0,0.88);">Hindalco</span><span style="color:hsl(152 55% 42%)">$285K</span><span>$1.4B</span><span>Sourcing, Analytics</span></div>
+        <div class="table-row" style="color: rgba(0,0,0,0.58);"><span style="font-weight:600; color:rgba(0,0,0,0.88);">JSW Group</span><span style="color:hsl(152 55% 42%)">$510K</span><span>$3.2B</span><span>Full Suite</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center; padding: 40px 0 60px; color: rgba(0,0,0,0.30); font-size: 12px;">
+  Aerchain SalesOS — Light Theme Variants v2 (Based on Variant E) — March 2026
+</div>
+
+</body>
+</html>
