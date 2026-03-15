@@ -54,6 +54,17 @@ Every single reference to a location, file, folder, or action MUST be a **clicka
 
 If you catch yourself writing something like `design-references/` or `App.jsx` in a sentence directed at Gaurav — STOP. Replace it with a clickable GitHub URL. No exceptions.
 
+## HTML Preview Rule (INVIOLABLE)
+
+Whenever you create an HTML file (prototype, preview, mockup, comparison, design reference — ANY `.html` file), you MUST:
+
+1. Commit and push it to a branch
+2. Immediately provide a **clickable htmlpreview.github.io link** so Gaurav can view it rendered in browser
+
+**Format:** `https://htmlpreview.github.io/?https://github.com/gkg-aerchain/aerchain-salesos/blob/{branch}/{path-to-file}.html`
+
+Do NOT just link to the raw GitHub blob. Do NOT just say "here's the file." Do NOT wait to be asked. The rendered preview link is ALWAYS provided automatically the moment the HTML file is pushed. No exceptions.
+
 ## GitHub API Access (INVIOLABLE — READ EVERY SESSION)
 
 **NEVER ask Gaurav to do manual GitHub operations.** You have full GitHub API access. Use it.
