@@ -1387,46 +1387,87 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     addLog("🏁 Full sync complete", "success");
   }, [syncingAll, syncModule, addLog]);
 
-  // ── Download snapshot ────────────────────────────────────
+  // ── Generate self-contained HTML from live app ──────────
+  // Both buttons capture the CURRENT live DOM + all injected styles + computed
+  // CSS custom properties, producing a fully standalone HTML file that renders
+  // identically without React, Vite, or any build tooling.
 
-  const downloadSnapshot = useCallback(() => {
+  const generateStandaloneHTML = useCallback((title, filename) => {
     const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+
+    // Collect all <style> tags injected by the app
     const styleContent = Array.from(document.querySelectorAll("style"))
       .map(s => s.textContent).join("\n");
+
+    // Capture computed CSS custom property values for the current theme
+    // so the static HTML works without the JS that sets data-theme
+    const computedStyle = getComputedStyle(document.documentElement);
+    const cssVars = [
+      "canvas","primary","accent","gp","green","amber","red",
+      "glass-1","glass-2","glass-border","fg","fg2","fg3","logo-fg",
+      "active-bg","accent-bg","accent-border","divider","badge-bg",
+      "topbar-bg","sidebar-bg","orb-1","orb-2",
+      "s-glass","s-elevated","s-glow"
+    ].map(v => {
+      const val = computedStyle.getPropertyValue(`--${v}`).trim();
+      return val ? `  --${v}: ${val};` : "";
+    }).filter(Boolean).join("\n");
+
+    // Snapshot the live DOM content
+    const appHTML = document.getElementById("root").innerHTML;
+
     const html = `<!DOCTYPE html>
 <html lang="en" data-theme="${currentTheme}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aerchain · SalesOS${showDummy ? " (Demo)" : ""} — ${currentTheme} theme</title>
+<title>${title} — ${currentTheme} theme — ${new Date().toISOString().slice(0,10)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>${styleContent}</style>
+<style>
+/* Computed theme vars (frozen at export time) */
+:root[data-theme="${currentTheme}"] {
+${cssVars}
+}
+
+/* App styles */
+${styleContent}
+
+/* Ensure static rendering works */
+body { margin: 0; padding: 0; }
+[style*="animation"] { animation: none !important; }
+</style>
 </head>
-<body style="margin:0;padding:0;">
-${document.getElementById("root").innerHTML}
+<body>
+<div id="root">${appHTML}</div>
 </body>
 </html>`;
+
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `aerchain-salesos-${showDummy ? "demo-" : ""}${currentTheme}-${new Date().toISOString().slice(0,10)}.html`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
-  }, [showDummy]);
-
-  // ── Download standalone prototype ───────────────────────
-  // The prototype HTML content is embedded here so aerchain-prototype.html
-  // can be removed from the repo. Content sourced from aerchain-prototype.html (699 lines).
-
-  const downloadPrototype = useCallback(() => {
-    const a = document.createElement("a");
-    a.href = "/aerchain-salesos/aerchain-prototype.html";
-    a.download = "aerchain-prototype.html";
-    // Fallback: open in new tab if direct download not available
-    a.target = "_blank";
-    a.click();
   }, []);
+
+  // ── Download snapshot (current view as-is) ─────────────
+  const downloadSnapshot = useCallback(() => {
+    const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+    const filename = `aerchain-salesos-${showDummy ? "demo-" : ""}${currentTheme}-${new Date().toISOString().slice(0,10)}.html`;
+    generateStandaloneHTML(
+      `Aerchain · SalesOS${showDummy ? " (Demo)" : ""}`,
+      filename
+    );
+  }, [showDummy, generateStandaloneHTML]);
+
+  // ── Download prototype (always generates from live state) ──
+  const downloadPrototype = useCallback(() => {
+    generateStandaloneHTML(
+      "Aerchain · SalesOS Prototype",
+      `aerchain-prototype-${new Date().toISOString().slice(0,10)}.html`
+    );
+  }, [generateStandaloneHTML]);
 
   // ── Derived state ─────────────────────────────────────────
 
