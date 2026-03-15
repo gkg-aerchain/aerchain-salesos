@@ -11,6 +11,12 @@ import { UPLOAD_MODULES, GROUPS, MOD, getSyncPrompt } from "./lib/constants.js";
 import { extractJSON, isStale, safePersist, timeAgo } from "./lib/utils.js";
 import { callClaude, createNotionAuditEntry, processWithClaude } from "./lib/api.js";
 import { T, buildThemeStylesheet } from "./lib/theme.js";
+import {
+  loadModuleData as sbLoadModules, saveAllModuleData as sbSaveModules,
+  loadSavedFiles as sbLoadFiles, saveAllFiles as sbSaveFiles, saveFile as sbSaveFile, deleteFileFromDB as sbDeleteFile,
+  loadClaudeMemory as sbLoadMemory, saveClaudeMemoryEntry as sbSaveMemEntry, clearClaudeMemoryDB as sbClearMemory,
+  writeSyncLog as sbWriteLog,
+} from "./lib/supabase.js";
 
 // ── Component imports ────────────────────────────────────
 import { StatusDot, Spinner, SyncBtn } from "./components/Common.jsx";
@@ -79,36 +85,64 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     setSyncLog(prev => [{ msg, type, time: new Date() }, ...prev].slice(0, 80));
   }, []);
 
-  // ── Load from localStorage ───────────────────────────────
+  // ── Load data (Supabase → localStorage fallback) ────────
 
   useEffect(() => {
-    const cached = localStorage.getItem("aerchain-module-data");
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (Object.keys(parsed).length > 0) {
-          setModuleData(parsed);
-          const fresh = Object.values(parsed).filter(v => v.status?.includes("Fresh")).length;
-          addLog(`📦 Loaded ${Object.keys(parsed).length} modules from cache (${fresh} fresh)`, "success");
-          return;
+    let cancelled = false;
+    (async () => {
+      // Try Supabase first
+      const [sbMods, sbFiles, sbMem] = await Promise.all([
+        sbLoadModules(), sbLoadFiles(), sbLoadMemory(),
+      ]);
+      if (cancelled) return;
+
+      if (sbMods) {
+        setModuleData(sbMods);
+        const fresh = Object.values(sbMods).filter(v => v.status?.includes("Fresh")).length;
+        addLog(`☁️ Loaded ${Object.keys(sbMods).length} modules from Supabase (${fresh} fresh)`, "success");
+      } else {
+        // Fall back to localStorage
+        const cached = localStorage.getItem("aerchain-module-data");
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Object.keys(parsed).length > 0) {
+              setModuleData(parsed);
+              const fresh = Object.values(parsed).filter(v => v.status?.includes("Fresh")).length;
+              addLog(`📦 Loaded ${Object.keys(parsed).length} modules from cache (${fresh} fresh)`, "success");
+            } else {
+              addLog("🆕 No cached data — sync a module to get started", "info");
+            }
+          } catch { addLog("🆕 No cached data — sync a module to get started", "info"); }
+        } else {
+          addLog("🆕 No cached data — sync a module to get started", "info");
         }
-      } catch {}
-    }
-    addLog("🆕 No cached data — sync a module to get started", "info");
+      }
+
+      if (sbFiles) setSavedFiles(sbFiles);
+      if (sbMem) setClaudeMemory(sbMem);
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  // Persist moduleData to localStorage on every change (debounced)
+  // Persist moduleData to localStorage + Supabase on every change (debounced)
   useEffect(() => {
-    const id = setTimeout(() => safePersist("aerchain-module-data", moduleData), 500);
+    const id = setTimeout(() => {
+      safePersist("aerchain-module-data", moduleData);
+      sbSaveModules(moduleData);
+    }, 500);
     return () => clearTimeout(id);
   }, [moduleData]);
 
   // Keep ref current so beforeunload always flushes the latest value
   useEffect(() => { savedFilesRef.current = savedFiles; }, [savedFiles]);
 
-  // Persist savedFiles to localStorage (debounced)
+  // Persist savedFiles to localStorage + Supabase (debounced)
   useEffect(() => {
-    const id = setTimeout(() => safePersist("aerchain-saved-files", savedFiles), 500);
+    const id = setTimeout(() => {
+      safePersist("aerchain-saved-files", savedFiles);
+      sbSaveFiles(savedFiles);
+    }, 500);
     return () => clearTimeout(id);
   }, [savedFiles]);
 
@@ -156,6 +190,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
       ...prev,
       [moduleKey]: (prev[moduleKey] || []).filter(f => f.id !== fileId)
     }));
+    sbDeleteFile(moduleKey, fileId);
     addLog(`🗑 File deleted from ${MOD[moduleKey]?.label || moduleKey}`, "info");
   }, [addLog]);
 
@@ -168,11 +203,13 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
       safePersist("aerchain-claude-memory", updated);
       return updated;
     });
+    sbSaveMemEntry(entry);
   }, []);
 
   const clearClaudeMemory = useCallback(() => {
     setClaudeMemory([]);
     localStorage.removeItem("aerchain-claude-memory");
+    sbClearMemory();
     addLog("🧹 Claude memory cleared", "info");
   }, [addLog]);
 
