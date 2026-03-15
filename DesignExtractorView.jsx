@@ -145,11 +145,12 @@ If the user provides only a brief text description (e.g., "dark theme, neon gree
 // Calls /api/extract which streams SSE events back for real-time progress.
 // No secrets in the browser.
 
-async function callExtractAPI(contentBlocks, customPrompt, onProgress) {
+async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal) {
   const res = await fetch("/api/extract", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contentBlocks, customPrompt: customPrompt || undefined }),
+    signal,
   });
 
   if (!res.ok) {
@@ -158,35 +159,42 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress) {
   }
 
   // Parse SSE stream
+  if (!res.body) throw new Error("No response stream — connection may have dropped");
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let result = null;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
 
-    // Process complete SSE messages (double newline delimited)
-    const messages = buffer.split("\n\n");
-    buffer = messages.pop(); // keep incomplete message in buffer
+      // Process complete SSE messages (double newline delimited)
+      const messages = buffer.split("\n\n");
+      buffer = messages.pop(); // keep incomplete message in buffer
 
-    for (const msg of messages) {
-      if (!msg.trim()) continue;
-      const eventMatch = msg.match(/^event: (\w+)/m);
-      const dataMatch = msg.match(/^data: (.+)$/m);
-      if (!eventMatch || !dataMatch) continue;
+      for (const msg of messages) {
+        if (!msg.trim()) continue;
+        const eventMatch = msg.match(/^event: (\w+)/m);
+        const dataMatch = msg.match(/^data: (.+)$/m);
+        if (!eventMatch || !dataMatch) continue;
 
-      const event = eventMatch[1];
-      let data;
-      try { data = JSON.parse(dataMatch[1]); } catch { continue; }
+        const event = eventMatch[1];
+        let data;
+        try { data = JSON.parse(dataMatch[1]); } catch { continue; }
 
-      if (event === "status" && onProgress) onProgress({ type: "status", ...data });
-      if (event === "progress" && onProgress) onProgress({ type: "progress", ...data });
-      if (event === "complete") result = data;
-      if (event === "error") throw new Error(data.error || "Extraction failed");
+        if (event === "status" && onProgress) onProgress({ type: "status", ...data });
+        if (event === "progress" && onProgress) onProgress({ type: "progress", ...data });
+        if (event === "complete") result = data;
+        if (event === "error") throw new Error(data?.error || "Extraction failed");
+      }
     }
+  } catch (streamErr) {
+    // Re-throw application errors (from "error" SSE event), catch network failures
+    if (result) return result; // got result before stream broke — use it
+    throw streamErr;
   }
 
   if (!result) throw new Error("Stream ended without result");
@@ -270,15 +278,15 @@ function getProgressStage(chars, phase) {
   return stage;
 }
 
-export default function DesignExtractorView({ onSaveToLibrary, referenceTokens }) {
+export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, cachedState, onStateChange }) {
   const [files, setFiles] = useState([]);
-  const [textInput, setTextInput] = useState("");
+  const [textInput, setTextInput] = useState(cachedState?.textInput || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [tokens, setTokens] = useState(null);
-  const [outputs, setOutputs] = useState(null);
+  const [tokens, setTokens] = useState(cachedState?.tokens || null);
+  const [outputs, setOutputs] = useState(cachedState?.outputs || null);
   const [activeTab, setActiveTab] = useState(0);
-  const [usage, setUsage] = useState(null);
+  const [usage, setUsage] = useState(cachedState?.usage || null);
   const [dragOver, setDragOver] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -286,6 +294,19 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens }
   const [progress, setProgress] = useState({ pct: 0, label: "" });
   const [canInstant, setCanInstant] = useState(false);
   const fileInputRef = useRef(null);
+  const abortRef = useRef(null);
+
+  // Abort in-flight extraction on unmount
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, []);
+
+  // Persist extraction results to parent so they survive unmount
+  useEffect(() => {
+    if (onStateChange && (tokens || textInput)) {
+      onStateChange({ tokens, outputs, usage, textInput });
+    }
+  }, [tokens, outputs, usage, textInput]);
 
   // Auto-detect if files support programmatic extraction
   useEffect(() => {
@@ -314,6 +335,11 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens }
       setError("Upload files or enter a text description.");
       return;
     }
+    // Abort any previous in-flight extraction
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setError(null);
     setTokens(null);
@@ -365,7 +391,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens }
           const stage = getProgressStage(evt.chars, null);
           setProgress(stage);
         }
-      });
+      }, controller.signal);
 
       if (!result.success) {
         throw new Error(result.error || "Extraction failed");
@@ -383,6 +409,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens }
       });
       setProgress({ pct: 100, label: "Complete" });
     } catch (err) {
+      if (err.name === "AbortError") return; // user navigated away or started new extraction
       setError(err.message);
     } finally {
       setLoading(false);
@@ -402,24 +429,42 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens }
     setProgress({ pct: 10, label: "Reading files" });
 
     try {
-      let extractedTokens = null;
+      const allTokens = [];
 
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const text = await readFileAsText(file);
         const ext = file.name.split(".").pop().toLowerCase();
 
-        setProgress({ pct: 30, label: "Analyzing DOM structure" });
+        setProgress({ pct: 10 + Math.round((i / files.length) * 40), label: `Analyzing ${file.name}` });
 
+        let result = null;
         if (ext === "html" || ext === "htm") {
-          extractedTokens = await extractFromHTML(text);
+          result = await extractFromHTML(text);
         } else if (ext === "css") {
-          extractedTokens = extractFromCSS(text);
+          result = extractFromCSS(text);
         }
+        if (result) allTokens.push(result);
       }
 
-      if (!extractedTokens) {
+      if (allTokens.length === 0) {
         throw new Error("No extractable content found in uploaded files.");
       }
+
+      // Merge tokens from all files — later files supplement earlier ones
+      const extractedTokens = allTokens.reduce((merged, t) => {
+        return {
+          meta: { ...merged.meta, ...t.meta },
+          colors: { ...merged.colors, ...t.colors },
+          gradients: [...(merged.gradients || []), ...(t.gradients || [])],
+          typography: { ...merged.typography, ...t.typography },
+          spacing: { ...merged.spacing, ...t.spacing },
+          radius: { ...merged.radius, ...t.radius },
+          shadows: { ...merged.shadows, ...t.shadows },
+          components: { ...merged.components, ...t.components },
+          designPrinciples: [...new Set([...(merged.designPrinciples || []), ...(t.designPrinciples || [])])],
+        };
+      });
 
       setProgress({ pct: 70, label: "Extracting design tokens" });
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Component } from "react";
 import {
   RefreshCw, AlertCircle, Clock,
   Loader2, Activity, FileText, DollarSign, X,
@@ -98,6 +98,11 @@ async function withRetry(fn, { retries = 3, label = "" } = {}) {
       await new Promise(r => setTimeout(r, delay));
     }
   }
+}
+
+function safePersist(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); }
+  catch (e) { console.warn(`localStorage write failed for "${key}":`, e.message); }
 }
 
 function timeAgo(date) {
@@ -914,9 +919,58 @@ function GenericView({ data }) {
   );
 }
 
+// ── ERROR BOUNDARY ────────────────────────────────────────
+
+class ModuleErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error("ModuleContent crashed:", error, info.componentStack);
+  }
+  componentDidUpdate(prevProps) {
+    // Reset error when user switches modules
+    if (prevProps.moduleKey !== this.props.moduleKey) {
+      this.setState({ hasError: false, error: null });
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", gap:16, padding:40, textAlign:"center" }}>
+          <div style={{ width:56, height:56, borderRadius:16, background:"#FEF2F2", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <AlertCircle size={24} color="#EF4444" />
+          </div>
+          <div>
+            <div style={{ color:"var(--text-primary,#1F2937)", fontWeight:600, marginBottom:6 }}>Something went wrong</div>
+            <div style={{ color:"var(--text-secondary,#6B7280)", fontSize:13, maxWidth:400 }}>
+              {this.state.error?.message || "An unexpected error occurred in this module."}
+            </div>
+          </div>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{
+              background:"var(--accent-bg,#F3F0FF)", border:"1px solid var(--accent-border,#DDD6FE)",
+              borderRadius:8, padding:"8px 20px", color:"var(--accent,#8B5CF6)",
+              fontSize:13, fontWeight:500, cursor:"pointer"
+            }}
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // ── MODULE CONTENT ROUTER ─────────────────────────────────
 
-function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, referenceTokens, onSaveToLibrary, onLoadReference }) {
+function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache }) {
   // Settings is never empty — always show view
   if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} />;
 
@@ -934,6 +988,8 @@ function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClear
             <DesignExtractorView
               onSaveToLibrary={onSaveToLibrary}
               referenceTokens={referenceTokens}
+              cachedState={extractorCache}
+              onStateChange={setExtractorCache}
             />
           </div>
         </div>
@@ -942,6 +998,8 @@ function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClear
     return <DesignExtractorView
       onSaveToLibrary={onSaveToLibrary}
       referenceTokens={referenceTokens}
+      cachedState={extractorCache}
+      onStateChange={setExtractorCache}
     />;
   }
 
@@ -1028,6 +1086,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     try { return JSON.parse(localStorage.getItem("aerchain-saved-files") || "{}"); } catch { return {}; }
   });
   const [referenceTokens, setReferenceTokens] = useState(null);
+  const [extractorCache, setExtractorCache] = useState(null); // persists extraction results across module switches
 
   // Dark Canvas v3 theme + font injection
   useEffect(() => {
@@ -1201,16 +1260,12 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
 
   // Persist moduleData to localStorage on every change
   useEffect(() => {
-    if (Object.keys(moduleData).length > 0) {
-      localStorage.setItem("aerchain-module-data", JSON.stringify(moduleData));
-    }
+    safePersist("aerchain-module-data", moduleData);
   }, [moduleData]);
 
   // Persist savedFiles to localStorage
   useEffect(() => {
-    if (Object.keys(savedFiles).length > 0) {
-      localStorage.setItem("aerchain-saved-files", JSON.stringify(savedFiles));
-    }
+    safePersist("aerchain-saved-files", savedFiles);
   }, [savedFiles]);
 
   // ── File management callbacks ──────────────────────────
@@ -1255,7 +1310,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     const entry = { module, prompt, response, timestamp: new Date().toISOString() };
     setClaudeMemory(prev => {
       const updated = [...prev, entry].slice(-200); // keep last 200
-      localStorage.setItem("aerchain-claude-memory", JSON.stringify(updated));
+      safePersist("aerchain-claude-memory", updated);
       return updated;
     });
   }, []);
@@ -1332,9 +1387,10 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
         summary: `Periodic Notion audit log sync — ${Object.keys(moduleData).length} modules`,
         refs: [],
       };
-      const existing = JSON.parse(localStorage.getItem("aerchain-notion-audit") || "[]");
+      let existing = [];
+      try { existing = JSON.parse(localStorage.getItem("aerchain-notion-audit") || "[]"); } catch { /* corrupted — reset */ }
       const updated = [entry, ...existing].slice(0, 100);
-      localStorage.setItem("aerchain-notion-audit", JSON.stringify(updated));
+      safePersist("aerchain-notion-audit", updated);
 
       // Also push to Notion API
       try {
@@ -1702,27 +1758,31 @@ body { margin: 0; padding: 0; }
           {/* Content */}
           <div style={{ flex:1, overflowY:"auto", padding:20 }}>
             <div style={{ animation:"fadeIn 0.2s ease" }}>
-              <ModuleContent
-                moduleKey={selected}
-                data={mData?.data}
-                onSync={() => syncModule(selected)}
-                syncing={isSyncing}
-                claudeMemory={claudeMemory}
-                onClearMemory={clearClaudeMemory}
-                onFilesSelected={(files) => handleFilesSelected(selected, files)}
-                uploadedFiles={uploadedFiles[selected]}
-                processing={processing.has(selected)}
-                onProcess={() => handleProcess(selected)}
-                theme={theme}
-                setTheme={setTheme}
-                moduleFiles={getModuleFiles(selected)}
-                onCreateFile={() => createFile(selected)}
-                onDuplicateFile={(file) => duplicateFile(selected, file)}
-                onDeleteFile={(fileId) => deleteFile(selected, fileId)}
-                referenceTokens={referenceTokens}
-                onSaveToLibrary={(file) => setSavedFiles(prev => ({ ...prev, "design-extractor": [...(prev["design-extractor"] || []), file] }))}
-                onLoadReference={(file) => setReferenceTokens(file.tokens)}
-              />
+              <ModuleErrorBoundary moduleKey={selected}>
+                <ModuleContent
+                  moduleKey={selected}
+                  data={mData?.data}
+                  onSync={() => syncModule(selected)}
+                  syncing={isSyncing}
+                  claudeMemory={claudeMemory}
+                  onClearMemory={clearClaudeMemory}
+                  onFilesSelected={(files) => handleFilesSelected(selected, files)}
+                  uploadedFiles={uploadedFiles[selected]}
+                  processing={processing.has(selected)}
+                  onProcess={() => handleProcess(selected)}
+                  theme={theme}
+                  setTheme={setTheme}
+                  moduleFiles={getModuleFiles(selected)}
+                  onCreateFile={() => createFile(selected)}
+                  onDuplicateFile={(file) => duplicateFile(selected, file)}
+                  onDeleteFile={(fileId) => deleteFile(selected, fileId)}
+                  referenceTokens={referenceTokens}
+                  onSaveToLibrary={(file) => setSavedFiles(prev => ({ ...prev, "design-extractor": [...(prev["design-extractor"] || []), file] }))}
+                  onLoadReference={(file) => setReferenceTokens(file.tokens)}
+                  extractorCache={extractorCache}
+                  setExtractorCache={setExtractorCache}
+                />
+              </ModuleErrorBoundary>
             </div>
           </div>
         </div>
