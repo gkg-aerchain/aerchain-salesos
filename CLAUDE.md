@@ -44,14 +44,21 @@ Never assume familiarity with developer tools. Treat every instruction like expl
 
 **NEVER ask Gaurav to do manual GitHub operations.** You have full GitHub API access. Use it.
 
-**GitHub Personal Access Token:** Stored in `.env.local` as `GITHUB_PAT`. Read it from there every session.
+**GitHub Personal Access Token:** Stored in `.env.local` as `GITHUB_PAT`. Read it from there at session start.
+
+### Token Bootstrap (for new environments / parallel sessions):
+`.env.local` is gitignored and local to each environment. If `GITHUB_PAT` is missing from `.env.local`:
+1. Ask Gaurav ONCE at session start: "I need your GitHub PAT to handle PRs and merges autonomously. Please paste it."
+2. Immediately write it to `.env.local` as `GITHUB_PAT=<token>`
+3. Never ask again for the rest of the session
+4. **NEVER** put the raw token in any tracked/committed file — GitHub push protection will block it
 
 ### Rules — NO EXCEPTIONS:
 1. **PRs**: Create them yourself via `curl` to `https://api.github.com/repos/gkg-aerchain/aerchain-salesos/pulls` with the token as `Authorization: token <TOKEN>`
 2. **Merges**: Merge them yourself via `curl` to `https://api.github.com/repos/gkg-aerchain/aerchain-salesos/pulls/{number}/merge`
 3. **Any GitHub API operation**: Read the token from `.env.local` (`GITHUB_PAT`). Do not fumble around trying proxy paths, credential helpers, or env vars. Just use this token directly.
 4. **NEVER tell Gaurav to open a GitHub link, click buttons, or do any manual git/GitHub work.** Handle it yourself end-to-end.
-5. If the token stops working, tell Gaurav it needs to be refreshed — but still never ask him to manually merge or create PRs.
+5. If the token is expired or rejected, ask Gaurav for a new one, store it in `.env.local`, and continue — but still never ask him to manually merge or create PRs.
 
 ### Custom Instruction — "geronimo" Gate:
 Do NOT execute any code changes until Gaurav explicitly says **"geronimo"**. If waiting, prompt him. No exceptions.
