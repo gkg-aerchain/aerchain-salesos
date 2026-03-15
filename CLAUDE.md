@@ -40,6 +40,20 @@ When giving instructions that involve actions outside this environment (terminal
 
 Never assume familiarity with developer tools. Treat every instruction like explaining to someone who has never used a terminal before.
 
+## Output Links Rule (INVIOLABLE)
+
+**NEVER output raw file paths, folder paths, or repo-relative paths as if Gaurav can do something with them.** He cannot click a file path. He cannot navigate a repo tree.
+
+Every single reference to a location, file, folder, or action MUST be a **clickable hyperlink** — a full URL that opens directly in the browser when clicked.
+
+- **Folders:** Link to the GitHub folder URL (e.g. `https://github.com/gkg-aerchain/aerchain-salesos/tree/branch/folder`)
+- **Upload locations:** Link to the GitHub upload URL (e.g. `https://github.com/gkg-aerchain/aerchain-salesos/upload/branch/folder`)
+- **Files:** Link to the GitHub file URL (e.g. `https://github.com/gkg-aerchain/aerchain-salesos/blob/branch/file`)
+- **PRs:** Link to the PR URL
+- **Anything else:** If it cannot be made into a clickable link, explain the action step-by-step with exact clicks instead
+
+If you catch yourself writing something like `design-references/` or `App.jsx` in a sentence directed at Gaurav — STOP. Replace it with a clickable GitHub URL. No exceptions.
+
 ## GitHub API Access (INVIOLABLE — READ EVERY SESSION)
 
 **NEVER ask Gaurav to do manual GitHub operations.** You have full GitHub API access. Use it.
