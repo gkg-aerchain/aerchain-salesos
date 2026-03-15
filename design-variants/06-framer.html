@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerchain SalesOS — Framer Design Variant</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   FRAMER DESIGN SYSTEM — Pure functional dark tool aesthetic
+   ═══════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sidebar-bg: #0D0D0D;
+  --sidebar-hover: #1A1A1A;
+  --sidebar-active: #1E1E1E;
+  --sidebar-text: #E0E0E0;
+  --sidebar-muted: #6B6B6B;
+  --sidebar-divider: #1E1E1E;
+
+  --content-bg: #121212;
+  --card-bg: #1E1E1E;
+  --card-border: #2A2A2A;
+  --card-shadow: none;
+
+  --text-primary: #E8E8E8;
+  --text-secondary: #999999;
+  --text-muted: #666666;
+
+  --accent: #4F87FF;
+  --accent-light: rgba(79,135,255,0.1);
+  --accent-border: rgba(79,135,255,0.25);
+  --emerald: #34D399;
+  --emerald-light: rgba(52,211,153,0.1);
+  --amber: #FBBF24;
+  --amber-light: rgba(251,191,36,0.1);
+  --red: #F87171;
+  --red-light: rgba(248,113,113,0.1);
+
+  --topbar-bg: #161616;
+  --topbar-border: #2A2A2A;
+
+  --radius: 6px;
+  --radius-lg: 8px;
+
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', ui-monospace, monospace;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  background: var(--content-bg);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection { background: rgba(79,135,255,0.3); }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
+
+/* Layout */
+.shell { display: flex; height: 100vh; }
+
+/* Sidebar — slim, icon-heavy */
+.sidebar {
+  width: 200px;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--sidebar-divider);
+}
+.sidebar-header {
+  padding: 16px 14px;
+  border-bottom: 1px solid var(--sidebar-divider);
+}
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 6px; }
+.sidebar-group-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--sidebar-muted);
+  padding: 10px 10px 4px;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--sidebar-muted);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.12s ease;
+  margin-bottom: 1px;
+}
+.sidebar-item:hover { background: var(--sidebar-hover); color: var(--sidebar-text); }
+.sidebar-item.active {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.sidebar-item .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  margin-left: auto; flex-shrink: 0;
+}
+.sidebar-footer {
+  padding: 12px 14px;
+  border-top: 1px solid var(--sidebar-divider);
+  font-size: 10px;
+  color: var(--sidebar-muted);
+  letter-spacing: 0.02em;
+}
+.sidebar-bottom {
+  border-top: 1px solid var(--sidebar-divider);
+  padding: 6px;
+}
+
+/* Main area */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Topbar */
+.topbar {
+  height: 48px;
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--topbar-border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.breadcrumb span.current { color: var(--text-primary); font-weight: 500; }
+.breadcrumb .sep { color: #444; font-size: 11px; }
+
+/* Demo banner */
+.demo-banner {
+  background: var(--accent-light);
+  border-bottom: 1px solid var(--accent-border);
+  padding: 5px 20px;
+  font-size: 11px;
+  color: var(--accent);
+  text-align: center;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* Filter bar */
+.filter-bar {
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--card-border);
+  background: var(--topbar-bg);
+  flex-shrink: 0;
+}
+.filter-bar .filter-item {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--card-border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.filter-bar .filter-item:hover { border-color: var(--accent); color: var(--accent); }
+.filter-bar .filter-item.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Content area */
+.content { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+}
+.card-title .icon {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.7;
+}
+
+/* Stat cards row — large mono numbers */
+.stat-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.stat-card {
+  flex: 1;
+  min-width: 150px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.stat-card .stat-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-card .stat-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.stat-card .stat-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Tables */
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--card-border);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--card-border);
+  color: var(--text-primary);
+  white-space: nowrap;
+  font-size: 12px;
+}
+.data-table tr:hover td { background: rgba(79,135,255,0.04); }
+.data-table .val-green { color: var(--emerald); font-weight: 600; font-family: var(--font-mono); }
+.data-table .val-muted { color: var(--text-muted); }
+.data-table .client-name { font-weight: 500; }
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+.badge-purple { background: var(--accent-light); color: var(--accent); }
+.badge-green { background: var(--emerald-light); color: var(--emerald); }
+.badge-amber { background: var(--amber-light); color: var(--amber); }
+.badge-red { background: var(--red-light); color: var(--red); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.12s ease;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #3D75ED; }
+.btn-secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--card-border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost { background: none; border: none; color: var(--text-muted); padding: 5px; cursor: pointer; border-radius: 4px; }
+.btn-ghost:hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+
+/* Section grid for pricing model */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* Module grid */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px;
+}
+.module-chip {
+  padding: 7px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  border: 1px solid var(--card-border);
+}
+.module-chip.available { background: var(--emerald-light); color: var(--emerald); border-color: rgba(52,211,153,0.2); }
+.module-chip.unavailable { background: transparent; color: var(--text-muted); border-color: var(--card-border); }
+
+/* Sync log panel */
+.log-panel {
+  width: 260px;
+  border-left: 1px solid var(--card-border);
+  background: var(--topbar-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.log-panel.hidden { display: none; }
+.log-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+.log-entries { flex: 1; overflow-y: auto; padding: 8px 10px; }
+.log-entry {
+  display: flex;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  animation: fadeIn 0.15s ease;
+}
+.log-entry .log-bar { width: 2px; border-radius: 2px; flex-shrink: 0; align-self: stretch; }
+.log-entry .log-msg { font-size: 11px; color: var(--text-primary); line-height: 1.4; }
+.log-entry .log-time { font-size: 10px; color: var(--text-muted); margin-top: 2px; font-family: var(--font-mono); font-size: 9px; }
+
+/* Lumos badge */
+.lumos-badge {
+  position: fixed;
+  bottom: 14px;
+  right: 14px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+/* Proposal view specific */
+.proposal-section { margin-bottom: 12px; }
+.proposal-section h3 { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text-primary); }
+.proposal-section p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+/* Upload zone */
+.upload-zone {
+  border: 1px dashed #333;
+  border-radius: var(--radius);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.upload-zone:hover { border-color: var(--accent); background: var(--accent-light); }
+.upload-zone .upload-icon { margin-bottom: 6px; color: var(--text-muted); }
+.upload-zone .upload-title { font-size: 12px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+.upload-zone .upload-sub { font-size: 10px; color: var(--text-muted); }
+
+/* Hide sections */
+.view { display: none; }
+.view.active { display: block; animation: fadeIn 0.15s ease; }
+
+/* Volume discount table */
+.vd-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.vd-table th {
+  text-align: left; padding: 6px 10px; font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+  border-bottom: 1px solid var(--card-border);
+}
+.vd-table td {
+  padding: 7px 10px; border-bottom: 1px solid var(--card-border); color: var(--text-primary);
+}
+</style>
+</head>
+<body>
+
+<div class="shell" id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <svg height="16" viewBox="0 0 168 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+        <path d="M3.7951 26.9895C3.61396 27.3937 3.43282 27.6616 3.254 27.7956C3.07286 27.9295 2.80115 27.9977 2.44119 27.9977H0.678569C0.225721 27.9977 0.000457764 27.852 0.000457764 27.5606C0.000457764 27.4478 0.056193 27.2574 0.169986 26.9895L10.3672 5.68021C10.7063 4.98698 10.9547 4.53109 11.1127 4.31959C11.2706 4.10575 11.4633 4 11.6886 4C11.893 4 12.0671 4.10575 12.2134 4.31959C12.3597 4.53344 12.6036 4.98698 12.9426 5.68021L23.242 26.9895C23.3558 27.2574 23.4116 27.4501 23.4116 27.5606C23.4116 27.852 23.1747 27.9977 22.7009 27.9977H20.8036C20.4413 27.9977 20.1766 27.9295 20.0071 27.7956C19.8375 27.6616 19.6518 27.3914 19.4474 26.9895L11.6212 10.2509L3.7951 26.9895Z" fill="#E0E0E0"/>
+        <path d="M40.5221 24.8957C40.6359 24.9991 40.6916 25.1989 40.6916 25.495V27.2433C40.6916 27.5418 40.6359 27.7415 40.5221 27.8426C40.4083 27.946 40.2179 27.9977 39.9462 27.9977H27.1062C26.8345 27.9977 26.644 27.946 26.5302 27.8426C26.4165 27.7392 26.3607 27.5394 26.3607 27.2433V4.75433C26.3607 4.45824 26.4165 4.25614 26.5302 4.1551C26.6417 4.0517 26.8345 4 27.1039 4H39.9113C40.183 4 40.3735 4.0517 40.4873 4.1551C40.6011 4.25849 40.6568 4.45824 40.6568 4.75433V6.50269C40.6568 6.80114 40.6011 7.00088 40.4873 7.10193C40.3735 7.20533 40.183 7.25703 39.9113 7.25703H30.153C29.9951 7.25703 29.8883 7.28523 29.8302 7.34162C29.7745 7.39802 29.7466 7.49672 29.7466 7.63302V13.9074C29.7466 14.0672 29.7745 14.1753 29.8302 14.234C29.886 14.2904 29.9928 14.3186 30.153 14.3186H38.7595C39.0312 14.3186 39.2216 14.3703 39.3354 14.4737C39.4492 14.5771 39.5049 14.7769 39.5049 15.0729V16.7861C39.5049 17.061 39.4492 17.2537 39.3354 17.3688C39.2216 17.484 39.0312 17.5404 38.7595 17.5404H30.153C29.9951 17.5404 29.8883 17.5686 29.8302 17.625C29.7745 17.6814 29.7466 17.7801 29.7466 17.9164V24.3623C29.7466 24.4986 29.7745 24.5973 29.8302 24.6537C29.886 24.7101 29.9928 24.7383 30.153 24.7383H39.9438C40.2156 24.7383 40.406 24.79 40.5198 24.8934L40.5221 24.8957Z" fill="#E0E0E0"/>
+        <path d="M48.7198 27.8449C48.606 27.9483 48.4156 28 48.1439 28H46.2466C45.9748 28 45.7844 27.9483 45.6706 27.8449C45.5568 27.7415 45.5011 27.5418 45.5011 27.2457V4.75433C45.5011 4.45824 45.5568 4.25614 45.6706 4.1551C45.7844 4.0517 45.9772 4 46.2466 4H52.7188C59.1562 4 62.3749 6.47919 62.3749 11.4399C62.3749 13.0849 61.9685 14.4408 61.1557 15.503C60.3429 16.5652 59.212 17.35 57.7675 17.8506L63.5941 26.9707C63.7753 27.2222 63.8659 27.4384 63.8659 27.6217C63.8659 27.758 63.8031 27.8567 63.6801 27.9131C63.5547 27.9695 63.3689 27.9977 63.1204 27.9977H61.1209C60.7377 27.9977 60.4544 27.9413 60.2733 27.8261C60.0921 27.711 59.8785 27.4619 59.63 27.0718L53.3969 17.061C53.2622 16.8777 53.1926 16.7179 53.1926 16.5816C53.1926 16.3983 53.3621 16.2949 53.7011 16.2738C57.1126 15.9095 58.8172 14.3656 58.8172 11.6444C58.8172 10.0911 58.2807 8.95369 57.2078 8.23225C56.1349 7.51317 54.5813 7.15128 52.5493 7.15128H49.2957C49.1378 7.15128 49.031 7.17948 48.9729 7.23588C48.9172 7.29227 48.8893 7.40272 48.8893 7.56252V27.241C48.8893 27.5394 48.8336 27.7392 48.7198 27.8402V27.8449Z" fill="#E0E0E0"/>
+        <path d="M84.5991 22.4471C84.8476 22.2473 85.0404 22.1486 85.1751 22.1486C85.2656 22.1486 85.3562 22.1815 85.4468 22.2473C85.5374 22.3131 85.6163 22.3907 85.6837 22.48L86.666 23.81C86.7798 23.944 86.8355 24.0991 86.8355 24.2753C86.8355 24.3646 86.8007 24.4586 86.7333 24.5573C86.666 24.656 86.5638 24.7618 86.4291 24.8722C85.2308 25.8686 83.8815 26.6394 82.3813 27.1822C80.8788 27.7251 79.3043 27.9977 77.6555 27.9977C75.4423 27.9977 73.415 27.4877 71.5734 26.4678C69.7318 25.448 68.2757 24.0309 67.2028 22.2121C66.1299 20.3956 65.5934 18.3558 65.5934 16.0952C65.5934 13.8345 66.1299 11.7525 67.2028 9.91247C68.2757 8.07246 69.7434 6.62724 71.6082 5.57446C73.4707 4.52639 75.5538 4 77.8575 4C79.4831 4 81.0367 4.27729 82.516 4.83188C83.9953 5.38647 85.3121 6.1408 86.464 7.09253C86.6892 7.24763 86.803 7.41447 86.803 7.59072C86.803 7.74581 86.7357 7.92206 86.5986 8.12181L85.6163 9.41898C85.4352 9.66337 85.254 9.78557 85.0752 9.78557C84.9405 9.78557 84.7478 9.69627 84.4993 9.52002C83.5286 8.78919 82.4766 8.21345 81.3479 7.79046C80.2193 7.36982 79.0326 7.15833 77.7902 7.15833C76.1855 7.15833 74.7247 7.53432 73.4033 8.28865C72.0819 9.04298 71.0369 10.0958 70.2682 11.447C69.4995 12.7982 69.1164 14.328 69.1164 16.0341C69.1164 17.7401 69.4949 19.1689 70.252 20.5225C71.009 21.8737 72.0471 22.9335 73.3685 23.6973C74.6899 24.461 76.1646 24.844 77.7902 24.844C80.3424 24.844 82.6113 24.0474 84.5991 22.4518V22.4471Z" fill="#E0E0E0"/>
+        <path d="M109.401 27.8449C109.288 27.9483 109.097 28 108.826 28H106.928C106.657 28 106.466 27.9483 106.352 27.8449C106.238 27.7415 106.183 27.5418 106.183 27.2457V17.6814C106.183 17.5451 106.155 17.4464 106.099 17.39C106.043 17.3336 105.934 17.3054 105.776 17.3054H94.562C94.4041 17.3054 94.2972 17.3336 94.2392 17.39C94.1834 17.4464 94.1556 17.5451 94.1556 17.6814V27.2457C94.1556 27.5441 94.0998 27.7439 93.986 27.8449C93.8722 27.9483 93.6818 28 93.4101 28H91.5128C91.2411 28 91.0507 27.9483 90.9369 27.8449C90.8231 27.7415 90.7673 27.5418 90.7673 27.2457V4.75433C90.7673 4.45824 90.8231 4.25614 90.9369 4.1551C91.0483 4.0517 91.2411 4 91.5105 4H93.4078C93.6795 4 93.8723 4.0517 93.9837 4.1551C94.0975 4.25849 94.1532 4.45824 94.1532 4.75433V13.6677C94.1532 13.804 94.1811 13.9074 94.2369 13.9755C94.2926 14.0437 94.3994 14.0789 94.5596 14.0789H105.774C105.932 14.0789 106.039 14.0437 106.097 13.9755C106.153 13.9074 106.18 13.804 106.18 13.6677V4.75433C106.18 4.45824 106.236 4.25614 106.35 4.1551C106.464 4.0517 106.657 4 106.928 4H108.826C109.095 4 109.288 4.0517 109.401 4.1551C109.515 4.25849 109.571 4.45824 109.571 4.75433V27.2457C109.571 27.5441 109.515 27.7439 109.401 27.8449Z" fill="#E0E0E0"/>
+        <path d="M164.252 4.1504C164.366 4.04935 164.558 4 164.828 4H166.725C166.997 4 167.189 4.04935 167.301 4.1504C167.415 4.24909 167.47 4.44414 167.47 4.73318V26.9049C167.47 27.6358 167.245 28.0023 166.792 28.0023C166.611 28.0023 166.421 27.9295 166.216 27.7862C166.012 27.6428 165.731 27.3702 165.369 26.9707L151.614 11.0498V26.9049C151.614 27.194 151.558 27.3867 151.444 27.4877C151.33 27.5864 151.14 27.6381 150.868 27.6381H148.971C148.699 27.6381 148.509 27.5888 148.395 27.4877C148.281 27.389 148.226 27.194 148.226 26.9049V5.09742C148.226 4.72143 148.281 4.44414 148.395 4.26554C148.509 4.0893 148.69 4 148.939 4C149.12 4 149.31 4.07285 149.514 4.2162C149.719 4.35954 149.988 4.63214 150.327 5.03163L164.082 20.9525V4.73083C164.082 4.44414 164.138 4.24909 164.252 4.14805V4.1504Z" fill="#E0E0E0"/>
+        <path d="M143.732 18.7083C143.72 18.6519 143.704 18.4944 143.699 18.4193C143.704 18.4357 143.73 18.6754 143.732 18.7083Z" fill="#DC5F40"/>
+        <path d="M141.613 11.08C142.698 10.9602 143.483 9.9732 143.364 8.87342C143.246 7.776 142.27 6.98171 141.184 7.10156C140.099 7.22141 139.314 8.20839 139.433 9.30816C139.551 10.4056 140.526 11.1999 141.613 11.08Z" fill="#DC5F40"/>
+        <path d="M143.857 20.6254C143.943 16.1699 142.092 10.7674 137.252 13.8364C136.846 13.9962 136.614 13.9398 136.4 13.6343C135.789 12.5158 135.32 11.3713 134.739 10.1964C130.371 -1.17501 125.383 5.32729 120.114 12.0575C108.347 27.4497 113.89 34.2669 132.438 20.75C133.086 20.2847 134.384 19.3118 134.851 19.2719C135.343 19.192 135.548 19.5962 135.919 20.4421C136.279 21.3093 136.878 22.5383 137.426 23.4148C140.592 29.6304 144.098 28.1899 143.859 20.6513V20.6254H143.857ZM129.909 18.3084C127.575 19.7842 125.36 21.5913 122.796 22.6699C121.679 23.1422 120.051 22.6205 119.649 21.7064C119.194 20.2894 120.822 18.2003 121.621 16.7292C122.547 15.0537 123.776 13.5638 124.953 12.0458C126.096 10.5489 127.647 8.32817 129.798 9.2987C131.523 10.2904 132.231 13.0328 133.218 14.6871C133.664 15.4039 133.65 15.9114 132.87 16.3438C131.925 16.9525 130.901 17.6457 129.928 18.299L129.909 18.3107V18.3084ZM142.556 21.2435C142.505 22.0965 142.345 25.323 141.27 23.7861C140.271 21.8874 139.175 19.521 138.197 17.4977C137.817 16.4637 140.192 16.0454 140.81 16.2216C142.535 16.8655 142.596 19.6197 142.556 21.2294V21.2458V21.2435Z" fill="#DC5F40"/>
+      </svg>
+      <div style="display:flex;align-items:center;gap:5px;margin-top:6px;">
+        <span style="width:4px;height:4px;border-radius:50%;background:var(--accent);display:inline-block;"></span>
+        <span style="font-size:9px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--sidebar-muted);">SalesOS</span>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="sidebar-group-label">DEAL DESK</div>
+      <div class="sidebar-item active" data-module="pricing-calculator" onclick="switchModule('pricing-calculator')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Pricing Calculator</span>
+        <span class="dot" style="background:var(--emerald);"></span>
+      </div>
+      <div class="sidebar-item" data-module="proposal-generator" onclick="switchModule('proposal-generator')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Proposal Generator</span>
+        <span class="dot" style="background:var(--emerald);"></span>
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-group-label">SYSTEM</div>
+      <div class="sidebar-item" data-module="settings" onclick="switchModule('settings')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div>Aerchain &middot; $6M ARR</div>
+      <div style="margin-top:2px;">$20B+ spend managed</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <span>SalesOS</span>
+        <span class="sep">/</span>
+        <span>Deal Desk</span>
+        <span class="sep">/</span>
+        <span class="current" id="breadcrumb-current">Pricing Calculator</span>
+      </div>
+      <div style="flex:1;"></div>
+
+      <!-- Demo toggle -->
+      <button class="btn-secondary btn" id="demo-toggle" onclick="toggleDemo()" style="font-size:11px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h0"/><path d="M17.8 6.2 19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2 11 5"/></svg>
+        <span id="demo-label">Demo</span>
+      </button>
+
+      <!-- Log toggle -->
+      <button class="btn-ghost" id="log-toggle" onclick="toggleLog()" title="Toggle sync log">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Demo banner -->
+    <div class="demo-banner" id="demo-banner" style="display:none;">
+      Demo Mode &mdash; Showing sample data
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar" id="filter-bar">
+      <span style="font-size:11px;font-weight:500;color:var(--text-muted);">View:</span>
+      <div class="filter-item active" data-filter="overview" onclick="setFilter(this,'overview')">Overview</div>
+      <div class="filter-item" data-filter="deals" onclick="setFilter(this,'deals')">Deals</div>
+      <div class="filter-item" data-filter="model" onclick="setFilter(this,'model')">Pricing Model</div>
+      <div class="filter-item" data-filter="modules" onclick="setFilter(this,'modules')">Modules</div>
+      <div style="flex:1;"></div>
+      <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);" id="last-synced-display">Last synced: Mar 14, 2026 10:00 AM</span>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="main-content">
+
+      <!-- PRICING CALCULATOR VIEW -->
+      <div class="view active" id="view-pricing-calculator">
+
+        <!-- Upload zone -->
+        <div class="card" id="upload-section">
+          <div class="card-title">
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+            Upload Pricing Data
+          </div>
+          <div class="upload-zone" id="upload-drop-zone">
+            <div class="upload-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div class="upload-title">Drop files here or click to browse</div>
+            <div class="upload-sub">Accepts: CSV, PDF, DOCX, XLSX, JSON, TXT</div>
+          </div>
+        </div>
+
+        <!-- KPI stat cards -->
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Per $1B Spend
+            </div>
+            <div class="stat-value">$300K</div>
+            <div class="stat-sub">Annual platform fee</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              YoY Escalation
+            </div>
+            <div class="stat-value">10%</div>
+            <div class="stat-sub">Contract renewal rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Break-Even
+            </div>
+            <div class="stat-value">$500M-$1B</div>
+            <div class="stat-sub">Spend under mgmt threshold</div>
+          </div>
+        </div>
+
+        <!-- Recent Deals Table -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            Recent Deals
+            <span style="color:var(--text-muted);font-size:11px;font-weight:400;">(3)</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Y1 Amount</th>
+                <th>Spend Under Mgmt</th>
+                <th>Modules</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="client-name">Tata Steel</td>
+                <td class="val-green">$420K</td>
+                <td class="val-muted">$2.1B</td>
+                <td>Sourcing, CLM, SXM</td>
+              </tr>
+              <tr>
+                <td class="client-name">Hindalco</td>
+                <td class="val-green">$285K</td>
+                <td class="val-muted">$1.4B</td>
+                <td>Sourcing, Analytics</td>
+              </tr>
+              <tr>
+                <td class="client-name">JSW Group</td>
+                <td class="val-green">$510K</td>
+                <td class="val-muted">$3.2B</td>
+                <td>Full Suite</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pricing Model Breakdown -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+            Pricing Model Breakdown
+          </div>
+          <div class="grid-2">
+            <div>
+              <div style="font-size:10px;font-weight:500;margin-bottom:6px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">BASE MODEL</div>
+              <table class="vd-table">
+                <tbody>
+                  <tr><td style="font-weight:500;">Per $1B Spend</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">$300,000</td></tr>
+                  <tr><td style="font-weight:500;">YoY Escalation</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">10%</td></tr>
+                  <tr><td style="font-weight:500;">Break-Even Threshold</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">$500M-$1B</td></tr>
+                  <tr><td style="font-weight:500;">Typical Contract</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">3 Years</td></tr>
+                  <tr><td style="font-weight:500;">Implementation Fee</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">15-20% of Y1</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:500;margin-bottom:6px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">REVENUE DRIVERS</div>
+              <table class="vd-table">
+                <tbody>
+                  <tr><td style="font-weight:500;">Platform License</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">60%</td></tr>
+                  <tr><td style="font-weight:500;">Implementation</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">20%</td></tr>
+                  <tr><td style="font-weight:500;">Support & SLA</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">12%</td></tr>
+                  <tr><td style="font-weight:500;">Training</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">5%</td></tr>
+                  <tr><td style="font-weight:500;">Customization</td><td style="text-align:right;font-weight:600;font-family:var(--font-mono);">3%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-Year Projection Table -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span>
+            3-Year Projection Table
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Year 1</th>
+                <th>Year 2 (+10%)</th>
+                <th>Year 3 (+10%)</th>
+                <th>3-Year Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="client-name">Tata Steel</td>
+                <td>$420,000</td>
+                <td>$462,000</td>
+                <td>$508,200</td>
+                <td class="val-green" style="font-weight:700;">$1,390,200</td>
+              </tr>
+              <tr>
+                <td class="client-name">Hindalco</td>
+                <td>$285,000</td>
+                <td>$313,500</td>
+                <td>$344,850</td>
+                <td class="val-green" style="font-weight:700;">$943,350</td>
+              </tr>
+              <tr>
+                <td class="client-name">JSW Group</td>
+                <td>$510,000</td>
+                <td>$561,000</td>
+                <td>$617,100</td>
+                <td class="val-green" style="font-weight:700;">$1,688,100</td>
+              </tr>
+              <tr style="border-top:2px solid var(--card-border);">
+                <td style="font-weight:700;">TOTAL</td>
+                <td style="font-weight:700;">$1,215,000</td>
+                <td style="font-weight:700;">$1,336,500</td>
+                <td style="font-weight:700;">$1,470,150</td>
+                <td class="val-green" style="font-weight:800;font-size:13px;">$4,021,650</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Module Availability Grid -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+            Module Availability
+          </div>
+          <div class="module-grid">
+            <div class="module-chip available">Sourcing</div>
+            <div class="module-chip available">CLM</div>
+            <div class="module-chip available">SXM</div>
+            <div class="module-chip available">Analytics</div>
+            <div class="module-chip available">Spend Intelligence</div>
+            <div class="module-chip available">Contract Mgmt</div>
+            <div class="module-chip unavailable">AP Automation</div>
+            <div class="module-chip unavailable">Intake Mgmt</div>
+            <div class="module-chip available">Savings Tracking</div>
+            <div class="module-chip available">Supplier Portal</div>
+            <div class="module-chip unavailable">Invoice Matching</div>
+            <div class="module-chip available">Auction Engine</div>
+          </div>
+        </div>
+
+        <!-- Volume Discount Tiers -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
+            Volume Discount Tiers
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Spend Under Management</th>
+                <th>Discount</th>
+                <th>Effective Rate (per $1B)</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Up to $500M</td>
+                <td>0%</td>
+                <td>$300,000</td>
+                <td class="val-muted">Standard rate</td>
+              </tr>
+              <tr>
+                <td>$500M - $1B</td>
+                <td class="val-green">5%</td>
+                <td>$285,000</td>
+                <td class="val-muted">Break-even threshold</td>
+              </tr>
+              <tr>
+                <td>$1B - $3B</td>
+                <td class="val-green">10%</td>
+                <td>$270,000</td>
+                <td class="val-muted">Mid-market enterprise</td>
+              </tr>
+              <tr>
+                <td>$3B - $5B</td>
+                <td class="val-green">15%</td>
+                <td>$255,000</td>
+                <td class="val-muted">Large enterprise</td>
+              </tr>
+              <tr>
+                <td>$5B+</td>
+                <td class="val-green">20%</td>
+                <td>$240,000</td>
+                <td class="val-muted">Strategic accounts</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PROPOSAL GENERATOR VIEW -->
+      <div class="view" id="view-proposal-generator">
+        <!-- Upload zone -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+            Upload Proposal Documents
+          </div>
+          <div class="upload-zone">
+            <div class="upload-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div class="upload-title">Drop files here or click to browse</div>
+            <div class="upload-sub">Accepts: CSV, PDF, DOCX, XLSX, JSON, TXT</div>
+          </div>
+        </div>
+
+        <!-- KPI Row -->
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Active Proposals
+            </div>
+            <div class="stat-value">4</div>
+            <div class="stat-sub">In pipeline</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Total Value
+            </div>
+            <div class="stat-value">$4.6M</div>
+            <div class="stat-sub">Combined deal value</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              Avg Deal Size
+            </div>
+            <div class="stat-value">$1.2M</div>
+            <div class="stat-sub">Per proposal</div>
+          </div>
+        </div>
+
+        <!-- Proposals table -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            Proposals
+            <span style="color:var(--text-muted);font-size:11px;font-weight:400;">(4)</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Value</th>
+                <th>Stage</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Contact</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="client-name">Mahindra & Mahindra</td>
+                <td class="val-green">$750K</td>
+                <td><span class="badge badge-purple">Proposal</span></td>
+                <td style="color:var(--emerald);font-weight:500;">Submitted</td>
+                <td class="val-muted">2026-03-10</td>
+                <td class="val-muted">Rajesh Kumar</td>
+              </tr>
+              <tr>
+                <td class="client-name">Larsen & Toubro</td>
+                <td class="val-green">$1.2M</td>
+                <td><span class="badge badge-amber">Negotiation</span></td>
+                <td style="color:var(--text-secondary);font-weight:500;">In Review</td>
+                <td class="val-muted">2026-03-05</td>
+                <td class="val-muted">Priya Sharma</td>
+              </tr>
+              <tr>
+                <td class="client-name">Reliance Industries</td>
+                <td class="val-green">$2.0M</td>
+                <td><span class="badge badge-purple">Proposal</span></td>
+                <td style="color:var(--amber);font-weight:500;">Draft</td>
+                <td class="val-muted">2026-03-12</td>
+                <td class="val-muted">Amit Patel</td>
+              </tr>
+              <tr>
+                <td class="client-name">Adani Ports</td>
+                <td class="val-green">$680K</td>
+                <td><span class="badge badge-green">Closed Won</span></td>
+                <td style="color:var(--emerald);font-weight:500;">Submitted</td>
+                <td class="val-muted">2026-02-28</td>
+                <td class="val-muted">Sneha Gupta</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div class="view" id="view-settings">
+        <div class="card">
+          <div class="card-title">Settings</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+            <p style="margin-bottom:10px;">Aerchain SalesOS configuration panel. API connections, Claude memory, and Notion audit logging are managed here.</p>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--content-bg);border-radius:4px;border:1px solid var(--card-border);">
+                <span style="font-weight:500;">Claude (Anthropic)</span>
+                <span style="flex:1;"></span>
+                <span class="badge badge-green">Connected</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--content-bg);border-radius:4px;border:1px solid var(--card-border);">
+                <span style="font-weight:500;">HubSpot</span>
+                <span style="flex:1;"></span>
+                <span class="badge badge-amber">Stub</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--content-bg);border-radius:4px;border:1px solid var(--card-border);">
+                <span style="font-weight:500;">Notion</span>
+                <span style="flex:1;"></span>
+                <span class="badge badge-green">Connected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SYNC LOG PANEL -->
+  <div class="log-panel" id="log-panel">
+    <div class="log-header">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      SYNC LOG
+      <div style="flex:1;"></div>
+      <button class="btn-ghost" onclick="clearLog()" style="font-size:10px;padding:2px 5px;">Clear</button>
+      <button class="btn-ghost" onclick="toggleLog()" style="padding:2px;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="log-entries" id="log-entries">
+      <div class="log-entry">
+        <div class="log-bar" style="background:var(--emerald);"></div>
+        <div>
+          <div class="log-msg">Loaded 2 modules from cache (2 fresh)</div>
+          <div class="log-time">10:00 AM</div>
+        </div>
+      </div>
+      <div class="log-entry">
+        <div class="log-bar" style="background:var(--accent);"></div>
+        <div>
+          <div class="log-msg">Demo mode activated</div>
+          <div class="log-time">10:01 AM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LUMOS BADGE -->
+<div class="lumos-badge">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h0"/><path d="M17.8 6.2 19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2 11 5"/></svg>
+  Lumos
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// FRAMER VARIANT — INTERACTIVE JS
+// ═══════════════════════════════════════════════════════════
+
+var currentModule = 'pricing-calculator';
+var demoMode = true;
+var logVisible = true;
+var currentFilter = 'overview';
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  toggleDemo();
+});
+
+function switchModule(moduleKey) {
+  currentModule = moduleKey;
+
+  document.querySelectorAll('.sidebar-item').forEach(function(item) {
+    item.classList.remove('active');
+    if (item.getAttribute('data-module') === moduleKey) {
+      item.classList.add('active');
+    }
+  });
+
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  var viewEl = document.getElementById('view-' + moduleKey);
+  if (viewEl) viewEl.classList.add('active');
+
+  var labels = {
+    'pricing-calculator': 'Pricing Calculator',
+    'proposal-generator': 'Proposal Generator',
+    'settings': 'Settings'
+  };
+  document.getElementById('breadcrumb-current').textContent = labels[moduleKey] || moduleKey;
+
+  var filterBar = document.getElementById('filter-bar');
+  if (moduleKey === 'pricing-calculator') {
+    filterBar.style.display = 'flex';
+  } else {
+    filterBar.style.display = 'none';
+  }
+
+  addLogEntry(labels[moduleKey] + ' selected', 'info');
+}
+
+function toggleDemo() {
+  demoMode = !demoMode;
+  var banner = document.getElementById('demo-banner');
+  var btn = document.getElementById('demo-toggle');
+  var label = document.getElementById('demo-label');
+
+  if (demoMode) {
+    banner.style.display = 'block';
+    btn.style.background = 'var(--accent-light)';
+    btn.style.borderColor = 'var(--accent-border)';
+    btn.style.color = 'var(--accent)';
+    label.textContent = 'Demo ON';
+    addLogEntry('Demo mode activated', 'info');
+  } else {
+    banner.style.display = 'none';
+    btn.style.background = 'transparent';
+    btn.style.borderColor = 'var(--card-border)';
+    btn.style.color = 'var(--text-secondary)';
+    label.textContent = 'Demo';
+    addLogEntry('Demo mode deactivated', 'info');
+  }
+}
+
+function toggleLog() {
+  logVisible = !logVisible;
+  var panel = document.getElementById('log-panel');
+  panel.style.display = logVisible ? 'flex' : 'none';
+}
+
+function clearLog() {
+  document.getElementById('log-entries').innerHTML = '';
+}
+
+function addLogEntry(msg, type) {
+  var colors = {
+    'success': 'var(--emerald)',
+    'error': 'var(--red)',
+    'warn': 'var(--amber)',
+    'info': 'var(--accent)'
+  };
+  var color = colors[type] || colors['info'];
+  var now = new Date();
+  var time = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+  var entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = '<div class="log-bar" style="background:' + color + ';"></div><div><div class="log-msg">' + msg + '</div><div class="log-time">' + time + '</div></div>';
+
+  var container = document.getElementById('log-entries');
+  container.insertBefore(entry, container.firstChild);
+
+  while (container.children.length > 50) {
+    container.removeChild(container.lastChild);
+  }
+}
+
+function setFilter(el, filterKey) {
+  currentFilter = filterKey;
+  document.querySelectorAll('.filter-item').forEach(function(f) { f.classList.remove('active'); });
+  el.classList.add('active');
+  addLogEntry('Filter: ' + filterKey, 'info');
+}
+</script>
+</body>
+</html>
