@@ -147,11 +147,11 @@ If the user provides only a brief text description (e.g., "dark theme, neon gree
 // Calls /api/extract which streams SSE events back for real-time progress.
 // No secrets in the browser.
 
-async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal) {
+async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, model) {
   const res = await withRetry(() => fetch("/api/extract", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contentBlocks, customPrompt: customPrompt || undefined }),
+    body: JSON.stringify({ contentBlocks, customPrompt: customPrompt || undefined, model: model || undefined }),
     signal,
   }), { retries: 2, label: "extract" });
 
@@ -281,6 +281,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
   const [progress, setProgress] = useState({ pct: 0, label: "" });
   const [canInstant, setCanInstant] = useState(false);
   const [saved, setSaved] = useState(cachedState?.saved || false);
+  const [model, setModel] = useState("claude-sonnet-4-20250514");
   const fileInputRef = useRef(null);
   const abortRef = useRef(null);
 
@@ -380,7 +381,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
           const stage = getProgressStage(evt.chars, null);
           setProgress(stage);
         }
-      }, controller.signal);
+      }, controller.signal, model);
 
       if (!result.success) {
         throw new Error(result.error || "Extraction failed");
@@ -613,7 +614,21 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
         {/* Actions Row */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {!loading ? (
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {/* Model selector */}
+              <select
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                style={{
+                  background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 8,
+                  padding: "8px 10px", fontSize: 12, fontWeight: 500, color: T.text,
+                  cursor: "pointer", outline: "none",
+                }}
+              >
+                <option value="claude-sonnet-4-20250514">Sonnet 4</option>
+                <option value="claude-opus-4-20250514">Opus 4</option>
+                <option value="claude-haiku-4-20250514">Haiku 4</option>
+              </select>
               {canInstant && (
                 <button
                   onClick={handleInstantExtract}
