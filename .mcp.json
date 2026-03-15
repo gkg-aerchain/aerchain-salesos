@@ -4,7 +4,7 @@
       "type": "http",
       "url": "https://api.refero.design/mcp",
       "headers": {
-        "Authorization": "Bearer mcp-or2fxAOKQFZatt6H"
+        "Authorization": "Bearer ${REFERO_API_KEY}"
       }
     },
     "notion": {
