@@ -15,6 +15,7 @@ import {
 // ── Theme tokens (same as App.jsx) ────────────────────────
 import { T } from "../lib/theme.js";
 import { fmt$ } from "../lib/utils.js";
+import { buildPreviewHTML } from "../lib/previewSkeleton.js";
 
 function timeAgo(date) {
   if (!date) return "Never";
@@ -338,28 +339,21 @@ function DesignSystemDetail({ file, onLoadReference }) {
         })}
       </div>
 
-      {/* Preview tab — color swatches + typography */}
-      {activeTab === "preview" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {/* Color swatches grid */}
-          <div className="glass-surface" style={{ borderRadius: 12, padding: "14px 16px", boxShadow: "var(--s-glass)" }}>
-            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 10 }}>Color Palette</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {Object.entries(colors).map(([key, c]) => (
-                <div key={key} style={{ textAlign: "center", width: 64 }}>
-                  <div style={{
-                    width: 48, height: 48, borderRadius: 8, background: c.hex,
-                    border: `1px solid ${T.border}`, margin: "0 auto 4px",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.1)"
-                  }} />
-                  <div style={{ fontSize: 8, fontWeight: 600, color: T.text }}>{c.name}</div>
-                  <div style={{ fontSize: 7, color: T.muted, fontFamily: "monospace" }}>{c.hex}</div>
-                </div>
-              ))}
-            </div>
+      {/* Preview tab — full iframe preview (same as Design Extractor) */}
+      {activeTab === "preview" && tokens && Object.keys(tokens).length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{
+            border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden",
+            height: 540, background: (meta.theme === "dark") ? "#0f0d1a" : "#f8f9fa",
+          }}>
+            <iframe
+              srcDoc={buildPreviewHTML(tokens)}
+              title="Design System Preview"
+              style={{ width: "100%", height: "100%", border: "none" }}
+              sandbox="allow-scripts"
+            />
           </div>
-
-          {/* Design principles */}
+          {/* Design principles below */}
           {principles.length > 0 && (
             <div className="glass-surface" style={{ borderRadius: 12, padding: "14px 16px", boxShadow: "var(--s-glass)" }}>
               <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 8 }}>Design Principles</div>
