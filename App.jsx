@@ -3,7 +3,7 @@ import {
   RefreshCw, AlertCircle, Clock,
   Loader2, Activity, FileText, DollarSign, X,
   TrendingUp, Users, Wand2, Download, Settings, Brain,
-  ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon, Monitor
+  ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon, Monitor, Palette, Check
 } from "lucide-react";
 import DUMMY_DATA from "./demo-data/index.js";
 
@@ -648,14 +648,42 @@ function ProposalsView({ data, onFilesSelected, uploadedFiles, processing, onPro
 
 // ── SETTINGS VIEW ─────────────────────────────────────────
 
-function SettingsView({ claudeMemory, onClearMemory }) {
+function SettingsView({ claudeMemory, onClearMemory, theme, setTheme }) {
   const [activeTab, setActiveTab] = useState("memory");
 
   const tabs = [
     { id: "memory",  label: "Claude Memory" },
+    { id: "theme",   label: "Theme"         },
     { id: "notion",  label: "Notion Audit"  },
     { id: "apis",    label: "API Connections"},
     { id: "supabase",label: "Database"      },
+  ];
+
+  const themeOptions = [
+    {
+      id: "dark",
+      name: "Dark Canvas",
+      desc: "Glassmorphic dark theme with purple accent orbs. Optimized for low-light environments.",
+      icon: Moon,
+      colors: ["hsl(265,30%,7%)", "hsl(262,75%,62%)", "rgba(255,255,255,0.04)", "rgba(255,255,255,0.88)"],
+      labels: ["Canvas", "Accent", "Surface", "Text"],
+    },
+    {
+      id: "light",
+      name: "Soft Lilac",
+      desc: "Warm purple-tinted light theme with frosted glass surfaces. Vibrant and expressive.",
+      icon: Sun,
+      colors: ["hsl(262,30%,92%)", "hsl(262,65%,52%)", "rgba(255,255,255,0.90)", "rgba(0,0,0,0.88)"],
+      labels: ["Canvas", "Accent", "Surface", "Text"],
+    },
+    {
+      id: "clean",
+      name: "Clean Enterprise",
+      desc: "Neutral white surfaces with gray borders. Matches the Aerchain procurement platform.",
+      icon: Monitor,
+      colors: ["#F8F9FC", "hsl(262,65%,52%)", "#FFFFFF", "#111827"],
+      labels: ["Canvas", "Accent", "Surface", "Text"],
+    },
   ];
 
   return (
@@ -715,6 +743,82 @@ function SettingsView({ claudeMemory, onClearMemory }) {
                 ))}
               </div>
             )}
+          </Card>
+        </div>
+      )}
+
+      {/* Theme tab */}
+      {activeTab === "theme" && (
+        <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+          <Card>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+              <Palette size={13} color={T.accent} />
+              <span style={{ fontSize:12, fontWeight:600 }}>Appearance</span>
+            </div>
+            <div style={{ color:T.muted, fontSize:12, marginBottom:16 }}>
+              Choose a visual theme. This affects colors, surfaces, and shadows. Layout and structure stay the same.
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {themeOptions.map(opt => {
+                const Icon = opt.icon;
+                const isSel = theme === opt.id;
+                return (
+                  <div key={opt.id} onClick={() => setTheme(opt.id)} style={{
+                    display:"flex", alignItems:"center", gap:14,
+                    padding:"14px 16px", borderRadius:10, cursor:"pointer",
+                    background: isSel ? T.accentBg : T.bgCard,
+                    border: `1px solid ${isSel ? T.borderAcc : T.border}`,
+                    transition:"all 0.15s",
+                  }}>
+                    {/* Selection indicator */}
+                    <div style={{
+                      width:20, height:20, borderRadius:"50%", flexShrink:0,
+                      border: isSel ? "none" : `2px solid ${T.border}`,
+                      background: isSel ? T.accent : "transparent",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                    }}>
+                      {isSel && <Check size={12} color="white" strokeWidth={3} />}
+                    </div>
+
+                    {/* Theme icon */}
+                    <div style={{
+                      width:36, height:36, borderRadius:8, flexShrink:0,
+                      background: T.accentBg,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                    }}>
+                      <Icon size={16} color={T.accent} />
+                    </div>
+
+                    {/* Name and description */}
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:600, color:T.text, marginBottom:2 }}>{opt.name}</div>
+                      <div style={{ fontSize:11, color:T.muted, lineHeight:1.4 }}>{opt.desc}</div>
+                    </div>
+
+                    {/* Color preview swatches */}
+                    <div style={{ display:"flex", gap:4, flexShrink:0 }}>
+                      {opt.colors.map((c, i) => (
+                        <div key={i} style={{ textAlign:"center" }}>
+                          <div style={{
+                            width:24, height:24, borderRadius:6,
+                            background:c, border:`1px solid ${T.border}`,
+                          }} />
+                          <div style={{ fontSize:8, color:T.mutedSoft, marginTop:2 }}>{opt.labels[i]}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card>
+            <div style={{ fontSize:11, color:T.muted, lineHeight:1.6 }}>
+              <strong style={{ color:T.text }}>Tip:</strong> You can also toggle themes quickly using the{" "}
+              {theme === "dark" ? <Sun size={10} style={{ verticalAlign:"middle" }} /> : theme === "light" ? <Monitor size={10} style={{ verticalAlign:"middle" }} /> : <Moon size={10} style={{ verticalAlign:"middle" }} />}
+              {" "}button in the top bar. It cycles through Dark → Light → Clean.
+            </div>
           </Card>
         </div>
       )}
@@ -818,9 +922,9 @@ function GenericView({ data }) {
 
 // ── MODULE CONTENT ROUTER ─────────────────────────────────
 
-function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess }) {
+function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme }) {
   // Settings is never empty — always show view
-  if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} />;
+  if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} />;
 
   const isEmpty = !data || Object.keys(data).length === 0 || (Object.keys(data).length === 1 && data.syncedAt);
 
@@ -1465,6 +1569,8 @@ ${document.getElementById("root").innerHTML}
                 uploadedFiles={uploadedFiles[selected]}
                 processing={processing.has(selected)}
                 onProcess={() => handleProcess(selected)}
+                theme={theme}
+                setTheme={setTheme}
               />
             </div>
           </div>
