@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerchain SalesOS — Dark Theme Rebalance Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ====== SIDE-BY-SIDE COMPARISON ====== */
+  body {
+    margin: 0;
+    font-family: 'Montserrat', -apple-system, sans-serif;
+    background: #0a0a0a;
+    color: #fff;
+  }
+
+  .page-header {
+    text-align: center;
+    padding: 30px 20px 10px;
+  }
+  .page-header h1 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 600;
+  }
+  .page-header p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    margin-top: 6px;
+  }
+
+  .compare-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 20px 24px 40px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .panel {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .panel-label {
+    text-align: center;
+    padding: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .panel-label.current { background: rgba(239,68,68,0.15); color: #f87171; }
+  .panel-label.proposed { background: rgba(16,185,129,0.15); color: #34d399; }
+
+  /* ====== SHARED APP STYLES ====== */
+  .app-shell {
+    display: flex;
+    height: 700px;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    padding: 14px 14px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sidebar-logo .logo-text { font-size: 13px; font-weight: 800; }
+  .sidebar-logo .app-badge {
+    font-size: 8px; font-weight: 700; letter-spacing: 0.5px;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .sidebar-section {
+    padding: 14px 12px 5px;
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; margin: 1px 6px;
+    border-radius: 7px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1px solid transparent;
+  }
+  .sidebar-item .dot { width: 5px; height: 5px; border-radius: 50%; margin-left: auto; }
+  .sidebar-footer {
+    margin-top: auto; padding: 12px 14px;
+    font-size: 10px; line-height: 1.5;
+  }
+
+  .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    height: 48px;
+    display: flex; align-items: center;
+    padding: 0 16px; gap: 10px; flex-shrink: 0;
+  }
+  .topbar-module { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .topbar-status { font-size: 10px; }
+  .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+  .btn-sync {
+    background: linear-gradient(135deg, hsl(262 75% 62%), hsl(275 80% 65%));
+    color: white; border: none; padding: 6px 12px;
+    border-radius: 7px; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .btn-demo {
+    padding: 5px 10px; border-radius: 7px;
+    font-size: 10px; font-weight: 600;
+    cursor: pointer; font-family: inherit; border: none;
+  }
+
+  .content { flex: 1; overflow-y: auto; padding: 16px; }
+
+  .demo-banner {
+    text-align: center; font-size: 11px; padding: 6px;
+    color: hsl(38 85% 58%);
+  }
+
+  .module-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; margin-bottom: 12px;
+  }
+  .module-header .icon-badge {
+    width: 28px; height: 28px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .module-header h2 { font-size: 15px; font-weight: 700; }
+  .module-header .sub { font-size: 10px; }
+  .stale-badge {
+    margin-left: auto; font-size: 10px; font-weight: 600;
+    padding: 4px 10px; border-radius: 5px;
+  }
+  .notion-link { font-size: 10px; text-decoration: none; margin-left: 8px; }
+
+  .stats-grid { display: flex; gap: 10px; margin-bottom: 14px; }
+  .stat-card {
+    flex: 1; border-radius: 10px; padding: 14px;
+  }
+  .stat-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.8px;
+    text-transform: uppercase; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .stat-value { font-size: 22px; font-weight: 800; }
+  .stat-sub { font-size: 10px; margin-top: 3px; }
+
+  .card {
+    border-radius: 10px; padding: 14px; margin-bottom: 12px;
+  }
+  .card-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    font-size: 12px; font-weight: 600;
+  }
+  .card-header .count { font-weight: 400; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    padding: 8px 12px;
+  }
+  td {
+    padding: 10px 12px; font-size: 12px;
+  }
+  .td-client { font-weight: 600; }
+  .td-value { font-weight: 600; }
+
+  .badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 4px; font-size: 10px; font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .sync-panel {
+    width: 220px; flex-shrink: 0;
+    padding: 10px; overflow-y: auto;
+  }
+  .sync-panel-header {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+  .sync-entry {
+    padding: 8px 10px; border-radius: 7px;
+    font-size: 10px; margin-bottom: 6px;
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .sync-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .sync-time { font-size: 9px; margin-top: 3px; }
+
+  .quick-sync {
+    padding-top: 10px; margin-top: 8px;
+  }
+  .quick-sync-label { font-size: 9px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; }
+  .quick-sync-btns { display: flex; gap: 4px; }
+  .qs-btn {
+    padding: 4px 10px; border-radius: 5px;
+    font-size: 10px; font-weight: 500;
+    cursor: pointer; font-family: inherit; border: none;
+  }
+
+  .lumos-btn {
+    position: absolute; bottom: 10px; right: 10px;
+    padding: 5px 12px; border-radius: 16px;
+    font-size: 10px; font-weight: 600;
+    border: none; cursor: pointer; font-family: inherit;
+  }
+
+  /* ====== CURRENT DARK THEME ====== */
+  .current {
+    --canvas: linear-gradient(145deg, hsl(265 30% 7%) 0%, hsl(270 20% 5%) 40%, hsl(260 15% 4%) 100%);
+    --glass-1: rgba(255,255,255,0.04);
+    --glass-2: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.09);
+    --fg: rgba(255,255,255,0.88);
+    --fg2: rgba(255,255,255,0.60);
+    --fg3: rgba(255,255,255,0.35);
+    --primary: hsl(262 75% 62%);
+    --active-bg: hsla(262,75%,62%,0.18);
+    --accent-bg: hsla(262,75%,62%,0.15);
+    --accent-border: hsla(262,75%,62%,0.4);
+    --divider: rgba(255,255,255,0.10);
+    --badge-bg: rgba(255,255,255,0.06);
+    --topbar-bg: rgba(255,255,255,0.03);
+    --sidebar-bg: rgba(255,255,255,0.03);
+    --green: hsl(152 60% 52%);
+    --amber: hsl(38 85% 58%);
+    --red: hsl(0 72% 62%);
+    --s-card: 0 2px 16px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  }
+
+  /* ====== PROPOSED REBALANCED DARK THEME ====== */
+  .proposed {
+    --canvas: hsl(265 25% 6%);
+    --glass-1: rgba(255,255,255,0.055);
+    --glass-2: rgba(255,255,255,0.09);
+    --glass-border: rgba(255,255,255,0.12);
+    --fg: rgba(255,255,255,0.90);
+    --fg2: rgba(255,255,255,0.58);
+    --fg3: rgba(255,255,255,0.35);
+    --primary: hsl(262 75% 62%);
+    --active-bg: hsla(262,75%,62%,0.20);
+    --accent-bg: hsla(262,75%,62%,0.15);
+    --accent-border: hsla(262,75%,62%,0.4);
+    --divider: rgba(255,255,255,0.12);
+    --badge-bg: rgba(255,255,255,0.07);
+    --topbar-bg: rgba(255,255,255,0.03);
+    --sidebar-bg: rgba(255,255,255,0.03);
+    --green: hsl(152 60% 52%);
+    --amber: hsl(38 85% 58%);
+    --red: hsl(0 72% 62%);
+    --s-card: 0 2px 16px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  }
+
+  /* Apply theme vars */
+  .theme-shell {
+    position: relative;
+  }
+  .theme-shell .app-shell { background: var(--canvas); color: var(--fg); }
+  .theme-shell .sidebar { background: var(--sidebar-bg); border-right: 1px solid var(--glass-border); }
+  .theme-shell .sidebar-logo { border-bottom: 1px solid var(--glass-border); }
+  .theme-shell .sidebar-section { color: var(--fg3); }
+  .theme-shell .sidebar-item { color: var(--fg2); }
+  .theme-shell .sidebar-item:hover { background: var(--glass-2); }
+  .theme-shell .sidebar-item.active {
+    background: var(--active-bg); color: var(--primary);
+    font-weight: 600; border-color: var(--accent-border);
+  }
+  .theme-shell .sidebar-footer { color: var(--fg3); border-top: 1px solid var(--glass-border); }
+  .theme-shell .app-badge { background: var(--accent-bg); color: var(--primary); }
+  .theme-shell .topbar { background: var(--topbar-bg); border-bottom: 1px solid var(--glass-border); }
+  .theme-shell .topbar-status { color: var(--fg3); }
+  .theme-shell .stat-card { background: var(--glass-1); border: 1px solid var(--glass-border); box-shadow: var(--s-card); }
+  .theme-shell .stat-label { color: var(--fg3); }
+  .theme-shell .stat-sub { color: var(--fg3); }
+  .theme-shell .card { background: var(--glass-1); border: 1px solid var(--glass-border); box-shadow: var(--s-card); }
+  .theme-shell .card-header .count { color: var(--fg3); }
+  .theme-shell th { color: var(--fg3); border-bottom: 1px solid var(--divider); }
+  .theme-shell td { border-bottom: 1px solid var(--divider); color: var(--fg2); }
+  .theme-shell .td-client { color: var(--fg); }
+  .theme-shell .td-value { color: var(--green); }
+  .theme-shell .module-header .icon-badge { background: var(--accent-bg); color: var(--primary); }
+  .theme-shell .module-header .sub { color: var(--fg3); }
+  .theme-shell .stale-badge { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
+  .theme-shell .notion-link { color: var(--fg3); }
+  .theme-shell .btn-demo { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .theme-shell .sync-panel { background: var(--sidebar-bg); border-left: 1px solid var(--glass-border); }
+  .theme-shell .sync-panel-header { color: var(--fg3); border-bottom: 1px solid var(--glass-border); }
+  .theme-shell .sync-entry { background: var(--glass-1); color: var(--fg2); }
+  .theme-shell .sync-time { color: var(--fg3); }
+  .theme-shell .quick-sync-label { color: var(--fg3); }
+  .theme-shell .qs-btn { background: var(--glass-1); color: var(--fg2); border: 1px solid var(--glass-border); }
+  .theme-shell .lumos-btn { background: var(--accent-bg); color: var(--primary); border: 1px solid var(--accent-border); }
+  .theme-shell .dot-green { background: var(--green); }
+  .theme-shell .dot-amber { background: var(--amber); }
+
+  .badge-proposal { background: rgba(139,92,246,0.15); color: hsl(262 75% 62%); }
+  .badge-negotiation { background: rgba(245,158,11,0.15); color: hsl(38 85% 58%); }
+  .badge-won { background: rgba(16,185,129,0.15); color: hsl(152 60% 52%); }
+  .status-submitted { color: hsl(152 60% 52%); }
+  .status-review { color: rgba(255,255,255,0.55); }
+  .status-draft { color: hsl(38 85% 58%); }
+
+  /* ====== DELTA CALLOUTS ====== */
+  .deltas {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+  }
+  .deltas h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.4); margin-bottom: 16px;
+  }
+  .delta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .delta-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .delta-card .label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.7); margin-bottom: 8px; }
+  .delta-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 11px; }
+  .delta-swatch { width: 20px; height: 20px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0; }
+  .delta-old { color: #f87171; }
+  .delta-new { color: #34d399; }
+  .delta-arrow { color: rgba(255,255,255,0.3); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Dark Theme Rebalance — Side-by-Side Preview</h1>
+  <p>Left: Current Dark Canvas v3 &nbsp;|&nbsp; Right: Proposed Rebalance (deeper, more uniform, better card lift)</p>
+</div>
+
+<div class="compare-container">
+
+  <!-- ====== CURRENT ====== -->
+  <div class="panel">
+    <div class="panel-label current">Current — Dark Canvas v3</div>
+    <div class="theme-shell current">
+      <div class="app-shell">
+        <div class="sidebar">
+          <div class="sidebar-logo">
+            <span class="logo-text" style="color:white">AERCHAIN</span>
+            <span class="app-badge">SALES OS</span>
+          </div>
+          <div class="sidebar-section">DEAL DESK</div>
+          <div class="sidebar-item">$ Pricing Calculator <span class="dot dot-green"></span></div>
+          <div class="sidebar-item active">📄 Proposal Generator <span class="dot dot-amber"></span></div>
+          <div class="sidebar-section" style="margin-top:auto">SYSTEM</div>
+          <div class="sidebar-item">⚙ Settings</div>
+          <div class="sidebar-footer">Aerchain · $6M ARR<br>$20B+ spend managed</div>
+        </div>
+        <div class="main-area">
+          <div class="topbar">
+            <div class="topbar-module">
+              <span style="color:var(--primary)">📄</span> Proposal Generator
+              <span style="font-size:10px;padding:2px 7px;border-radius:4px;background:var(--badge-bg);color:var(--amber);font-weight:600">STALE</span>
+            </div>
+            <div class="topbar-actions">
+              <button class="btn-sync">↻ Sync All</button>
+              <button class="btn-demo">Demo ON</button>
+            </div>
+          </div>
+          <div class="demo-banner">Demo Mode — Showing sample data</div>
+          <div class="content">
+            <div class="module-header">
+              <div class="icon-badge">📄</div>
+              <div>
+                <h2 style="margin:0">Proposal Generator</h2>
+                <div class="sub">● Fresh · ⏱ 1d ago</div>
+              </div>
+              <div class="stale-badge">⚠ Data is stale — sync recommended</div>
+              <a class="notion-link" href="#">📋 Notion Log ↗</a>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-label">📄 Active Proposals</div>
+                <div class="stat-value">4</div>
+                <div class="stat-sub">In pipeline</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label" style="color:var(--green)">$ Total Value</div>
+                <div class="stat-value" style="color:var(--green)">$4.6M</div>
+                <div class="stat-sub">Combined deal value</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label" style="color:var(--amber)">📈 Avg Deal Size</div>
+                <div class="stat-value" style="color:var(--amber)">$1.2M</div>
+                <div class="stat-sub">Per proposal</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">📄 Active Proposals <span class="count">(4)</span></div>
+              <table>
+                <thead>
+                  <tr><th>Client</th><th>Value</th><th>Stage</th><th>Status</th><th>Submitted</th><th>Contact</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="td-client">Mahindra & Mahindra</td><td class="td-value">$750K</td><td><span class="badge badge-proposal">Proposal</span></td><td class="status-submitted">Submitted</td><td>2026-03-10</td><td>Rajesh Kumar</td></tr>
+                  <tr><td class="td-client">Larsen & Toubro</td><td class="td-value">$1.2M</td><td><span class="badge badge-negotiation">Negotiation</span></td><td class="status-review">In Review</td><td>2026-03-05</td><td>Priya Sharma</td></tr>
+                  <tr><td class="td-client">Reliance Industries</td><td class="td-value">$2.0M</td><td><span class="badge badge-proposal">Proposal</span></td><td class="status-draft">Draft</td><td>2026-03-12</td><td>Amit Patel</td></tr>
+                  <tr><td class="td-client">Adani Ports</td><td class="td-value">$680K</td><td><span class="badge badge-won">Closed Won</span></td><td class="status-submitted">Submitted</td><td>2026-02-28</td><td>Sneha Gupta</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PROPOSED ====== -->
+  <div class="panel">
+    <div class="panel-label proposed">Proposed — Rebalanced Dark</div>
+    <div class="theme-shell proposed">
+      <div class="app-shell">
+        <div class="sidebar">
+          <div class="sidebar-logo">
+            <span class="logo-text" style="color:white">AERCHAIN</span>
+            <span class="app-badge">SALES OS</span>
+          </div>
+          <div class="sidebar-section">DEAL DESK</div>
+          <div class="sidebar-item">$ Pricing Calculator <span class="dot dot-green"></span></div>
+          <div class="sidebar-item active">📄 Proposal Generator <span class="dot dot-amber"></span></div>
+          <div class="sidebar-section" style="margin-top:auto">SYSTEM</div>
+          <div class="sidebar-item">⚙ Settings</div>
+          <div class="sidebar-footer">Aerchain · $6M ARR<br>$20B+ spend managed</div>
+        </div>
+        <div class="main-area">
+          <div class="topbar">
+            <div class="topbar-module">
+              <span style="color:var(--primary)">📄</span> Proposal Generator
+              <span style="font-size:10px;padding:2px 7px;border-radius:4px;background:var(--badge-bg);color:var(--amber);font-weight:600">STALE</span>
+            </div>
+            <div class="topbar-actions">
+              <button class="btn-sync">↻ Sync All</button>
+              <button class="btn-demo">Demo ON</button>
+            </div>
+          </div>
+          <div class="demo-banner">Demo Mode — Showing sample data</div>
+          <div class="content">
+            <div class="module-header">
+              <div class="icon-badge">📄</div>
+              <div>
+                <h2 style="margin:0">Proposal Generator</h2>
+                <div class="sub">● Fresh · ⏱ 1d ago</div>
+              </div>
+              <div class="stale-badge">⚠ Data is stale — sync recommended</div>
+              <a class="notion-link" href="#">📋 Notion Log ↗</a>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-label">📄 Active Proposals</div>
+                <div class="stat-value">10</div>
+                <div class="stat-sub">In pipeline</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label" style="color:var(--green)">$ Total Value</div>
+                <div class="stat-value" style="color:var(--green)">$10.8M</div>
+                <div class="stat-sub">Combined deal value</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label" style="color:var(--amber)">📈 Avg Deal Size</div>
+                <div class="stat-value" style="color:var(--amber)">$1.1M</div>
+                <div class="stat-sub">Per proposal</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">📄 Active Proposals <span class="count">(10)</span></div>
+              <table>
+                <thead>
+                  <tr><th>Client</th><th>Value</th><th>Stage</th><th>Status</th><th>Submitted</th><th>Contact</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td class="td-client">Mahindra & Mahindra</td><td class="td-value">$750K</td><td><span class="badge badge-proposal">Proposal</span></td><td class="status-submitted">Submitted</td><td>2026-03-10</td><td>Rajesh Kumar</td></tr>
+                  <tr><td class="td-client">Larsen & Toubro</td><td class="td-value">$1.2M</td><td><span class="badge badge-negotiation">Negotiation</span></td><td class="status-review">In Review</td><td>2026-03-05</td><td>Priya Sharma</td></tr>
+                  <tr><td class="td-client">Reliance Industries</td><td class="td-value">$2.0M</td><td><span class="badge badge-proposal">Proposal</span></td><td class="status-draft">Draft</td><td>2026-03-12</td><td>Amit Patel</td></tr>
+                  <tr><td class="td-client">Adani Ports</td><td class="td-value">$680K</td><td><span class="badge badge-won">Closed Won</span></td><td class="status-submitted">Submitted</td><td>2026-02-28</td><td>Sneha Gupta</td></tr>
+                  <tr><td class="td-client">Tata Steel</td><td class="td-value">$1.5M</td><td><span class="badge badge-negotiation">Negotiation</span></td><td class="status-review">In Review</td><td>2026-03-01</td><td>Vikram Singh</td></tr>
+                  <tr><td class="td-client">JSW Group</td><td class="td-value">$1.9M</td><td><span class="badge badge-proposal">Proposal</span></td><td class="status-submitted">Submitted</td><td>2026-03-08</td><td>Ananya Desai</td></tr>
+                  <tr><td class="td-client">Infosys Ltd</td><td class="td-value">$520K</td><td><span class="badge" style="background:rgba(239,68,68,0.15);color:hsl(0 72% 62%)">Closed Lost</span></td><td style="color:hsl(0 72% 62%)">Rejected</td><td>2026-02-15</td><td>Karthik Nair</td></tr>
+                  <tr><td class="td-client">Bajaj Auto</td><td class="td-value">$890K</td><td><span class="badge badge-proposal">Proposal</span></td><td class="status-draft">Draft</td><td>2026-03-13</td><td>Meera Joshi</td></tr>
+                  <tr><td class="td-client">Wipro Ltd</td><td class="td-value">$380K</td><td><span class="badge badge-won">Closed Won</span></td><td class="status-submitted">Submitted</td><td>2026-02-20</td><td>Rohan Kapoor</td></tr>
+                  <tr><td class="td-client">Hindustan Unilever</td><td class="td-value">$1.1M</td><td><span class="badge badge-negotiation">Negotiation</span></td><td class="status-review">In Review</td><td>2026-03-03</td><td>Divya Menon</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DELTA CALLOUTS -->
+<div class="deltas">
+  <h2>What Changed — Token Deltas</h2>
+  <div class="delta-grid">
+    <div class="delta-card">
+      <div class="label">Canvas (Background)</div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:hsl(265 30% 7%)"></div>
+        <span class="delta-old">3-stop gradient (7%→5%→4% L)</span>
+      </div>
+      <div class="delta-row"><span class="delta-arrow">↓</span></div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:hsl(265 25% 6%)"></div>
+        <span class="delta-new">Solid hsl(265 25% 6%) — uniform, deeper</span>
+      </div>
+    </div>
+    <div class="delta-card">
+      <div class="label">Glass-1 (Card Surface)</div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:rgba(255,255,255,0.04)"></div>
+        <span class="delta-old">rgba(255,255,255, 0.04) — 4%</span>
+      </div>
+      <div class="delta-row"><span class="delta-arrow">↓</span></div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:rgba(255,255,255,0.055)"></div>
+        <span class="delta-new">rgba(255,255,255, 0.055) — 5.5%</span>
+      </div>
+    </div>
+    <div class="delta-card">
+      <div class="label">Glass Border</div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.3)"></div>
+        <span class="delta-old">rgba(255,255,255, 0.09) — 9%</span>
+      </div>
+      <div class="delta-row"><span class="delta-arrow">↓</span></div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.3)"></div>
+        <span class="delta-new">rgba(255,255,255, 0.12) — 12%</span>
+      </div>
+    </div>
+    <div class="delta-card">
+      <div class="label">Divider (Table Rows)</div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:rgba(255,255,255,0.10)"></div>
+        <span class="delta-old">rgba(255,255,255, 0.10) — 10%</span>
+      </div>
+      <div class="delta-row"><span class="delta-arrow">↓</span></div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:rgba(255,255,255,0.12)"></div>
+        <span class="delta-new">rgba(255,255,255, 0.12) — 12%</span>
+      </div>
+    </div>
+    <div class="delta-card">
+      <div class="label">Primary Text</div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:rgba(255,255,255,0.88)"></div>
+        <span class="delta-old">rgba(255,255,255, 0.88) — 88%</span>
+      </div>
+      <div class="delta-row"><span class="delta-arrow">↓</span></div>
+      <div class="delta-row">
+        <div class="delta-swatch" style="background:rgba(255,255,255,0.90)"></div>
+        <span class="delta-new">rgba(255,255,255, 0.90) — 90%</span>
+      </div>
+    </div>
+    <div class="delta-card">
+      <div class="label">Orbs (Background Blobs)</div>
+      <div class="delta-row">
+        <span class="delta-old">30% + 25% opacity — visible</span>
+      </div>
+      <div class="delta-row"><span class="delta-arrow">↓</span></div>
+      <div class="delta-row">
+        <span class="delta-new">15% + 12% opacity — barely visible</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
