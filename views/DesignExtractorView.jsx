@@ -5,10 +5,11 @@
 //   HTML styleguide, Markdown spec, JSON tokens, React theme
 // ═══════════════════════════════════════════════════════════
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle, Zap, Save } from "lucide-react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle, Zap, Save, Monitor } from "lucide-react";
 import { generateHTML, generateMarkdown, generateJSON, generateReactTheme, buildOutputs } from "../lib/generators.js";
 import { canExtractProgrammatically, extractFromHTML, extractFromCSS } from "../lib/programmaticExtractor.js";
+import { buildPreviewHTML } from "../lib/previewSkeleton.js";
 import { withRetry } from "../lib/retry.js";
 import { T } from "../lib/theme.js";
 
@@ -230,7 +231,8 @@ async function readFileAsText(file) {
 // ── MAIN COMPONENT ───────────────────────────────────────
 
 const TABS = [
-  { key: "html",     label: "HTML",     Icon: Eye,      ext: ".html" },
+  { key: "preview",  label: "Preview",  Icon: Monitor,   ext: ".html" },
+  { key: "html",     label: "HTML",     Icon: Eye,       ext: ".html" },
   { key: "markdown", label: "Markdown", Icon: FileText,  ext: ".md" },
   { key: "json",     label: "JSON",     Icon: Code,      ext: ".json" },
   { key: "react",    label: "React",    Icon: Code,      ext: ".jsx" },
@@ -282,8 +284,10 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
   const [canInstant, setCanInstant] = useState(false);
   const [saved, setSaved] = useState(cachedState?.saved || false);
   const [model, setModel] = useState("claude-sonnet-4-20250514");
+  const [previewDark, setPreviewDark] = useState(false);
   const fileInputRef = useRef(null);
   const abortRef = useRef(null);
+  const iframeRef = useRef(null);
 
   // Abort in-flight extraction on unmount
   useEffect(() => {
@@ -310,6 +314,23 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
       setUsage({ input_tokens: 0, output_tokens: 0 });
     }
   }, [referenceTokens]);
+
+  // Build preview HTML from tokens — instant, no API call
+  const previewHTML = useMemo(() => {
+    if (!tokens) return null;
+    return buildPreviewHTML(tokens);
+  }, [tokens]);
+
+  // Toggle dark/light theme inside preview iframe
+  useEffect(() => {
+    if (!iframeRef.current) return;
+    try {
+      const doc = iframeRef.current.contentDocument;
+      if (doc?.documentElement) {
+        doc.documentElement.setAttribute("data-theme", previewDark ? "dark" : "light");
+      }
+    } catch { /* cross-origin safety */ }
+  }, [previewDark]);
 
   const handleDrop = useCallback((e) => {
     e.preventDefault();
@@ -531,6 +552,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
   };
 
   const currentTab = TABS[activeTab];
+  const isPreviewTab = currentTab.key === "preview";
   const currentOutput = outputs ? outputs[currentTab.key] : "";
 
   return (
@@ -802,37 +824,23 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
             ))}
           </div>
 
-          {/* Tab Actions */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <button
-              onClick={() => copyToClipboard(currentOutput)}
-              style={{
-                background: "none", border: `1.5px solid ${T.border}`, borderRadius: 100,
-                padding: "5px 14px", fontSize: 11, fontWeight: 600, color: T.text,
-                cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-              }}
-            >
-              {copied ? <><CheckCircle size={12} /> Copied!</> : <><Copy size={12} /> Copy</>}
-            </button>
-            <button
-              onClick={() => {
-                const name = tokens?.meta?.name?.replace(/\s+/g, "-").toLowerCase() || "design-system";
-                downloadFile(currentOutput, `${name}${currentTab.ext}`);
-              }}
-              style={{
-                background: "none", border: `1.5px solid ${T.border}`, borderRadius: 100,
-                padding: "5px 14px", fontSize: 11, fontWeight: 600, color: T.text,
-                cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
-              }}
-            >
-              <Download size={12} /> Download
-            </button>
-            {activeTab === 0 && (
+          {/* Tab Actions — hidden on Preview tab */}
+          {!isPreviewTab && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <button
+                onClick={() => copyToClipboard(currentOutput)}
+                style={{
+                  background: "none", border: `1.5px solid ${T.border}`, borderRadius: 100,
+                  padding: "5px 14px", fontSize: 11, fontWeight: 600, color: T.text,
+                  cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                }}
+              >
+                {copied ? <><CheckCircle size={12} /> Copied!</> : <><Copy size={12} /> Copy</>}
+              </button>
               <button
                 onClick={() => {
-                  const w = window.open("", "_blank");
-                  w.document.write(currentOutput);
-                  w.document.close();
+                  const name = tokens?.meta?.name?.replace(/\s+/g, "-").toLowerCase() || "design-system";
+                  downloadFile(currentOutput, `${name}${currentTab.ext}`);
                 }}
                 style={{
                   background: "none", border: `1.5px solid ${T.border}`, borderRadius: 100,
@@ -840,24 +848,107 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
                   cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
                 }}
               >
-                <Eye size={12} /> Preview
+                <Download size={12} /> Download
               </button>
-            )}
-          </div>
+              {currentTab.key === "html" && (
+                <button
+                  onClick={() => {
+                    const w = window.open("", "_blank");
+                    w.document.write(currentOutput);
+                    w.document.close();
+                  }}
+                  style={{
+                    background: "none", border: `1.5px solid ${T.border}`, borderRadius: 100,
+                    padding: "5px 14px", fontSize: 11, fontWeight: 600, color: T.text,
+                    cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                  }}
+                >
+                  <Eye size={12} /> Preview
+                </button>
+              )}
+            </div>
+          )}
 
-          {/* Output Content */}
-          <div style={{
-            background: T.bg, border: `1px solid ${T.border}`, borderRadius: 12,
-            maxHeight: 480, overflow: "auto",
-          }}>
-            <pre style={{
-              margin: 0, padding: 16, fontSize: 11,
-              fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.6,
-              color: T.text, whiteSpace: "pre-wrap", wordBreak: "break-word",
+          {/* Preview Tab — live iframe with theme toggle */}
+          {isPreviewTab && previewHTML && (
+            <div>
+              {/* Preview toolbar */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <button
+                  onClick={() => setPreviewDark(!previewDark)}
+                  style={{
+                    background: previewDark ? "#1e1b2e" : "#fff",
+                    color: previewDark ? "#e2e8f0" : "#1f2937",
+                    border: `1.5px solid ${T.border}`, borderRadius: 100,
+                    padding: "5px 14px", fontSize: 11, fontWeight: 600,
+                    cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {previewDark ? "☾ Dark" : "☀ Light"}
+                </button>
+                <button
+                  onClick={() => {
+                    const w = window.open("", "_blank");
+                    w.document.write(previewHTML);
+                    w.document.close();
+                  }}
+                  style={{
+                    background: "none", border: `1.5px solid ${T.border}`, borderRadius: 100,
+                    padding: "5px 14px", fontSize: 11, fontWeight: 600, color: T.text,
+                    cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                  }}
+                >
+                  <Eye size={12} /> Open in New Tab
+                </button>
+                <button
+                  onClick={() => {
+                    const name = tokens?.meta?.name?.replace(/\s+/g, "-").toLowerCase() || "design-system";
+                    downloadFile(previewHTML, `${name}-preview.html`);
+                  }}
+                  style={{
+                    background: "none", border: `1.5px solid ${T.border}`, borderRadius: 100,
+                    padding: "5px 14px", fontSize: 11, fontWeight: 600, color: T.text,
+                    cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                  }}
+                >
+                  <Download size={12} /> Download Preview
+                </button>
+                <span style={{ fontSize: 10, color: T.muted, marginLeft: "auto" }}>
+                  Instant algorithmic render — no API cost
+                </span>
+              </div>
+              {/* iframe */}
+              <div style={{
+                border: `1px solid ${T.border}`, borderRadius: 12, overflow: "hidden",
+                height: 640, background: previewDark ? "#0f0d1a" : "#f8f9fa",
+              }}>
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={previewHTML}
+                  title="Design System Preview"
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                  sandbox="allow-scripts"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Output Content — code view for non-preview tabs */}
+          {!isPreviewTab && (
+            <div style={{
+              background: T.bg, border: `1px solid ${T.border}`, borderRadius: 12,
+              maxHeight: 480, overflow: "auto",
             }}>
-              {currentOutput}
-            </pre>
-          </div>
+              <pre style={{
+                margin: 0, padding: 16, fontSize: 11,
+                fontFamily: "'JetBrains Mono', monospace", lineHeight: 1.6,
+                color: T.text, whiteSpace: "pre-wrap", wordBreak: "break-word",
+              }}>
+                {currentOutput}
+              </pre>
+            </div>
+          )}
         </div>
       )}
     </div>
