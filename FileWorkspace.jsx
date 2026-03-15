@@ -4,7 +4,7 @@
 // Provides: card grid, expandable detail canvas, file management
 // ═══════════════════════════════════════════════════════════
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import {
   FileText, DollarSign, Palette, Plus, Copy, Trash2, Download,
   ChevronDown, ChevronRight, X, Clock, Tag, User, Edit3,
@@ -87,7 +87,7 @@ function getModuleIcon(moduleKey) {
 // FILE CARD (collapsed view in the grid)
 // ══════════════════════════════════════════════════════════
 
-function FileCard({ file, moduleKey, isSelected, onClick }) {
+const FileCard = memo(function FileCard({ file, moduleKey, isSelected, onClick }) {
   const metrics = getCardMetrics(moduleKey, file);
   const Icon = getModuleIcon(moduleKey);
 
@@ -158,7 +158,7 @@ function FileCard({ file, moduleKey, isSelected, onClick }) {
       </div>
     </div>
   );
-}
+});
 
 // ══════════════════════════════════════════════════════════
 // FILE DETAIL PANEL (expanded working canvas)

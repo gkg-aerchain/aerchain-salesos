@@ -4,7 +4,7 @@ import {
   Activity, X,
   Wand2, Download, Settings, Sun, Moon, Monitor, Link
 } from "lucide-react";
-import DUMMY_DATA, { SAMPLE_FILES } from "./demo-data/index.js";
+// demo-data is lazy-loaded on first Demo Mode toggle to reduce initial bundle (~104 KB)
 
 // ── Lib imports ──────────────────────────────────────────
 import { UPLOAD_MODULES, GROUPS, MOD, getSyncPrompt } from "./lib/constants.js";
@@ -38,6 +38,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const [showLog, setShowLog]           = useState(true);
   const [lastGlobalSync, setLastGlobalSync] = useState(null);
   const [showDummy, setShowDummy]       = useState(false);
+  const [demoData, setDemoData]         = useState({ DUMMY_DATA: {}, SAMPLE_FILES: {} });
   const [theme, setTheme]               = useState("dark");
   const [claudeMemory, setClaudeMemory] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aerchain-claude-memory") || "[]"); } catch { return []; }
@@ -48,8 +49,19 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const [savedFiles, setSavedFiles] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aerchain-saved-files") || "{}"); } catch { return {}; }
   });
+  // Always-current ref used by beforeunload to avoid stale-closure writes
+  const savedFilesRef = useRef(savedFiles);
   const [referenceTokens, setReferenceTokens] = useState(null);
   const [extractorCache, setExtractorCache] = useState(null);
+
+  // Lazy-load demo data only when Demo Mode is first activated
+  useEffect(() => {
+    if (showDummy && !demoData.DUMMY_DATA?.["pricing-calculator"]) {
+      import("./demo-data/index.js").then(mod => {
+        setDemoData({ DUMMY_DATA: mod.default, SAMPLE_FILES: mod.SAMPLE_FILES });
+      });
+    }
+  }, [showDummy]);
 
   // Dark Canvas v3 theme + font injection
   useEffect(() => {
@@ -91,33 +103,37 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     return () => clearTimeout(id);
   }, [moduleData]);
 
+  // Keep ref current so beforeunload always flushes the latest value
+  useEffect(() => { savedFilesRef.current = savedFiles; }, [savedFiles]);
+
   // Persist savedFiles to localStorage (debounced)
   useEffect(() => {
     const id = setTimeout(() => safePersist("aerchain-saved-files", savedFiles), 500);
     return () => clearTimeout(id);
   }, [savedFiles]);
 
-  // Flush pending writes on tab close
+  // Flush pending writes on tab close — use savedFilesRef so the handler
+  // always writes the latest state even if closed within the 500ms debounce window
   useEffect(() => {
     const flush = () => {
       safePersist("aerchain-module-data", moduleData);
-      safePersist("aerchain-saved-files", savedFiles);
+      safePersist("aerchain-saved-files", savedFilesRef.current);
     };
     window.addEventListener("beforeunload", flush);
     return () => window.removeEventListener("beforeunload", flush);
-  }, [moduleData, savedFiles]);
+  }, [moduleData]);
 
   // ── File management callbacks ──────────────────────────
   const getModuleFiles = useCallback((moduleKey) => {
     if (moduleKey === "design-extractor") {
-      const refs = SAMPLE_FILES["design-extractor"] || [];
+      const refs = demoData.SAMPLE_FILES["design-extractor"] || [];
       const saved = savedFiles["design-extractor"] || [];
       const seen = new Set(refs.map(f => f.id));
       return [...refs, ...saved.filter(f => !seen.has(f.id))];
     }
-    if (showDummy) return SAMPLE_FILES[moduleKey] || [];
+    if (showDummy) return demoData.SAMPLE_FILES[moduleKey] || [];
     return savedFiles[moduleKey] || [];
-  }, [showDummy, savedFiles]);
+  }, [showDummy, savedFiles, demoData.SAMPLE_FILES]);
 
   const createFile = useCallback((moduleKey) => {
     const id = `${moduleKey.slice(0,2)}-${Date.now()}`;
@@ -368,7 +384,7 @@ body { margin: 0; padding: 0; }
 
   const mod = MOD[selected] || {};
   const { Icon } = mod;
-  const mData = showDummy ? DUMMY_DATA[selected] : moduleData[selected];
+  const mData = showDummy ? demoData.DUMMY_DATA[selected] : moduleData[selected];
   const mStatus = mData?.status || "⬜ Never Synced";
   const mLastSync = mData?.lastSynced;
   const stale = isStale(mLastSync, mData?.staleAfterHrs || 4);

@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { Component, memo } from "react";
 import { Upload, Palette, Brain, AlertCircle } from "lucide-react";
 import { T } from "../lib/theme.js";
 import { UPLOAD_MODULES } from "../lib/constants.js";
@@ -56,7 +56,7 @@ export class ModuleErrorBoundary extends Component {
   }
 }
 
-export function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache }) {
+export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache }) {
   if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} />;
 
   if (moduleKey === "design-extractor") {
@@ -133,4 +133,4 @@ export function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, 
     case "proposal-generator": return <ProposalsView data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />;
     default:                   return <GenericView data={data} />;
   }
-}
+});

@@ -10,4 +10,17 @@ export default defineConfig({
     host: true,
     allowedHosts: "all",
   },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      // Keep @anthropic-ai/sdk out of the client bundle — it's server-side only
+      external: ["@anthropic-ai/sdk"],
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom"],
+          "vendor-icons": ["lucide-react"],
+        },
+      },
+    },
+  },
 });
