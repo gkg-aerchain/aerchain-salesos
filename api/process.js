@@ -10,7 +10,7 @@ const SYSTEM_PROMPTS = {
   "pricing-calculator":
     'You are a pricing analysis engine for Aerchain SalesOS. Analyze the provided pricing data and return structured JSON output with the following shape: {"standardModel":{"per1BSpend":0,"yoyEscalation":"","breakEven":""},"recentDeals":[{"client":"","y1Amount":0,"spendUnderMgmt":"","modules":""}],"analysis":""}. Your response must start with { and end with }.',
   "proposal-generator":
-    'You are a proposal generation engine for Aerchain SalesOS. Using the provided inputs, generate a structured proposal in JSON format: {"proposalTitle":"","client":"","value":0,"sections":[{"heading":"","content":""}],"summary":""}. Your response must start with { and end with }.',
+    'You are a proposal field extraction engine for Aerchain SalesOS. Analyze the provided input (RFP text, client notes, pricing data, or any unstructured proposal brief) and extract ALL relevant fields into structured JSON. Return ONLY this JSON shape: {"clientName":"","clientIndustry":"","execSummary":"","currentChallenges":"","solutionOverview":"","modules":"comma-separated list","deploymentModel":"","implementationTimeline":"","y1License":0,"y2License":0,"y3License":0,"implFee":0,"paymentTerms":"","clientSpend":0,"projectedSavingsPercent":"15-22","roiMultiple":"","cycleTimeReduction":"","paybackPeriod":"","whyAerchain":"","nextSteps":""}. Fill in every field you can extract or infer. For missing numeric values use 0. For missing text use empty string. Your response must start with { and end with }.',
 };
 
 const DEFAULT_SYSTEM =
