@@ -1,0 +1,992 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildOutputs > produces all four outputs matching snapshot 1`] = `
+{
+  "html": "<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerchain DS — Design System Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.55; background: #FAFAFA; color: #1F2937; -webkit-font-smoothing: antialiased; }
+.page { max-width: 1200px; margin: 0 auto; padding: 40px 32px 80px; }
+.section { margin-bottom: 56px; }
+.section-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.section-desc { font-size: 14px; color: #6B7280; margin-bottom: 24px; }
+.sample-card { background: #FFFFFF; border: 1px solid #F0F0F0; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 20px; }
+.swatch-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.swatch { width: 100px; height: 80px; border-radius: 12px; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; font-size: 10px; font-family: 'JetBrains Mono', monospace; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.swatch.light-text { color: white; }
+.swatch.dark-text { color: #1F2937; }
+.swatch-name { font-weight: 600; font-family: 'Inter', system-ui, sans-serif; font-size: 11px; }
+.gradient-strip { height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: white; margin-bottom: 10px; }
+.type-specimen { padding: 16px 0; border-bottom: 1px solid #F0F0F0; }
+.type-specimen:last-child { border-bottom: none; }
+.type-meta { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #9CA3AF; margin-top: 4px; }
+.page-header { background: linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%); border-radius: 20px; padding: 40px; margin-bottom: 48px; }
+.flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="page-header">
+  <h1 style="font-size:32px;font-weight:800;margin-bottom:8px;">Aerchain DS</h1>
+  <p style="font-size:15px;color:#6B7280;max-width:600px;">Clean SaaS design system with a purple/teal gradient identity.</p>
+  <div style="margin-top:12px;font-size:12px;color:#9CA3AF;">Theme: light | Linear, Vercel</div>
+</div>
+<div class="section"><div class="section-title">Color Palette</div><div class="section-desc">All color tokens extracted from the design</div><div class="swatch-row"><div class="swatch light-text" style="background:#8B5CF6;"><span class="swatch-name">Primary Violet</span>#8B5CF6</div>
+      <div class="swatch light-text" style="background:#06B6D4;"><span class="swatch-name">Cyan</span>#06B6D4</div>
+      <div class="swatch dark-text" style="background:#FAFAFA;border:1px solid #E5E7EB;"><span class="swatch-name">Content Background</span>#FAFAFA</div>
+      <div class="swatch dark-text" style="background:#FFFFFF;border:1px solid #E5E7EB;"><span class="swatch-name">Card Background</span>#FFFFFF</div>
+      <div class="swatch dark-text" style="background:#F0F0F0;border:1px solid #E5E7EB;"><span class="swatch-name">Card Border</span>#F0F0F0</div>
+      <div class="swatch dark-text" style="background:#F9F9FB;border:1px solid #E5E7EB;"><span class="swatch-name">Sidebar Background</span>#F9F9FB</div>
+      <div class="swatch dark-text" style="background:#F3F0FF;border:1px solid #E5E7EB;"><span class="swatch-name">Primary Light</span>#F3F0FF</div>
+      <div class="swatch light-text" style="background:#1F2937;"><span class="swatch-name">Text Primary</span>#1F2937</div>
+      <div class="swatch light-text" style="background:#6B7280;"><span class="swatch-name">Text Secondary</span>#6B7280</div>
+      <div class="swatch light-text" style="background:#9CA3AF;"><span class="swatch-name">Text Muted</span>#9CA3AF</div></div></div>
+<div class="section"><div class="section-title">Gradients</div><div class="section-desc">Gradient definitions</div><div class="gradient-strip" style="background:linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);">Primary Gradient — Primary buttons, hero accents</div>
+    <div class="gradient-strip" style="background:linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%);">Header Wash — Page header background tint</div></div>
+<div class="section"><div class="section-title">Typography</div><div class="section-desc">Font: 'Inter', system-ui, sans-serif | Mono: 'JetBrains Mono', monospace</div><div class="sample-card"><div class="type-specimen">
+      <div style="font-size:32px;font-weight:800;background:linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Aerchain DS — Display</div>
+      <div class="type-meta">32px / 800 — Display (gradient)</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:24px;font-weight:700;">Aerchain DS — Heading 1</div>
+      <div class="type-meta">24px / 700 — Heading 1</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:14px;font-weight:400;">Aerchain DS — Body</div>
+      <div class="type-meta">14px / 400 — Body</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:11px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;color:#9CA3AF;">Aerchain DS — Caption</div>
+      <div class="type-meta">11px / 500 / 0.04em tracking — Caption (uppercase muted)</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:13px;font-weight:400;font-family:'JetBrains Mono', monospace;">Aerchain DS — Code</div>
+      <div class="type-meta">13px / 400 — Code (mono)</div>
+    </div></div></div>
+<div class="section"><div class="section-title">Border Radius</div><div class="section-desc">Radius scale</div><div class="flex-row"><div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">8px</div>
+        <div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">12px</div>
+        <div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">16px</div>
+        <div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">20px</div>
+        <div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">9999px</div></div></div>
+<div class="section"><div class="section-title">Design Principles</div><div class="section-desc">Core rules that define this design system</div><div class="sample-card"><ol style="padding-left:20px;list-style:decimal;"><li style="padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:13px;">Clarity over decoration — every visual element earns its place.</li>
+      <li style="padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:13px;">Gradient identity — the violet-to-cyan gradient is a consistent brand signal.</li>
+      <li style="padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:13px;">Subtle depth — light shadows and micro-borders create hierarchy without noise.</li></ol></div></div>
+</div>
+</body>
+</html>",
+  "json": "{
+  "meta": {
+    "name": "Aerchain DS",
+    "description": "Clean SaaS design system with a purple/teal gradient identity.",
+    "theme": "light",
+    "inspiration": "Linear, Vercel"
+  },
+  "colors": {
+    "primary": {
+      "hex": "#8B5CF6",
+      "name": "Primary Violet",
+      "usage": "Primary actions, highlights"
+    },
+    "secondary": {
+      "hex": "#06B6D4",
+      "name": "Cyan",
+      "usage": "Accents, badges"
+    },
+    "contentBg": {
+      "hex": "#FAFAFA",
+      "name": "Content Background",
+      "usage": "Page background"
+    },
+    "cardBg": {
+      "hex": "#FFFFFF",
+      "name": "Card Background",
+      "usage": "Card surfaces"
+    },
+    "cardBorder": {
+      "hex": "#F0F0F0",
+      "name": "Card Border",
+      "usage": "Card outlines"
+    },
+    "sidebarBg": {
+      "hex": "#F9F9FB",
+      "name": "Sidebar Background",
+      "usage": "Navigation panel"
+    },
+    "primaryLight": {
+      "hex": "#F3F0FF",
+      "name": "Primary Light",
+      "usage": "Tinted backgrounds"
+    },
+    "textPrimary": {
+      "hex": "#1F2937",
+      "name": "Text Primary",
+      "usage": "Body copy, headings"
+    },
+    "textSecondary": {
+      "hex": "#6B7280",
+      "name": "Text Secondary",
+      "usage": "Subheadings, captions"
+    },
+    "textMuted": {
+      "hex": "#9CA3AF",
+      "name": "Text Muted",
+      "usage": "Placeholder, disabled"
+    }
+  },
+  "gradients": [
+    {
+      "name": "Primary Gradient",
+      "css": "linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%)",
+      "usage": "Primary buttons, hero accents"
+    },
+    {
+      "name": "Header Wash",
+      "css": "linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%)",
+      "usage": "Page header background tint"
+    }
+  ],
+  "typography": {
+    "fontFamily": "'Inter', system-ui, sans-serif",
+    "monoFamily": "'JetBrains Mono', monospace",
+    "googleFontsImport": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap",
+    "scale": [
+      {
+        "name": "Display",
+        "size": "32px",
+        "weight": "800",
+        "tracking": "normal",
+        "notes": "gradient"
+      },
+      {
+        "name": "Heading 1",
+        "size": "24px",
+        "weight": "700",
+        "tracking": "normal",
+        "notes": ""
+      },
+      {
+        "name": "Body",
+        "size": "14px",
+        "weight": "400",
+        "tracking": "normal",
+        "notes": ""
+      },
+      {
+        "name": "Caption",
+        "size": "11px",
+        "weight": "500",
+        "tracking": "0.04em",
+        "notes": "uppercase muted"
+      },
+      {
+        "name": "Code",
+        "size": "13px",
+        "weight": "400",
+        "tracking": "normal",
+        "notes": "mono"
+      }
+    ]
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "40px"
+  },
+  "radius": {
+    "sm": {
+      "value": "8px",
+      "usage": "Badges, chips"
+    },
+    "md": {
+      "value": "12px",
+      "usage": "Inputs, small cards"
+    },
+    "lg": {
+      "value": "16px",
+      "usage": "Cards"
+    },
+    "xl": {
+      "value": "20px",
+      "usage": "Modals, panels"
+    },
+    "full": {
+      "value": "9999px",
+      "usage": "Pills, avatars"
+    }
+  },
+  "shadows": {
+    "card": {
+      "css": "0 2px 12px rgba(0,0,0,0.04)",
+      "usage": "Default card elevation"
+    },
+    "elevated": {
+      "css": "0 8px 32px rgba(139,92,246,0.12)",
+      "usage": "Hover or active card"
+    },
+    "input": {
+      "css": "0 0 0 3px rgba(139,92,246,0.15)",
+      "usage": "Focused input ring"
+    }
+  },
+  "components": {
+    "button": {
+      "borderRadius": "100px",
+      "padding": "10px 24px",
+      "fontSize": "13px",
+      "fontWeight": "600",
+      "variants": [
+        {
+          "name": "Primary",
+          "bg": "linear-gradient(135deg,#8B5CF6,#06B6D4)",
+          "color": "#FFFFFF"
+        },
+        {
+          "name": "Secondary",
+          "bg": "#FFFFFF",
+          "color": "#1F2937",
+          "border": "1.5px solid #F0F0F0"
+        },
+        {
+          "name": "Ghost",
+          "bg": "transparent",
+          "color": "#8B5CF6"
+        }
+      ]
+    },
+    "card": {
+      "borderRadius": "16px",
+      "padding": "24px",
+      "border": "1px solid #F0F0F0",
+      "hoverShadow": "0 8px 32px rgba(139,92,246,0.12)",
+      "hoverTransform": "translateY(-2px)"
+    },
+    "input": {
+      "borderRadius": "12px",
+      "padding": "10px 14px",
+      "border": "1.5px solid #F0F0F0",
+      "focusBorder": "#8B5CF6",
+      "focusShadow": "0 0 0 3px rgba(139,92,246,0.15)"
+    },
+    "table": {
+      "headerFontSize": "11px",
+      "headerWeight": "600",
+      "headerTransform": "uppercase",
+      "cellPadding": "12px 16px",
+      "rowHoverBg": "#F9F9FB"
+    },
+    "sidebar": {
+      "width": "220px",
+      "activeBackground": "#F3F0FF",
+      "activeColor": "#8B5CF6"
+    }
+  },
+  "designPrinciples": [
+    "Clarity over decoration — every visual element earns its place.",
+    "Gradient identity — the violet-to-cyan gradient is a consistent brand signal.",
+    "Subtle depth — light shadows and micro-borders create hierarchy without noise."
+  ]
+}",
+  "markdown": "# Aerchain DS — Design System Specification
+
+> Clean SaaS design system with a purple/teal gradient identity.
+> Theme: light | Inspiration: Linear, Vercel
+
+---
+
+## Colors
+
+| Token | Hex | Name | Usage |
+|-------|-----|------|-------|
+| \`--primary\` | \`#8B5CF6\` | Primary Violet | Primary actions, highlights |
+| \`--secondary\` | \`#06B6D4\` | Cyan | Accents, badges |
+| \`--contentBg\` | \`#FAFAFA\` | Content Background | Page background |
+| \`--cardBg\` | \`#FFFFFF\` | Card Background | Card surfaces |
+| \`--cardBorder\` | \`#F0F0F0\` | Card Border | Card outlines |
+| \`--sidebarBg\` | \`#F9F9FB\` | Sidebar Background | Navigation panel |
+| \`--primaryLight\` | \`#F3F0FF\` | Primary Light | Tinted backgrounds |
+| \`--textPrimary\` | \`#1F2937\` | Text Primary | Body copy, headings |
+| \`--textSecondary\` | \`#6B7280\` | Text Secondary | Subheadings, captions |
+| \`--textMuted\` | \`#9CA3AF\` | Text Muted | Placeholder, disabled |
+
+## Gradients
+
+| Name | CSS | Usage |
+|------|-----|-------|
+| Primary Gradient | \`linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%)\` | Primary buttons, hero accents |
+| Header Wash | \`linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%)\` | Page header background tint |
+
+## Typography
+
+- **Font Family:** \`'Inter', system-ui, sans-serif\`
+- **Mono Family:** \`'JetBrains Mono', monospace\`
+- **Google Fonts:** \`https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap\`
+
+| Element | Size | Weight | Tracking | Notes |
+|---------|------|--------|----------|-------|
+| Display | 32px | 800 | normal | gradient |
+| Heading 1 | 24px | 700 | normal |  |
+| Body | 14px | 400 | normal |  |
+| Caption | 11px | 500 | 0.04em | uppercase muted |
+| Code | 13px | 400 | normal | mono |
+
+## Spacing
+
+| Token | Value |
+|-------|-------|
+| \`--sp-xs\` | \`4px\` |
+| \`--sp-sm\` | \`8px\` |
+| \`--sp-md\` | \`16px\` |
+| \`--sp-lg\` | \`24px\` |
+| \`--sp-xl\` | \`40px\` |
+
+## Border Radius
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| \`--r-sm\` | \`8px\` | Badges, chips |
+| \`--r-md\` | \`12px\` | Inputs, small cards |
+| \`--r-lg\` | \`16px\` | Cards |
+| \`--r-xl\` | \`20px\` | Modals, panels |
+| \`--r-full\` | \`9999px\` | Pills, avatars |
+
+## Shadows
+
+| Name | CSS | Usage |
+|------|-----|-------|
+| card | \`0 2px 12px rgba(0,0,0,0.04)\` | Default card elevation |
+| elevated | \`0 8px 32px rgba(139,92,246,0.12)\` | Hover or active card |
+| input | \`0 0 0 3px rgba(139,92,246,0.15)\` | Focused input ring |
+
+## Components
+
+### Button
+- Border Radius: \`100px\`
+- Padding: \`10px 24px\`
+- Font: \`13px\` / \`600\`
+- **Primary**: bg \`linear-gradient(135deg,#8B5CF6,#06B6D4)\`, color \`#FFFFFF\`
+- **Secondary**: bg \`#FFFFFF\`, color \`#1F2937\`, border \`1.5px solid #F0F0F0\`
+- **Ghost**: bg \`transparent\`, color \`#8B5CF6\`
+
+### Card
+- Border Radius: \`16px\`
+- Padding: \`24px\`
+- Border: \`1px solid #F0F0F0\`
+- Hover: shadow → \`0 8px 32px rgba(139,92,246,0.12)\`, transform: \`translateY(-2px)\`
+
+### Input
+- Border Radius: \`12px\`
+- Padding: \`10px 14px\`
+- Focus: border \`#8B5CF6\` + shadow \`0 0 0 3px rgba(139,92,246,0.15)\`
+
+### Table
+- Header: \`11px\` / \`600\` / \`uppercase\`
+- Cell Padding: \`12px 16px\`
+- Row Hover: \`#F9F9FB\`
+
+### Sidebar
+- Width: \`220px\`
+- Active: bg \`#F3F0FF\`, color \`#8B5CF6\`
+
+## Design Principles
+
+1. Clarity over decoration — every visual element earns its place.
+2. Gradient identity — the violet-to-cyan gradient is a consistent brand signal.
+3. Subtle depth — light shadows and micro-borders create hierarchy without noise.
+
+---
+
+*Auto-generated by Aerchain Design Extractor*
+",
+  "react": "// AUTO-GENERATED THEME — Aerchain DS
+
+export const theme = {
+  colors: {
+    primary: '#8B5CF6',
+    secondary: '#06B6D4',
+    contentBg: '#FAFAFA',
+    cardBg: '#FFFFFF',
+    cardBorder: '#F0F0F0',
+    sidebarBg: '#F9F9FB',
+    primaryLight: '#F3F0FF',
+    textPrimary: '#1F2937',
+    textSecondary: '#6B7280',
+    textMuted: '#9CA3AF',
+  },
+  gradients: {
+    primarygradient: 'linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%)',
+    headerwash: 'linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%)',
+  },
+  typography: {
+    fontFamily: "'Inter', system-ui, sans-serif",
+    monoFamily: "'JetBrains Mono', monospace",
+  },
+  spacing: {
+    xs: '4px',
+    sm: '8px',
+    md: '16px',
+    lg: '24px',
+    xl: '40px',
+  },
+  radius: {
+    sm: '8px',
+    md: '12px',
+    lg: '16px',
+    xl: '20px',
+    full: '9999px',
+  },
+  shadows: {
+    card: '0 2px 12px rgba(0,0,0,0.04)',
+    elevated: '0 8px 32px rgba(139,92,246,0.12)',
+    input: '0 0 0 3px rgba(139,92,246,0.15)',
+  },
+};
+
+export const styles = {
+  card: {
+    background: '#FFFFFF',
+    border: '1px solid #F0F0F0',
+    borderRadius: '16px',
+    padding: '24px',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+  },
+  button: {
+    primary: {
+      background: 'linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%)',
+      color: '#FFFFFF',
+      borderRadius: '100px',
+      padding: '10px 24px',
+      fontSize: '13px',
+      fontWeight: '600',
+      border: 'none',
+      cursor: 'pointer',
+    },
+    secondary: {
+      background: '#FFFFFF',
+      color: '#1F2937',
+      borderRadius: '100px',
+      padding: '10px 24px',
+      fontSize: '13px',
+      fontWeight: '600',
+      border: '1.5px solid #F0F0F0',
+      cursor: 'pointer',
+    },
+  },
+  input: {
+    padding: '10px 14px',
+    borderRadius: '12px',
+    border: '1.5px solid #F0F0F0',
+    fontSize: '13px',
+    fontFamily: ''Inter', system-ui, sans-serif',
+    outline: 'none',
+  },
+};
+",
+}
+`;
+
+exports[`generateHTML > produces a complete HTML document matching snapshot 1`] = `
+"<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerchain DS — Design System Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.55; background: #FAFAFA; color: #1F2937; -webkit-font-smoothing: antialiased; }
+.page { max-width: 1200px; margin: 0 auto; padding: 40px 32px 80px; }
+.section { margin-bottom: 56px; }
+.section-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.section-desc { font-size: 14px; color: #6B7280; margin-bottom: 24px; }
+.sample-card { background: #FFFFFF; border: 1px solid #F0F0F0; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 20px; }
+.swatch-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.swatch { width: 100px; height: 80px; border-radius: 12px; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px; font-size: 10px; font-family: 'JetBrains Mono', monospace; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.swatch.light-text { color: white; }
+.swatch.dark-text { color: #1F2937; }
+.swatch-name { font-weight: 600; font-family: 'Inter', system-ui, sans-serif; font-size: 11px; }
+.gradient-strip { height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: white; margin-bottom: 10px; }
+.type-specimen { padding: 16px 0; border-bottom: 1px solid #F0F0F0; }
+.type-specimen:last-child { border-bottom: none; }
+.type-meta { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #9CA3AF; margin-top: 4px; }
+.page-header { background: linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%); border-radius: 20px; padding: 40px; margin-bottom: 48px; }
+.flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="page-header">
+  <h1 style="font-size:32px;font-weight:800;margin-bottom:8px;">Aerchain DS</h1>
+  <p style="font-size:15px;color:#6B7280;max-width:600px;">Clean SaaS design system with a purple/teal gradient identity.</p>
+  <div style="margin-top:12px;font-size:12px;color:#9CA3AF;">Theme: light | Linear, Vercel</div>
+</div>
+<div class="section"><div class="section-title">Color Palette</div><div class="section-desc">All color tokens extracted from the design</div><div class="swatch-row"><div class="swatch light-text" style="background:#8B5CF6;"><span class="swatch-name">Primary Violet</span>#8B5CF6</div>
+      <div class="swatch light-text" style="background:#06B6D4;"><span class="swatch-name">Cyan</span>#06B6D4</div>
+      <div class="swatch dark-text" style="background:#FAFAFA;border:1px solid #E5E7EB;"><span class="swatch-name">Content Background</span>#FAFAFA</div>
+      <div class="swatch dark-text" style="background:#FFFFFF;border:1px solid #E5E7EB;"><span class="swatch-name">Card Background</span>#FFFFFF</div>
+      <div class="swatch dark-text" style="background:#F0F0F0;border:1px solid #E5E7EB;"><span class="swatch-name">Card Border</span>#F0F0F0</div>
+      <div class="swatch dark-text" style="background:#F9F9FB;border:1px solid #E5E7EB;"><span class="swatch-name">Sidebar Background</span>#F9F9FB</div>
+      <div class="swatch dark-text" style="background:#F3F0FF;border:1px solid #E5E7EB;"><span class="swatch-name">Primary Light</span>#F3F0FF</div>
+      <div class="swatch light-text" style="background:#1F2937;"><span class="swatch-name">Text Primary</span>#1F2937</div>
+      <div class="swatch light-text" style="background:#6B7280;"><span class="swatch-name">Text Secondary</span>#6B7280</div>
+      <div class="swatch light-text" style="background:#9CA3AF;"><span class="swatch-name">Text Muted</span>#9CA3AF</div></div></div>
+<div class="section"><div class="section-title">Gradients</div><div class="section-desc">Gradient definitions</div><div class="gradient-strip" style="background:linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);">Primary Gradient — Primary buttons, hero accents</div>
+    <div class="gradient-strip" style="background:linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%);">Header Wash — Page header background tint</div></div>
+<div class="section"><div class="section-title">Typography</div><div class="section-desc">Font: 'Inter', system-ui, sans-serif | Mono: 'JetBrains Mono', monospace</div><div class="sample-card"><div class="type-specimen">
+      <div style="font-size:32px;font-weight:800;background:linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Aerchain DS — Display</div>
+      <div class="type-meta">32px / 800 — Display (gradient)</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:24px;font-weight:700;">Aerchain DS — Heading 1</div>
+      <div class="type-meta">24px / 700 — Heading 1</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:14px;font-weight:400;">Aerchain DS — Body</div>
+      <div class="type-meta">14px / 400 — Body</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:11px;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;color:#9CA3AF;">Aerchain DS — Caption</div>
+      <div class="type-meta">11px / 500 / 0.04em tracking — Caption (uppercase muted)</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:13px;font-weight:400;font-family:'JetBrains Mono', monospace;">Aerchain DS — Code</div>
+      <div class="type-meta">13px / 400 — Code (mono)</div>
+    </div></div></div>
+<div class="section"><div class="section-title">Border Radius</div><div class="section-desc">Radius scale</div><div class="flex-row"><div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">8px</div>
+        <div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">12px</div>
+        <div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">16px</div>
+        <div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">20px</div>
+        <div style="width:60px;height:50px;background:#F3F0FF;border:2px solid #DDD6FE;border-radius:9999px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:monospace;">9999px</div></div></div>
+<div class="section"><div class="section-title">Design Principles</div><div class="section-desc">Core rules that define this design system</div><div class="sample-card"><ol style="padding-left:20px;list-style:decimal;"><li style="padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:13px;">Clarity over decoration — every visual element earns its place.</li>
+      <li style="padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:13px;">Gradient identity — the violet-to-cyan gradient is a consistent brand signal.</li>
+      <li style="padding:8px 0;border-bottom:1px solid #F0F0F0;font-size:13px;">Subtle depth — light shadows and micro-borders create hierarchy without noise.</li></ol></div></div>
+</div>
+</body>
+</html>"
+`;
+
+exports[`generateJSON > produces a JSON string matching snapshot 1`] = `
+"{
+  "meta": {
+    "name": "Aerchain DS",
+    "description": "Clean SaaS design system with a purple/teal gradient identity.",
+    "theme": "light",
+    "inspiration": "Linear, Vercel"
+  },
+  "colors": {
+    "primary": {
+      "hex": "#8B5CF6",
+      "name": "Primary Violet",
+      "usage": "Primary actions, highlights"
+    },
+    "secondary": {
+      "hex": "#06B6D4",
+      "name": "Cyan",
+      "usage": "Accents, badges"
+    },
+    "contentBg": {
+      "hex": "#FAFAFA",
+      "name": "Content Background",
+      "usage": "Page background"
+    },
+    "cardBg": {
+      "hex": "#FFFFFF",
+      "name": "Card Background",
+      "usage": "Card surfaces"
+    },
+    "cardBorder": {
+      "hex": "#F0F0F0",
+      "name": "Card Border",
+      "usage": "Card outlines"
+    },
+    "sidebarBg": {
+      "hex": "#F9F9FB",
+      "name": "Sidebar Background",
+      "usage": "Navigation panel"
+    },
+    "primaryLight": {
+      "hex": "#F3F0FF",
+      "name": "Primary Light",
+      "usage": "Tinted backgrounds"
+    },
+    "textPrimary": {
+      "hex": "#1F2937",
+      "name": "Text Primary",
+      "usage": "Body copy, headings"
+    },
+    "textSecondary": {
+      "hex": "#6B7280",
+      "name": "Text Secondary",
+      "usage": "Subheadings, captions"
+    },
+    "textMuted": {
+      "hex": "#9CA3AF",
+      "name": "Text Muted",
+      "usage": "Placeholder, disabled"
+    }
+  },
+  "gradients": [
+    {
+      "name": "Primary Gradient",
+      "css": "linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%)",
+      "usage": "Primary buttons, hero accents"
+    },
+    {
+      "name": "Header Wash",
+      "css": "linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%)",
+      "usage": "Page header background tint"
+    }
+  ],
+  "typography": {
+    "fontFamily": "'Inter', system-ui, sans-serif",
+    "monoFamily": "'JetBrains Mono', monospace",
+    "googleFontsImport": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap",
+    "scale": [
+      {
+        "name": "Display",
+        "size": "32px",
+        "weight": "800",
+        "tracking": "normal",
+        "notes": "gradient"
+      },
+      {
+        "name": "Heading 1",
+        "size": "24px",
+        "weight": "700",
+        "tracking": "normal",
+        "notes": ""
+      },
+      {
+        "name": "Body",
+        "size": "14px",
+        "weight": "400",
+        "tracking": "normal",
+        "notes": ""
+      },
+      {
+        "name": "Caption",
+        "size": "11px",
+        "weight": "500",
+        "tracking": "0.04em",
+        "notes": "uppercase muted"
+      },
+      {
+        "name": "Code",
+        "size": "13px",
+        "weight": "400",
+        "tracking": "normal",
+        "notes": "mono"
+      }
+    ]
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "40px"
+  },
+  "radius": {
+    "sm": {
+      "value": "8px",
+      "usage": "Badges, chips"
+    },
+    "md": {
+      "value": "12px",
+      "usage": "Inputs, small cards"
+    },
+    "lg": {
+      "value": "16px",
+      "usage": "Cards"
+    },
+    "xl": {
+      "value": "20px",
+      "usage": "Modals, panels"
+    },
+    "full": {
+      "value": "9999px",
+      "usage": "Pills, avatars"
+    }
+  },
+  "shadows": {
+    "card": {
+      "css": "0 2px 12px rgba(0,0,0,0.04)",
+      "usage": "Default card elevation"
+    },
+    "elevated": {
+      "css": "0 8px 32px rgba(139,92,246,0.12)",
+      "usage": "Hover or active card"
+    },
+    "input": {
+      "css": "0 0 0 3px rgba(139,92,246,0.15)",
+      "usage": "Focused input ring"
+    }
+  },
+  "components": {
+    "button": {
+      "borderRadius": "100px",
+      "padding": "10px 24px",
+      "fontSize": "13px",
+      "fontWeight": "600",
+      "variants": [
+        {
+          "name": "Primary",
+          "bg": "linear-gradient(135deg,#8B5CF6,#06B6D4)",
+          "color": "#FFFFFF"
+        },
+        {
+          "name": "Secondary",
+          "bg": "#FFFFFF",
+          "color": "#1F2937",
+          "border": "1.5px solid #F0F0F0"
+        },
+        {
+          "name": "Ghost",
+          "bg": "transparent",
+          "color": "#8B5CF6"
+        }
+      ]
+    },
+    "card": {
+      "borderRadius": "16px",
+      "padding": "24px",
+      "border": "1px solid #F0F0F0",
+      "hoverShadow": "0 8px 32px rgba(139,92,246,0.12)",
+      "hoverTransform": "translateY(-2px)"
+    },
+    "input": {
+      "borderRadius": "12px",
+      "padding": "10px 14px",
+      "border": "1.5px solid #F0F0F0",
+      "focusBorder": "#8B5CF6",
+      "focusShadow": "0 0 0 3px rgba(139,92,246,0.15)"
+    },
+    "table": {
+      "headerFontSize": "11px",
+      "headerWeight": "600",
+      "headerTransform": "uppercase",
+      "cellPadding": "12px 16px",
+      "rowHoverBg": "#F9F9FB"
+    },
+    "sidebar": {
+      "width": "220px",
+      "activeBackground": "#F3F0FF",
+      "activeColor": "#8B5CF6"
+    }
+  },
+  "designPrinciples": [
+    "Clarity over decoration — every visual element earns its place.",
+    "Gradient identity — the violet-to-cyan gradient is a consistent brand signal.",
+    "Subtle depth — light shadows and micro-borders create hierarchy without noise."
+  ]
+}"
+`;
+
+exports[`generateMarkdown > produces a Markdown document matching snapshot 1`] = `
+"# Aerchain DS — Design System Specification
+
+> Clean SaaS design system with a purple/teal gradient identity.
+> Theme: light | Inspiration: Linear, Vercel
+
+---
+
+## Colors
+
+| Token | Hex | Name | Usage |
+|-------|-----|------|-------|
+| \`--primary\` | \`#8B5CF6\` | Primary Violet | Primary actions, highlights |
+| \`--secondary\` | \`#06B6D4\` | Cyan | Accents, badges |
+| \`--contentBg\` | \`#FAFAFA\` | Content Background | Page background |
+| \`--cardBg\` | \`#FFFFFF\` | Card Background | Card surfaces |
+| \`--cardBorder\` | \`#F0F0F0\` | Card Border | Card outlines |
+| \`--sidebarBg\` | \`#F9F9FB\` | Sidebar Background | Navigation panel |
+| \`--primaryLight\` | \`#F3F0FF\` | Primary Light | Tinted backgrounds |
+| \`--textPrimary\` | \`#1F2937\` | Text Primary | Body copy, headings |
+| \`--textSecondary\` | \`#6B7280\` | Text Secondary | Subheadings, captions |
+| \`--textMuted\` | \`#9CA3AF\` | Text Muted | Placeholder, disabled |
+
+## Gradients
+
+| Name | CSS | Usage |
+|------|-----|-------|
+| Primary Gradient | \`linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%)\` | Primary buttons, hero accents |
+| Header Wash | \`linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%)\` | Page header background tint |
+
+## Typography
+
+- **Font Family:** \`'Inter', system-ui, sans-serif\`
+- **Mono Family:** \`'JetBrains Mono', monospace\`
+- **Google Fonts:** \`https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap\`
+
+| Element | Size | Weight | Tracking | Notes |
+|---------|------|--------|----------|-------|
+| Display | 32px | 800 | normal | gradient |
+| Heading 1 | 24px | 700 | normal |  |
+| Body | 14px | 400 | normal |  |
+| Caption | 11px | 500 | 0.04em | uppercase muted |
+| Code | 13px | 400 | normal | mono |
+
+## Spacing
+
+| Token | Value |
+|-------|-------|
+| \`--sp-xs\` | \`4px\` |
+| \`--sp-sm\` | \`8px\` |
+| \`--sp-md\` | \`16px\` |
+| \`--sp-lg\` | \`24px\` |
+| \`--sp-xl\` | \`40px\` |
+
+## Border Radius
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| \`--r-sm\` | \`8px\` | Badges, chips |
+| \`--r-md\` | \`12px\` | Inputs, small cards |
+| \`--r-lg\` | \`16px\` | Cards |
+| \`--r-xl\` | \`20px\` | Modals, panels |
+| \`--r-full\` | \`9999px\` | Pills, avatars |
+
+## Shadows
+
+| Name | CSS | Usage |
+|------|-----|-------|
+| card | \`0 2px 12px rgba(0,0,0,0.04)\` | Default card elevation |
+| elevated | \`0 8px 32px rgba(139,92,246,0.12)\` | Hover or active card |
+| input | \`0 0 0 3px rgba(139,92,246,0.15)\` | Focused input ring |
+
+## Components
+
+### Button
+- Border Radius: \`100px\`
+- Padding: \`10px 24px\`
+- Font: \`13px\` / \`600\`
+- **Primary**: bg \`linear-gradient(135deg,#8B5CF6,#06B6D4)\`, color \`#FFFFFF\`
+- **Secondary**: bg \`#FFFFFF\`, color \`#1F2937\`, border \`1.5px solid #F0F0F0\`
+- **Ghost**: bg \`transparent\`, color \`#8B5CF6\`
+
+### Card
+- Border Radius: \`16px\`
+- Padding: \`24px\`
+- Border: \`1px solid #F0F0F0\`
+- Hover: shadow → \`0 8px 32px rgba(139,92,246,0.12)\`, transform: \`translateY(-2px)\`
+
+### Input
+- Border Radius: \`12px\`
+- Padding: \`10px 14px\`
+- Focus: border \`#8B5CF6\` + shadow \`0 0 0 3px rgba(139,92,246,0.15)\`
+
+### Table
+- Header: \`11px\` / \`600\` / \`uppercase\`
+- Cell Padding: \`12px 16px\`
+- Row Hover: \`#F9F9FB\`
+
+### Sidebar
+- Width: \`220px\`
+- Active: bg \`#F3F0FF\`, color \`#8B5CF6\`
+
+## Design Principles
+
+1. Clarity over decoration — every visual element earns its place.
+2. Gradient identity — the violet-to-cyan gradient is a consistent brand signal.
+3. Subtle depth — light shadows and micro-borders create hierarchy without noise.
+
+---
+
+*Auto-generated by Aerchain Design Extractor*
+"
+`;
+
+exports[`generateReactTheme > produces a React theme file matching snapshot 1`] = `
+"// AUTO-GENERATED THEME — Aerchain DS
+
+export const theme = {
+  colors: {
+    primary: '#8B5CF6',
+    secondary: '#06B6D4',
+    contentBg: '#FAFAFA',
+    cardBg: '#FFFFFF',
+    cardBorder: '#F0F0F0',
+    sidebarBg: '#F9F9FB',
+    primaryLight: '#F3F0FF',
+    textPrimary: '#1F2937',
+    textSecondary: '#6B7280',
+    textMuted: '#9CA3AF',
+  },
+  gradients: {
+    primarygradient: 'linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%)',
+    headerwash: 'linear-gradient(120deg, #F3F0FF 0%, #E0F7FA 100%)',
+  },
+  typography: {
+    fontFamily: "'Inter', system-ui, sans-serif",
+    monoFamily: "'JetBrains Mono', monospace",
+  },
+  spacing: {
+    xs: '4px',
+    sm: '8px',
+    md: '16px',
+    lg: '24px',
+    xl: '40px',
+  },
+  radius: {
+    sm: '8px',
+    md: '12px',
+    lg: '16px',
+    xl: '20px',
+    full: '9999px',
+  },
+  shadows: {
+    card: '0 2px 12px rgba(0,0,0,0.04)',
+    elevated: '0 8px 32px rgba(139,92,246,0.12)',
+    input: '0 0 0 3px rgba(139,92,246,0.15)',
+  },
+};
+
+export const styles = {
+  card: {
+    background: '#FFFFFF',
+    border: '1px solid #F0F0F0',
+    borderRadius: '16px',
+    padding: '24px',
+    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+  },
+  button: {
+    primary: {
+      background: 'linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%)',
+      color: '#FFFFFF',
+      borderRadius: '100px',
+      padding: '10px 24px',
+      fontSize: '13px',
+      fontWeight: '600',
+      border: 'none',
+      cursor: 'pointer',
+    },
+    secondary: {
+      background: '#FFFFFF',
+      color: '#1F2937',
+      borderRadius: '100px',
+      padding: '10px 24px',
+      fontSize: '13px',
+      fontWeight: '600',
+      border: '1.5px solid #F0F0F0',
+      cursor: 'pointer',
+    },
+  },
+  input: {
+    padding: '10px 14px',
+    borderRadius: '12px',
+    border: '1.5px solid #F0F0F0',
+    fontSize: '13px',
+    fontFamily: ''Inter', system-ui, sans-serif',
+    outline: 'none',
+  },
+};
+"
+`;
