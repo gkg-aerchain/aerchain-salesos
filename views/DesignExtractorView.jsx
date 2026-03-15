@@ -7,10 +7,10 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle, Zap, Save } from "lucide-react";
-import { generateHTML, generateMarkdown, generateJSON, generateReactTheme, buildOutputs } from "./lib/generators.js";
-import { canExtractProgrammatically, extractFromHTML, extractFromCSS } from "./lib/programmaticExtractor.js";
-import { withRetry } from "./lib/retry.js";
-import { T } from "./lib/theme.js";
+import { generateHTML, generateMarkdown, generateJSON, generateReactTheme, buildOutputs } from "../lib/generators.js";
+import { canExtractProgrammatically, extractFromHTML, extractFromCSS } from "../lib/programmaticExtractor.js";
+import { withRetry } from "../lib/retry.js";
+import { T } from "../lib/theme.js";
 
 // ── DEFAULT EXTRACTION PROMPT (editable in UI) ───────────
 // This is only used as the default value for the prompt editor.

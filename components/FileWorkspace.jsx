@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 
 // ── Theme tokens (same as App.jsx) ────────────────────────
-import { T } from "./lib/theme.js";
-import { fmt$ } from "./lib/utils.js";
+import { T } from "../lib/theme.js";
+import { fmt$ } from "../lib/utils.js";
 
 function timeAgo(date) {
   if (!date) return "Never";

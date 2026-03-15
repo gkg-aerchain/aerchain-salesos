@@ -7,8 +7,8 @@ import PricingCalcView from "../views/PricingCalcView.jsx";
 import ProposalsView from "../views/ProposalsView.jsx";
 import SettingsView from "../views/SettingsView.jsx";
 import GenericView from "../views/GenericView.jsx";
-import DesignExtractorView from "../DesignExtractorView.jsx";
-import FileWorkspace from "../FileWorkspace.jsx";
+import DesignExtractorView from "../views/DesignExtractorView.jsx";
+import FileWorkspace from "./FileWorkspace.jsx";
 
 export class ModuleErrorBoundary extends Component {
   constructor(props) {
