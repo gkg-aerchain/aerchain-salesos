@@ -9,6 +9,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle, Zap, Save } from "lucide-react";
 import { generateHTML, generateMarkdown, generateJSON, generateReactTheme, buildOutputs } from "./lib/generators.js";
 import { canExtractProgrammatically, extractFromHTML, extractFromCSS } from "./lib/programmaticExtractor.js";
+import { withRetry } from "./lib/retry.js";
 
 // ── DEFAULT EXTRACTION PROMPT (editable in UI) ───────────
 // This is only used as the default value for the prompt editor.
@@ -146,12 +147,12 @@ If the user provides only a brief text description (e.g., "dark theme, neon gree
 // No secrets in the browser.
 
 async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal) {
-  const res = await fetch("/api/extract", {
+  const res = await withRetry(() => fetch("/api/extract", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contentBlocks, customPrompt: customPrompt || undefined }),
     signal,
-  });
+  }), { retries: 2, label: "extract" });
 
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
@@ -293,6 +294,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
   const [customPrompt, setCustomPrompt] = useState(DEFAULT_EXTRACTION_PROMPT);
   const [progress, setProgress] = useState({ pct: 0, label: "" });
   const [canInstant, setCanInstant] = useState(false);
+  const [saved, setSaved] = useState(cachedState?.saved || false);
   const fileInputRef = useRef(null);
   const abortRef = useRef(null);
 
@@ -304,9 +306,9 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
   // Persist extraction results to parent so they survive unmount
   useEffect(() => {
     if (onStateChange && (tokens || textInput)) {
-      onStateChange({ tokens, outputs, usage, textInput });
+      onStateChange({ tokens, outputs, usage, textInput, saved });
     }
-  }, [tokens, outputs, usage, textInput]);
+  }, [tokens, outputs, usage, textInput, saved]);
 
   // Auto-detect if files support programmatic extraction
   useEffect(() => {
@@ -344,6 +346,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
     setError(null);
     setTokens(null);
     setOutputs(null);
+    setSaved(false);
     setProgress({ pct: 5, label: "Preparing input files" });
 
     try {
@@ -426,6 +429,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
     setError(null);
     setTokens(null);
     setOutputs(null);
+    setSaved(false);
     setProgress({ pct: 10, label: "Reading files" });
 
     try {
@@ -486,7 +490,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
 
   // ── Save current extraction to library ──
   const handleSaveToLibrary = () => {
-    if (!tokens || !outputs || !onSaveToLibrary) return;
+    if (!tokens || !onSaveToLibrary) return;
     const id = `ds-${Date.now()}`;
     const now = new Date().toISOString();
     onSaveToLibrary({
@@ -499,8 +503,9 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
       source: "Design Extractor",
       tags: ["extracted"],
       tokens,
-      outputs,
+      // outputs intentionally omitted — regenerate via buildOutputs(tokens)
     });
+    setSaved(true);
   };
 
   const copyToClipboard = (text) => {
@@ -752,13 +757,14 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
             )}
             <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
               {onSaveToLibrary && (
-                <button onClick={handleSaveToLibrary} style={{
+                <button onClick={handleSaveToLibrary} disabled={saved} style={{
                   background: "none", border: `1.5px solid ${T.borderAcc}`,
                   color: T.accent, borderRadius: 100,
-                  padding: "7px 18px", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  padding: "7px 18px", fontSize: 12, fontWeight: 600, cursor: saved ? "default" : "pointer",
                   display: "flex", alignItems: "center", gap: 6,
+                  opacity: saved ? 0.5 : 1,
                 }}>
-                  <Save size={13} /> Save to Library
+                  <Save size={13} /> {saved ? "Saved to Library" : "Save to Library"}
                 </button>
               )}
               <button onClick={downloadZip} style={{

@@ -18,7 +18,7 @@ import FileWorkspace from "./FileWorkspace.jsx";
 // Each audit entry: timestamp, action, module, summary, reference links array
 // Reference links can include: app internal, Gmail, Google Sheets, Drive, Notion pages
 // Modules that use upload→process→output flow instead of sync
-const UPLOAD_MODULES = new Set(["pricing-calculator", "proposal-generator"]);
+const UPLOAD_MODULES = new Set(["pricing-calculator", "proposal-generator", "design-extractor"]);
 
 const NOTION_AUDIT_CONFIG = {
   masterPageUrl: "https://www.notion.so/Claude-Code-Log-DB-Dump-32401f618de280c0bb83c67614b4ac93",
@@ -1258,15 +1258,27 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     addLog("🆕 No cached data — sync a module to get started", "info");
   }, []);
 
-  // Persist moduleData to localStorage on every change
+  // Persist moduleData to localStorage on every change (debounced)
   useEffect(() => {
-    safePersist("aerchain-module-data", moduleData);
+    const id = setTimeout(() => safePersist("aerchain-module-data", moduleData), 500);
+    return () => clearTimeout(id);
   }, [moduleData]);
 
-  // Persist savedFiles to localStorage
+  // Persist savedFiles to localStorage (debounced)
   useEffect(() => {
-    safePersist("aerchain-saved-files", savedFiles);
+    const id = setTimeout(() => safePersist("aerchain-saved-files", savedFiles), 500);
+    return () => clearTimeout(id);
   }, [savedFiles]);
+
+  // Flush pending writes on tab close
+  useEffect(() => {
+    const flush = () => {
+      safePersist("aerchain-module-data", moduleData);
+      safePersist("aerchain-saved-files", savedFiles);
+    };
+    window.addEventListener("beforeunload", flush);
+    return () => window.removeEventListener("beforeunload", flush);
+  }, [moduleData, savedFiles]);
 
   // ── File management callbacks ──────────────────────────
   const getModuleFiles = useCallback((moduleKey) => {
@@ -1274,7 +1286,8 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     if (moduleKey === "design-extractor") {
       const refs = SAMPLE_FILES["design-extractor"] || [];
       const saved = savedFiles["design-extractor"] || [];
-      return [...refs, ...saved];
+      const seen = new Set(refs.map(f => f.id));
+      return [...refs, ...saved.filter(f => !seen.has(f.id))];
     }
     if (showDummy) return SAMPLE_FILES[moduleKey] || [];
     return savedFiles[moduleKey] || [];
