@@ -1,0 +1,1 @@
+# Design References\n\nThis folder contains reference designs, mood boards, and UI/UX inspiration files for the Aerchain Sales OS light theme.\n\nUpload images, PDFs, or screenshots of designs you like here. Claude will analyze them to distill a cohesive light theme.
