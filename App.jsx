@@ -3,7 +3,7 @@ import {
   RefreshCw, AlertCircle, Clock,
   Loader2, Activity, FileText, DollarSign, X,
   TrendingUp, Users, Wand2, Download, Settings, Brain,
-  ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon
+  ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon, Monitor
 } from "lucide-react";
 import DUMMY_DATA from "./demo-data/index.js";
 
@@ -935,6 +935,36 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
         --s-glow:       0 0 16px rgba(124,58,237,0.12);
       }
 
+      /* Clean Enterprise theme — matches Aerchain procurement platform */
+      :root[data-theme="clean"] {
+        --canvas:       #F8F9FC;
+        --primary:      hsl(262 65% 52%);
+        --accent:       hsl(275 70% 55%);
+        --gp:           linear-gradient(135deg, hsl(262 65% 52%), hsl(280 60% 58%));
+        --green:        hsl(152 55% 42%);
+        --amber:        hsl(38 80% 48%);
+        --red:          hsl(0 65% 52%);
+        --glass-1:      #FFFFFF;
+        --glass-2:      #F3F4F6;
+        --glass-border: #E5E7EB;
+        --fg:           #111827;
+        --fg2:          #6B7280;
+        --fg3:          #9CA3AF;
+        --logo-fg:      #1a1a2e;
+        --active-bg:    rgba(124,58,237,0.08);
+        --accent-bg:    rgba(124,58,237,0.08);
+        --accent-border:rgba(124,58,237,0.25);
+        --divider:      #E5E7EB;
+        --badge-bg:     #F3F4F6;
+        --topbar-bg:    #FFFFFF;
+        --sidebar-bg:   #FFFFFF;
+        --orb-1:        radial-gradient(circle, transparent 0%, transparent 70%);
+        --orb-2:        radial-gradient(circle, transparent 0%, transparent 70%);
+        --s-glass:      0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+        --s-elevated:   0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+        --s-glow:       0 0 0 transparent;
+      }
+
       ::selection { background: hsla(262,80%,55%,0.30); }
       ::-webkit-scrollbar { width: 5px; height: 5px; }
       ::-webkit-scrollbar-track { background: transparent; }
@@ -942,6 +972,8 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
       ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.20); }
       [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
       [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.20); }
+      [data-theme="clean"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.10); }
+      [data-theme="clean"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.18); }
 
       @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
       @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
@@ -1305,8 +1337,8 @@ ${document.getElementById("root").innerHTML}
         </button>
 
         {/* Theme toggle */}
-        <button className="icon-btn" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} title="Toggle theme">
-          {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+        <button className="icon-btn" onClick={() => setTheme(t => t === "dark" ? "light" : t === "light" ? "clean" : "dark")} title={`Theme: ${theme}`}>
+          {theme === "dark" ? <Sun size={14} /> : theme === "light" ? <Monitor size={14} /> : <Moon size={14} />}
         </button>
 
         {/* Settings gear */}
