@@ -916,7 +916,7 @@ function GenericView({ data }) {
 
 // ── MODULE CONTENT ROUTER ─────────────────────────────────
 
-function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile }) {
+function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, referenceTokens, onSaveToLibrary, onLoadReference }) {
   // Settings is never empty — always show view
   if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} />;
 
@@ -926,13 +926,13 @@ function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClear
     if (files.length > 0) {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
-          <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} onLoadReference={(file) => setReferenceTokens(file.tokens)} />
+          <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} onLoadReference={onLoadReference} />
           <div className="glass-surface" style={{ borderRadius: 14, padding: "12px 16px", boxShadow: "var(--s-glass)" }}>
             <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
               <Palette size={12} color={T.accent} /> Extract New Design System
             </div>
             <DesignExtractorView
-              onSaveToLibrary={(file) => setSavedFiles(prev => ({ ...prev, "design-extractor": [...(prev["design-extractor"] || []), file] }))}
+              onSaveToLibrary={onSaveToLibrary}
               referenceTokens={referenceTokens}
             />
           </div>
@@ -940,7 +940,7 @@ function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClear
       );
     }
     return <DesignExtractorView
-      onSaveToLibrary={(file) => setSavedFiles(prev => ({ ...prev, "design-extractor": [...(prev["design-extractor"] || []), file] }))}
+      onSaveToLibrary={onSaveToLibrary}
       referenceTokens={referenceTokens}
     />;
   }
@@ -1719,6 +1719,9 @@ body { margin: 0; padding: 0; }
                 onCreateFile={() => createFile(selected)}
                 onDuplicateFile={(file) => duplicateFile(selected, file)}
                 onDeleteFile={(fileId) => deleteFile(selected, fileId)}
+                referenceTokens={referenceTokens}
+                onSaveToLibrary={(file) => setSavedFiles(prev => ({ ...prev, "design-extractor": [...(prev["design-extractor"] || []), file] }))}
+                onLoadReference={(file) => setReferenceTokens(file.tokens)}
               />
             </div>
           </div>
