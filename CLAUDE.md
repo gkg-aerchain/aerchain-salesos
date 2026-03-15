@@ -39,3 +39,19 @@ When giving instructions that involve actions outside this environment (terminal
 - Say exactly WHERE to come back to and what to report
 
 Never assume familiarity with developer tools. Treat every instruction like explaining to someone who has never used a terminal before.
+
+## GitHub API Access (INVIOLABLE — READ EVERY SESSION)
+
+**NEVER ask Gaurav to do manual GitHub operations.** You have full GitHub API access. Use it.
+
+**GitHub Personal Access Token:** Stored in `.env.local` as `GITHUB_PAT`. Read it from there every session.
+
+### Rules — NO EXCEPTIONS:
+1. **PRs**: Create them yourself via `curl` to `https://api.github.com/repos/gkg-aerchain/aerchain-salesos/pulls` with the token as `Authorization: token <TOKEN>`
+2. **Merges**: Merge them yourself via `curl` to `https://api.github.com/repos/gkg-aerchain/aerchain-salesos/pulls/{number}/merge`
+3. **Any GitHub API operation**: Read the token from `.env.local` (`GITHUB_PAT`). Do not fumble around trying proxy paths, credential helpers, or env vars. Just use this token directly.
+4. **NEVER tell Gaurav to open a GitHub link, click buttons, or do any manual git/GitHub work.** Handle it yourself end-to-end.
+5. If the token stops working, tell Gaurav it needs to be refreshed — but still never ask him to manually merge or create PRs.
+
+### Custom Instruction — "geronimo" Gate:
+Do NOT execute any code changes until Gaurav explicitly says **"geronimo"**. If waiting, prompt him. No exceptions.
