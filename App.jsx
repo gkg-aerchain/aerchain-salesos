@@ -907,32 +907,32 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
         --s-glow:       0 0 24px rgba(124,58,237,0.18);
       }
       :root[data-theme="light"] {
-        --canvas:       linear-gradient(145deg, hsl(220 20% 96%) 0%, hsl(220 15% 93%) 40%, hsl(220 10% 90%) 100%);
+        --canvas:       hsl(262 30% 92%);
         --primary:      hsl(262 65% 52%);
         --accent:       hsl(275 70% 55%);
-        --gp:           linear-gradient(135deg, hsl(262 65% 52%), hsl(275 70% 55%));
+        --gp:           linear-gradient(135deg, #DC5F40, hsl(262 65% 52%));
         --green:        hsl(152 55% 42%);
         --amber:        hsl(38 80% 48%);
         --red:          hsl(0 65% 52%);
-        --glass-1:      rgba(0,0,0,0.03);
-        --glass-2:      rgba(0,0,0,0.05);
-        --glass-border: rgba(0,0,0,0.10);
-        --fg:           rgba(0,0,0,0.85);
-        --fg2:          rgba(0,0,0,0.55);
-        --fg3:          rgba(0,0,0,0.35);
-        --logo-fg:      #0a0a0f;
-        --active-bg:    hsla(262,65%,52%,0.12);
-        --accent-bg:    hsla(262,65%,52%,0.10);
-        --accent-border:hsla(262,65%,52%,0.30);
-        --divider:      rgba(0,0,0,0.10);
-        --badge-bg:     rgba(0,0,0,0.05);
-        --topbar-bg:    rgba(255,255,255,0.75);
-        --sidebar-bg:   rgba(255,255,255,0.60);
-        --orb-1:        radial-gradient(circle, hsl(265 60% 80% / .20) 0%, transparent 70%);
-        --orb-2:        radial-gradient(circle, hsl(255 50% 80% / .15) 0%, transparent 70%);
-        --s-glass:      0 2px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04) inset;
-        --s-elevated:   0 12px 40px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06) inset;
-        --s-glow:       0 0 24px rgba(124,58,237,0.10);
+        --glass-1:      rgba(255,255,255,0.90);
+        --glass-2:      rgba(255,255,255,0.50);
+        --glass-border: rgba(124,58,237,0.10);
+        --fg:           rgba(0,0,0,0.88);
+        --fg2:          rgba(0,0,0,0.45);
+        --fg3:          rgba(80,40,180,0.40);
+        --logo-fg:      #1a1a2e;
+        --active-bg:    linear-gradient(135deg, rgba(124,58,237,0.12), rgba(220,95,64,0.08));
+        --accent-bg:    rgba(124,58,237,0.15);
+        --accent-border:rgba(124,58,237,0.15);
+        --divider:      rgba(124,58,237,0.10);
+        --badge-bg:     rgba(124,58,237,0.08);
+        --topbar-bg:    rgba(255,255,255,0.82);
+        --sidebar-bg:   rgba(255,255,255,0.55);
+        --orb-1:        radial-gradient(circle, hsla(262,50%,75%,0.25) 0%, transparent 70%);
+        --orb-2:        radial-gradient(circle, hsla(20,60%,70%,0.15) 0%, transparent 70%);
+        --s-glass:      0 2px 12px rgba(124,58,237,0.08), inset 0 0 0 1px rgba(255,255,255,0.5);
+        --s-elevated:   0 8px 24px rgba(124,58,237,0.10), inset 0 0 0 1px rgba(255,255,255,0.5);
+        --s-glow:       0 0 16px rgba(124,58,237,0.12);
       }
 
       ::selection { background: hsla(262,80%,55%,0.30); }
