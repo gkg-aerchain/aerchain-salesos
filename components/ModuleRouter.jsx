@@ -1,14 +1,18 @@
-import { Component, memo } from "react";
+import { Component, memo, lazy, Suspense } from "react";
 import { Upload, Palette, Brain, AlertCircle } from "lucide-react";
 import { T } from "../lib/theme.js";
 import { UPLOAD_MODULES } from "../lib/constants.js";
 import { Card, FileUploadZone, EmptyState, Spinner } from "./Common.jsx";
-import PricingCalcView from "../views/PricingCalcView.jsx";
-import ProposalsView from "../views/ProposalsView.jsx";
 import SettingsView from "../views/SettingsView.jsx";
 import GenericView from "../views/GenericView.jsx";
-import DesignExtractorView from "../views/DesignExtractorView.jsx";
-import FileWorkspace from "./FileWorkspace.jsx";
+const DesignExtractorView = lazy(() => import("../views/DesignExtractorView.jsx"));
+const FileWorkspace = lazy(() => import("./FileWorkspace.jsx"));
+
+const MODULE_VIEWS = {
+  "pricing-calculator": lazy(() => import("../views/PricingCalcView.jsx")),
+  "proposal-generator": lazy(() => import("../views/ProposalsView.jsx")),
+  "design-extractor": null, // handled specially (has FileWorkspace + extractor)
+};
 
 export class ModuleErrorBoundary extends Component {
   constructor(props) {
@@ -64,34 +68,44 @@ export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSy
     if (files.length > 0) {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
-          <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} onLoadReference={onLoadReference} />
+          <Suspense fallback={<Spinner />}>
+            <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} onLoadReference={onLoadReference} />
+          </Suspense>
           <div className="glass-surface" style={{ borderRadius: 14, padding: "12px 16px", boxShadow: "var(--s-glass)" }}>
             <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
               <Palette size={12} color={T.accent} /> Extract New Design System
             </div>
-            <DesignExtractorView
-              onSaveToLibrary={onSaveToLibrary}
-              referenceTokens={referenceTokens}
-              cachedState={extractorCache}
-              onStateChange={setExtractorCache}
-            />
+            <Suspense fallback={<Spinner />}>
+              <DesignExtractorView
+                onSaveToLibrary={onSaveToLibrary}
+                referenceTokens={referenceTokens}
+                cachedState={extractorCache}
+                onStateChange={setExtractorCache}
+              />
+            </Suspense>
           </div>
         </div>
       );
     }
-    return <DesignExtractorView
-      onSaveToLibrary={onSaveToLibrary}
-      referenceTokens={referenceTokens}
-      cachedState={extractorCache}
-      onStateChange={setExtractorCache}
-    />;
+    return (
+      <Suspense fallback={<Spinner />}>
+        <DesignExtractorView
+          onSaveToLibrary={onSaveToLibrary}
+          referenceTokens={referenceTokens}
+          cachedState={extractorCache}
+          onStateChange={setExtractorCache}
+        />
+      </Suspense>
+    );
   }
 
   const files = moduleFiles || [];
   if (files.length > 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
-        <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} />
+        <Suspense fallback={<Spinner />}>
+          <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} />
+        </Suspense>
         {UPLOAD_MODULES.has(moduleKey) && (
           <Card>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
@@ -128,9 +142,13 @@ export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSy
   }
   if (isEmpty) return <EmptyState moduleKey={moduleKey} onSync={onSync} loading={syncing} />;
 
-  switch (moduleKey) {
-    case "pricing-calculator": return <PricingCalcView data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />;
-    case "proposal-generator": return <ProposalsView data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />;
-    default:                   return <GenericView data={data} />;
+  const ViewComponent = MODULE_VIEWS[moduleKey];
+  if (ViewComponent) {
+    return (
+      <Suspense fallback={<Spinner />}>
+        <ViewComponent data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />
+      </Suspense>
+    );
   }
+  return <GenericView data={data} />;
 });
