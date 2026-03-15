@@ -9,6 +9,7 @@ import { UPLOAD_MODULES, GROUPS, MOD, getSyncPrompt } from "./lib/constants.js";
 import { extractJSON, isStale, safePersist, timeAgo } from "./lib/utils.js";
 import { callClaude, createNotionAuditEntry, processWithClaude } from "./lib/api.js";
 import { T, buildThemeStylesheet } from "./lib/theme.js";
+import { SEED_DESIGN_FILES } from "./lib/seedDesignFiles.js";
 import {
   loadModuleData as sbLoadModules, saveAllModuleData as sbSaveModules,
   loadSavedFiles as sbLoadFiles, saveAllFiles as sbSaveFiles, saveFile as sbSaveFile, deleteFileFromDB as sbDeleteFile,
@@ -117,6 +118,15 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
           } catch { /* corrupted cache */ }
         }
       }
+      // Inject seed design files if they haven't been added yet
+      setSavedFiles(prev => {
+        const existing = prev["design-extractor"] || [];
+        const existingIds = new Set(existing.map(f => f.id));
+        const missing = SEED_DESIGN_FILES.filter(f => !existingIds.has(f.id));
+        if (missing.length === 0) return prev;
+        return { ...prev, "design-extractor": [...existing, ...missing] };
+      });
+
       if (sbMem) setClaudeMemory(sbMem);
     })();
     return () => { cancelled = true; };
