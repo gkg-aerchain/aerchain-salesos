@@ -4,7 +4,7 @@
 // Provides: card grid, expandable detail canvas, file management
 // ═══════════════════════════════════════════════════════════
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import {
   FileText, DollarSign, Palette, Plus, Copy, Trash2, Download,
   ChevronDown, ChevronRight, X, Clock, Tag, User, Edit3,
@@ -13,32 +13,8 @@ import {
 } from "lucide-react";
 
 // ── Theme tokens (same as App.jsx) ────────────────────────
-const T = {
-  bg:        "var(--canvas)",
-  bgCard:    "var(--glass-1)",
-  bgActive:  "var(--active-bg)",
-  border:    "var(--glass-border)",
-  borderAcc: "var(--accent-border)",
-  text:      "var(--fg)",
-  muted:     "var(--fg2)",
-  mutedSoft: "var(--fg3)",
-  accent:    "var(--primary)",
-  accentBg:  "var(--accent-bg)",
-  success:   "var(--green)",
-  warn:      "var(--amber)",
-  error:     "var(--red)",
-  glass:     "var(--s-glass)",
-  elevated:  "var(--s-elevated)",
-  divider:   "var(--divider)",
-  badgeBg:   "var(--badge-bg)",
-};
-
-function fmt$(n) {
-  if (!n || isNaN(n)) return "$—";
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
-  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
-  return `$${Math.round(n).toLocaleString()}`;
-}
+import { T } from "../lib/theme.js";
+import { fmt$ } from "../lib/utils.js";
 
 function timeAgo(date) {
   if (!date) return "Never";
@@ -111,7 +87,7 @@ function getModuleIcon(moduleKey) {
 // FILE CARD (collapsed view in the grid)
 // ══════════════════════════════════════════════════════════
 
-function FileCard({ file, moduleKey, isSelected, onClick }) {
+const FileCard = memo(function FileCard({ file, moduleKey, isSelected, onClick }) {
   const metrics = getCardMetrics(moduleKey, file);
   const Icon = getModuleIcon(moduleKey);
 
@@ -182,7 +158,7 @@ function FileCard({ file, moduleKey, isSelected, onClick }) {
       </div>
     </div>
   );
-}
+});
 
 // ══════════════════════════════════════════════════════════
 // FILE DETAIL PANEL (expanded working canvas)

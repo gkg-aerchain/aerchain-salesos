@@ -7,9 +7,10 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle, Zap, Save } from "lucide-react";
-import { generateHTML, generateMarkdown, generateJSON, generateReactTheme, buildOutputs } from "./lib/generators.js";
-import { canExtractProgrammatically, extractFromHTML, extractFromCSS } from "./lib/programmaticExtractor.js";
-import { withRetry } from "./lib/retry.js";
+import { generateHTML, generateMarkdown, generateJSON, generateReactTheme, buildOutputs } from "../lib/generators.js";
+import { canExtractProgrammatically, extractFromHTML, extractFromCSS } from "../lib/programmaticExtractor.js";
+import { withRetry } from "../lib/retry.js";
+import { T } from "../lib/theme.js";
 
 // ── DEFAULT EXTRACTION PROMPT (editable in UI) ───────────
 // This is only used as the default value for the prompt editor.
@@ -223,22 +224,7 @@ async function readFileAsText(file) {
 
 // ── DESIGN TOKENS (uses parent app's T or fallback) ──────
 
-const T = {
-  bg:        "var(--canvas)",
-  bgCard:    "var(--glass-1)",
-  border:    "var(--glass-border)",
-  borderAcc: "var(--accent-border)",
-  text:      "var(--fg)",
-  muted:     "var(--fg2)",
-  mutedSoft: "var(--fg3)",
-  accent:    "var(--primary)",
-  accentBg:  "var(--accent-bg)",
-  success:   "var(--green)",
-  error:     "var(--red)",
-  glass:     "var(--s-glass)",
-  elevated:  "var(--s-elevated)",
-  divider:   "var(--divider)",
-};
+// T imported from ./lib/theme.js (single source of truth)
 
 
 // ── MAIN COMPONENT ───────────────────────────────────────
