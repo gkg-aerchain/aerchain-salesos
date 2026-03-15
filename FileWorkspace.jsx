@@ -130,7 +130,6 @@ function FileCard({ file, moduleKey, isSelected, onClick }) {
         flexDirection: "column",
         gap: 10,
       }}
-      className="glass-surface"
       onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = T.borderAcc; }}
       onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = T.border; }}
     >
