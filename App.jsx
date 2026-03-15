@@ -3,9 +3,10 @@ import {
   RefreshCw, AlertCircle, Clock,
   Loader2, Activity, FileText, DollarSign, X,
   TrendingUp, Users, Wand2, Download, Settings, Brain,
-  ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon
+  ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon, Palette
 } from "lucide-react";
 import DUMMY_DATA from "./demo-data/index.js";
+import DesignExtractorView from "./DesignExtractorView.jsx";
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -33,12 +34,14 @@ const NOTION_AUDIT_CONFIG = {
 // Module groups — DEAL DESK in main area, SYSTEM pinned to sidebar bottom
 const GROUPS = [
   { id: "deal-desk", label: "DEAL DESK",  modules: ["pricing-calculator","proposal-generator"], pinBottom: false },
+  { id: "tools",     label: "TOOLS",      modules: ["design-extractor"],                        pinBottom: false },
   { id: "system",    label: "SYSTEM",     modules: ["settings"],                                pinBottom: true  },
 ];
 
 const MOD = {
   "pricing-calculator": { label: "Pricing Calculator", Icon: DollarSign },
   "proposal-generator": { label: "Proposal Generator", Icon: FileText   },
+  "design-extractor":   { label: "Design Extractor",   Icon: Palette    },
   "settings":           { label: "Settings",           Icon: Settings   },
 };
 
@@ -819,8 +822,9 @@ function GenericView({ data }) {
 // ── MODULE CONTENT ROUTER ─────────────────────────────────
 
 function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess }) {
-  // Settings is never empty — always show view
+  // Settings and Design Extractor are never empty — always show view
   if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} />;
+  if (moduleKey === "design-extractor") return <DesignExtractorView />;
 
   const isEmpty = !data || Object.keys(data).length === 0 || (Object.keys(data).length === 1 && data.syncedAt);
 
@@ -832,6 +836,7 @@ function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClear
   switch (moduleKey) {
     case "pricing-calculator": return <PricingCalcView data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />;
     case "proposal-generator": return <ProposalsView data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />;
+    case "design-extractor":   return <DesignExtractorView />;
     default:                   return <GenericView data={data} />;
   }
 }
