@@ -372,21 +372,56 @@ export const styles = {
 }
 
 
-// ── SERVER API CALL ───────────────────────────────────────
-// Calls /api/extract (Vercel serverless function) which holds the API key.
+// ── SERVER API CALL (SSE streaming) ──────────────────────
+// Calls /api/extract which streams SSE events back for real-time progress.
 // No secrets in the browser.
 
-async function callExtractAPI(contentBlocks, customPrompt) {
+async function callExtractAPI(contentBlocks, customPrompt, onProgress) {
   const res = await fetch("/api/extract", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contentBlocks, customPrompt: customPrompt || undefined }),
   });
+
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
     throw new Error(e.error || `HTTP ${res.status}`);
   }
-  return res.json();
+
+  // Parse SSE stream
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // Process complete SSE messages (double newline delimited)
+    const messages = buffer.split("\n\n");
+    buffer = messages.pop(); // keep incomplete message in buffer
+
+    for (const msg of messages) {
+      if (!msg.trim()) continue;
+      const eventMatch = msg.match(/^event: (\w+)/m);
+      const dataMatch = msg.match(/^data: (.+)$/m);
+      if (!eventMatch || !dataMatch) continue;
+
+      const event = eventMatch[1];
+      let data;
+      try { data = JSON.parse(dataMatch[1]); } catch { continue; }
+
+      if (event === "status" && onProgress) onProgress({ type: "status", ...data });
+      if (event === "progress" && onProgress) onProgress({ type: "progress", ...data });
+      if (event === "complete") result = data;
+      if (event === "error") throw new Error(data.error || "Extraction failed");
+    }
+  }
+
+  if (!result) throw new Error("Stream ended without result");
+  return result;
 }
 
 function fileToBase64(file) {
@@ -437,6 +472,35 @@ const TABS = [
   { key: "react",    label: "React",    Icon: Code,      ext: ".jsx" },
 ];
 
+// ── PROGRESS STAGES ──────────────────────────────────────
+// Maps stream progress to human-readable status messages.
+// Driven by character count from the streaming response.
+const PROGRESS_STAGES = [
+  { at: 0,    pct: 5,   label: "Preparing input files" },
+  { at: 0,    pct: 10,  label: "Sending to Claude API" },
+  { at: 0,    pct: 15,  label: "Connecting to Claude API" },
+  { at: 50,   pct: 22,  label: "Analyzing design elements" },
+  { at: 300,  pct: 30,  label: "Extracting color palette" },
+  { at: 800,  pct: 40,  label: "Scanning typography scale" },
+  { at: 1500, pct: 50,  label: "Mapping gradient tokens" },
+  { at: 2500, pct: 60,  label: "Parsing component styles" },
+  { at: 3500, pct: 70,  label: "Reading spacing + radius" },
+  { at: 4500, pct: 78,  label: "Extracting shadow values" },
+  { at: 5500, pct: 85,  label: "Building token structure" },
+  { at: 6500, pct: 92,  label: "Finalizing design system" },
+];
+
+function getProgressStage(chars, phase) {
+  if (phase === "parsing") return { pct: 95, label: "Validating JSON output" };
+  if (phase === "generating") return { pct: 98, label: "Generating outputs" };
+  // Find the highest stage that matches the current char count
+  let stage = PROGRESS_STAGES[0];
+  for (const s of PROGRESS_STAGES) {
+    if (chars >= s.at) stage = s;
+  }
+  return stage;
+}
+
 export default function DesignExtractorView() {
   const [files, setFiles] = useState([]);
   const [textInput, setTextInput] = useState("");
@@ -450,6 +514,7 @@ export default function DesignExtractorView() {
   const [copied, setCopied] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [customPrompt, setCustomPrompt] = useState(DEFAULT_EXTRACTION_PROMPT);
+  const [progress, setProgress] = useState({ pct: 0, label: "" });
   const fileInputRef = useRef(null);
 
   const handleDrop = useCallback((e) => {
@@ -469,6 +534,7 @@ export default function DesignExtractorView() {
     setError(null);
     setTokens(null);
     setOutputs(null);
+    setProgress({ pct: 5, label: "Preparing input files" });
 
     try {
       // Build content blocks for Claude API
@@ -504,12 +570,24 @@ export default function DesignExtractorView() {
         text: "Analyze all the inputs above and extract a complete design system. Return ONLY the JSON object as specified in your system prompt.",
       });
 
-      // Call server-side API (API key is on the server, not in the browser)
-      const result = await callExtractAPI(contentBlocks, customPrompt);
+      setProgress({ pct: 10, label: "Sending to Claude API" });
+
+      // Call server-side API with progress callback
+      const result = await callExtractAPI(contentBlocks, customPrompt, (evt) => {
+        if (evt.type === "status") {
+          const stage = getProgressStage(0, evt.phase);
+          setProgress(stage);
+        } else if (evt.type === "progress") {
+          const stage = getProgressStage(evt.chars, null);
+          setProgress(stage);
+        }
+      });
 
       if (!result.success) {
         throw new Error(result.error || "Extraction failed");
       }
+
+      setProgress({ pct: 98, label: "Generating outputs" });
 
       setUsage(result.usage);
       setTokens(result.tokens);
@@ -519,6 +597,7 @@ export default function DesignExtractorView() {
         json: generateJSON(result.tokens),
         react: generateReactTheme(result.tokens),
       });
+      setProgress({ pct: 100, label: "Complete" });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -644,25 +723,51 @@ export default function DesignExtractorView() {
 
         {/* Actions Row */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button
-            onClick={handleExtract}
-            disabled={loading}
-            style={{
-              background: loading ? T.muted : `linear-gradient(135deg, var(--primary), var(--green, #10B981))`,
-              color: "#fff",
-              border: "none",
-              borderRadius: 100,
-              padding: "10px 28px",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: loading ? "default" : "pointer",
-              display: "flex", alignItems: "center", gap: 8,
-              boxShadow: loading ? "none" : "0 4px 14px rgba(139,92,246,0.3)",
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Extracting...</> : <><Palette size={14} /> Extract Design System</>}
-          </button>
+          {!loading ? (
+            <button
+              onClick={handleExtract}
+              style={{
+                background: `linear-gradient(135deg, var(--primary), var(--green, #10B981))`,
+                color: "#fff",
+                border: "none",
+                borderRadius: 100,
+                padding: "10px 28px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 8,
+                boxShadow: "0 4px 14px rgba(139,92,246,0.3)",
+              }}
+            >
+              <Palette size={14} /> Extract Design System
+            </button>
+          ) : (
+            /* ── PROGRESS INDICATOR ── */
+            <div style={{ flex: 1, maxWidth: 380 }}>
+              {/* Status label */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <Loader2 size={13} style={{ color: T.accent, animation: "spin 1s linear infinite", flexShrink: 0 }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{progress.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: T.muted, marginLeft: "auto" }}>{progress.pct}%</span>
+              </div>
+              {/* Track */}
+              <div style={{
+                height: 6,
+                borderRadius: 100,
+                background: T.divider,
+                overflow: "hidden",
+              }}>
+                <div style={{
+                  height: "100%",
+                  width: `${progress.pct}%`,
+                  borderRadius: 100,
+                  background: `linear-gradient(90deg, var(--primary), var(--green, #10B981))`,
+                  transition: "width 0.4s ease",
+                  boxShadow: "0 0 8px rgba(139,92,246,0.4)",
+                }} />
+              </div>
+            </div>
+          )}
 
           <button
             onClick={() => setShowPrompt(!showPrompt)}
