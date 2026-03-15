@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aerchain SalesOS — Dark Canvas v3 Mock-up</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════════════
    DESIGN TOKENS — Dark Canvas v3
@@ -353,7 +353,8 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
 
 /* Enrichment zone consistent spacing */
 .enrich-zone {
-  padding: 0 24px 20px;
+  padding: 0;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -567,7 +568,7 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
     <!-- Module indicator -->
     <div style="margin-left:12px;font-size:12px;color:var(--fg2);display:flex;align-items:center;gap:6px">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-      Pricing Calculator
+      <span id="topbar-module-label">Pricing Calculator</span>
     </div>
 
     <div class="spacer"></div>
@@ -608,7 +609,7 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
     </button>
 
     <!-- Sync log toggle -->
-    <button class="icon-btn" title="Sync log">
+    <button class="icon-btn" title="Sync log" onclick="toggleSyncLog()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     </button>
 
@@ -626,12 +627,12 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
         <!-- DEAL DESK group -->
         <div class="sidebar-group-label">Deal Desk</div>
 
-        <div class="nav-item active">
+        <div class="nav-item active" id="nav-pricing" onclick="switchNav('pricing')">
           <svg class="nav-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
           <span style="flex:1">Pricing Calculator</span>
         </div>
 
-        <div class="nav-item">
+        <div class="nav-item" id="nav-proposals" onclick="switchNav('proposals')">
           <svg class="nav-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           <span style="flex:1">Proposal Generator</span>
         </div>
@@ -640,7 +641,7 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
       <!-- SYSTEM group — pinned bottom -->
       <div style="border-top:1px solid var(--glass-border)">
         <div class="sidebar-group-label">System</div>
-        <div class="nav-item">
+        <div class="nav-item" id="nav-settings" onclick="switchNav('settings')">
           <svg class="nav-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
           <span style="flex:1">Settings</span>
         </div>
@@ -659,7 +660,9 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
     </div>
 
     <!-- ── Main Content ── -->
-    <div class="main">
+    <div class="main" id="main-content">
+      <!-- ══ PRICING CALCULATOR MODULE ══ -->
+      <div id="section-pricing">
       <!-- Module header -->
       <div class="module-header">
         <div>
@@ -728,8 +731,10 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
         <div id="pricing-extra" class="enrich-zone"></div>
       </div>
 
-      <!-- ── Proposals View (below, as if scrolled) ── -->
-      <div class="module-divider">
+      </div><!-- /section-pricing -->
+
+      <!-- ══ PROPOSAL GENERATOR MODULE ══ -->
+      <div id="section-proposals" class="module-divider">
         <div class="module-header">
           <div>
             <h2 class="module-title">Proposal Generator</h2>
@@ -777,10 +782,11 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
 
         <!-- Proposals enrichment zone (populated by demo toggle) -->
         <div id="proposals-extra" class="enrich-zone"></div>
-      </div>
 
-      <!-- ── Settings Preview ── -->
-      <div class="module-divider">
+      </div><!-- /section-proposals -->
+
+      <!-- ══ SETTINGS MODULE ══ -->
+      <div id="section-settings" class="module-divider">
         <div class="module-header">
           <div>
             <h2 class="module-title">Settings</h2>
@@ -788,14 +794,15 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
           </div>
         </div>
 
-        <div class="settings-tabs">
-          <button class="settings-tab active">Claude Memory</button>
-          <button class="settings-tab">Notion Audit</button>
-          <button class="settings-tab">API Connections</button>
-          <button class="settings-tab">Database</button>
+        <div class="settings-tabs" id="settings-tabs">
+          <button class="settings-tab active" onclick="switchSettingsTab('memory')">Claude Memory</button>
+          <button class="settings-tab" onclick="switchSettingsTab('notion')">Notion Audit</button>
+          <button class="settings-tab" onclick="switchSettingsTab('apis')">API Connections</button>
+          <button class="settings-tab" onclick="switchSettingsTab('database')">Database</button>
         </div>
 
-        <div class="section-content" style="padding-top:20px">
+        <!-- Settings tab: memory -->
+        <div class="section-content settings-tab-content" id="settings-memory" style="padding-top:20px">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
             <!-- API connection cards -->
             <div class="kpi-card" style="padding:14px 16px">
@@ -814,10 +821,10 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
             </div>
             <div class="kpi-card" style="padding:14px 16px">
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-                <span class="status-dot off"></span>
+                <span class="status-dot live"></span>
                 <span style="font-size:12px;font-weight:500">Notion</span>
               </div>
-              <div style="font-size:10px;color:var(--fg3);font-family:JetBrains Mono,monospace">Not connected</div>
+              <div style="font-size:10px;color:var(--fg3);font-family:JetBrains Mono,monospace">Token configured</div>
             </div>
           </div>
 
@@ -851,12 +858,124 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
             <button class="btn-outline" style="font-size:11px;padding:6px 14px;color:var(--red);border-color:rgba(239,68,68,0.2)">Clear Memory</button>
           </div>
         </div>
-      </div>
+
+        <!-- Settings tab: notion -->
+        <div class="section-content settings-tab-content" id="settings-notion" style="display:none;padding-top:20px">
+          <div style="background:var(--glass-1);border:1px solid var(--glass-border);border-radius:var(--r);padding:20px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+              <svg width="13" height="13" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="18" fill="currentColor"/><text x="50" y="70" text-anchor="middle" fill="var(--glass-1)" font-size="55" font-weight="bold">N</text></svg>
+              <span style="font-size:12px;font-weight:600">Notion Audit Log</span>
+            </div>
+            <div style="color:var(--fg2);font-size:12px;margin-bottom:16px">
+              Master database: <strong style="color:var(--fg)">Aerchain SalesOS Notion Log</strong>
+            </div>
+            <div style="color:var(--fg2);font-size:12px;margin-bottom:12px">
+              Every page state syncs to Notion every 30 minutes as human-readable content.
+              Each audit entry includes a timestamp, action summary, and reference links.
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--glass-1);border-radius:7px;border:1px solid var(--glass-border)">
+                <svg width="12" height="12" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="18" fill="currentColor"/><text x="50" y="70" text-anchor="middle" fill="var(--glass-1)" font-size="55" font-weight="bold">N</text></svg>
+                <span style="font-size:12px;flex:1">Pricing Calculator Log</span>
+                <span style="color:var(--fg3);font-size:11px">Not created yet</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--glass-1);border-radius:7px;border:1px solid var(--glass-border)">
+                <svg width="12" height="12" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="18" fill="currentColor"/><text x="50" y="70" text-anchor="middle" fill="var(--glass-1)" font-size="55" font-weight="bold">N</text></svg>
+                <span style="font-size:12px;flex:1">Proposal Generator Log</span>
+                <span style="color:var(--fg3);font-size:11px">Not created yet</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--glass-1);border-radius:7px;border:1px solid var(--glass-border)">
+                <svg width="12" height="12" viewBox="0 0 100 100" fill="none"><rect width="100" height="100" rx="18" fill="currentColor"/><text x="50" y="70" text-anchor="middle" fill="var(--glass-1)" font-size="55" font-weight="bold">N</text></svg>
+                <span style="font-size:12px;flex:1">Settings & Memory Log</span>
+                <span style="color:var(--fg3);font-size:11px">Not created yet</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings tab: apis -->
+        <div class="section-content settings-tab-content" id="settings-apis" style="display:none;padding-top:20px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+            <div class="kpi-card" style="padding:14px 16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <span class="status-dot live"></span>
+                <span style="font-size:12px;font-weight:500">Claude (Anthropic)</span>
+              </div>
+              <div style="font-size:10px;color:var(--fg3);font-family:JetBrains Mono,monospace">Direct API — configured</div>
+            </div>
+            <div class="kpi-card" style="padding:14px 16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <span class="status-dot off"></span>
+                <span style="font-size:12px;font-weight:500">HubSpot</span>
+              </div>
+              <div style="font-size:10px;color:var(--fg3);font-family:JetBrains Mono,monospace">Not connected</div>
+            </div>
+            <div class="kpi-card" style="padding:14px 16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <span class="status-dot live"></span>
+                <span style="font-size:12px;font-weight:500">Notion</span>
+              </div>
+              <div style="font-size:10px;color:var(--fg3);font-family:JetBrains Mono,monospace">Token configured</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings tab: database -->
+        <div class="section-content settings-tab-content" id="settings-database" style="display:none;padding-top:20px">
+          <div style="color:var(--amber);font-size:12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:7px;padding:10px 12px;margin-bottom:12px">
+            Supabase project not yet connected. All data is stored in localStorage.
+          </div>
+          <div style="color:var(--fg2);font-size:12px;margin-bottom:8px">Starting schema (to be designed):</div>
+          <div style="background:var(--glass-1);border:1px solid var(--glass-border);border-radius:var(--r);overflow:hidden">
+            <div style="padding:8px 14px;border-bottom:1px solid var(--glass-border);font-size:11px;color:var(--fg2);display:flex;align-items:center;gap:8px"><span class="status-dot off"></span>modules</div>
+            <div style="padding:8px 14px;border-bottom:1px solid var(--glass-border);font-size:11px;color:var(--fg2);display:flex;align-items:center;gap:8px"><span class="status-dot off"></span>module_data</div>
+            <div style="padding:8px 14px;border-bottom:1px solid var(--glass-border);font-size:11px;color:var(--fg2);display:flex;align-items:center;gap:8px"><span class="status-dot off"></span>documents</div>
+            <div style="padding:8px 14px;border-bottom:1px solid var(--glass-border);font-size:11px;color:var(--fg2);display:flex;align-items:center;gap:8px"><span class="status-dot off"></span>doc_chunks</div>
+            <div style="padding:8px 14px;border-bottom:1px solid var(--glass-border);font-size:11px;color:var(--fg2);display:flex;align-items:center;gap:8px"><span class="status-dot off"></span>sync_log</div>
+            <div style="padding:8px 14px;border-bottom:1px solid var(--glass-border);font-size:11px;color:var(--fg2);display:flex;align-items:center;gap:8px"><span class="status-dot off"></span>notion_backups</div>
+            <div style="padding:8px 14px;font-size:11px;color:var(--fg2);display:flex;align-items:center;gap:8px"><span class="status-dot off"></span>match_documents()</div>
+          </div>
+        </div>
+
+      </div><!-- /section-settings -->
 
       <!-- Bottom spacer -->
       <div style="height:40px"></div>
     </div><!-- /main -->
   </div><!-- /body -->
+
+  <!-- Demo mode banner -->
+  <div id="demo-banner" style="display:none;background:rgba(124,58,237,0.10);border-bottom:1px solid rgba(124,58,237,0.2);padding:4px 20px;font-size:11px;color:hsl(262 70% 72%);text-align:center;position:fixed;top:54px;left:0;right:0;z-index:15">
+    Demo Mode — Showing sample data
+  </div>
+
+  <!-- Lumos marker -->
+  <div style="position:fixed;bottom:16px;right:16px;z-index:200;display:flex;align-items:center;gap:6px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:8px;padding:6px 12px;box-shadow:0 0 12px rgba(139,92,246,0.25)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+    <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:#8b5cf6">Lumos</span>
+  </div>
+
+  <!-- Sync log panel -->
+  <div class="sync-log" id="sync-log-panel" style="display:none">
+    <div style="padding:12px 14px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="hsl(262 75% 62%)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.5px;color:var(--fg3)">SYNC LOG</span>
+      <div style="flex:1"></div>
+      <button class="icon-btn" style="padding:2px" onclick="toggleSyncLog()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:4px" id="sync-log-entries">
+      <div style="color:var(--fg3);font-size:11px;text-align:center;margin-top:20px">No sync activity yet</div>
+    </div>
+    <div style="padding:10px;border-top:1px solid var(--glass-border);flex-shrink:0">
+      <div style="color:var(--fg3);font-size:10px;font-weight:600;letter-spacing:1px;margin-bottom:8px">QUICK SYNC</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        <button class="btn-outline" style="font-size:10px;padding:4px 8px">Pricing</button>
+        <button class="btn-outline" style="font-size:10px;padding:4px 8px">Proposals</button>
+      </div>
+    </div>
+  </div>
 </div><!-- /shell -->
 
 <style>
@@ -866,6 +985,67 @@ body { margin: 0; font-family: Montserrat, system-ui, sans-serif; font-size: 14p
 
 <script>
 let demoOn = false;
+let syncLogOpen = false;
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR NAVIGATION
+   ═══════════════════════════════════════════════════ */
+function switchNav(section) {
+  // Update active state
+  document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
+  var navEl = document.getElementById('nav-' + section);
+  if (navEl) navEl.classList.add('active');
+
+  // Scroll to section
+  var target = document.getElementById('section-' + section);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Update topbar module indicator
+  var labels = { pricing: 'Pricing Calculator', proposals: 'Proposal Generator', settings: 'Settings' };
+  var topbarMod = document.getElementById('topbar-module-label');
+  if (topbarMod) topbarMod.textContent = labels[section] || section;
+}
+
+/* ═══════════════════════════════════════════════════
+   SETTINGS TABS
+   ═══════════════════════════════════════════════════ */
+function switchSettingsTab(tab) {
+  // Update tab active state
+  var tabs = document.querySelectorAll('#settings-tabs .settings-tab');
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  event.target.classList.add('active');
+
+  // Show/hide tab content
+  document.querySelectorAll('.settings-tab-content').forEach(function(el) { el.style.display = 'none'; });
+  var content = document.getElementById('settings-' + tab);
+  if (content) content.style.display = '';
+}
+
+/* ═══════════════════════════════════════════════════
+   SYNC LOG PANEL
+   ═══════════════════════════════════════════════════ */
+function toggleSyncLog() {
+  syncLogOpen = !syncLogOpen;
+  var panel = document.getElementById('sync-log-panel');
+  if (panel) panel.style.display = syncLogOpen ? '' : 'none';
+}
+
+function addSyncLogEntry(msg, type) {
+  var colors = { success: 'var(--green)', error: 'var(--red)', warn: 'var(--amber)', info: 'var(--fg3)' };
+  var container = document.getElementById('sync-log-entries');
+  if (!container) return;
+  // Clear "no activity" placeholder
+  if (container.children.length === 1 && container.children[0].tagName === 'DIV' && container.children[0].style.textAlign === 'center') {
+    container.innerHTML = '';
+  }
+  var now = new Date().toLocaleTimeString();
+  var entry = document.createElement('div');
+  entry.style.cssText = 'display:flex;gap:8px;padding:5px 8px;background:var(--glass-1);border-radius:5px;border:1px solid var(--glass-border)';
+  entry.innerHTML = '<div style="width:3px;border-radius:4px;background:' + (colors[type] || colors.info) + ';flex-shrink:0;align-self:stretch"></div>' +
+    '<div><div style="color:var(--fg);font-size:11px;line-height:1.4">' + msg + '</div>' +
+    '<div style="color:var(--fg3);font-size:10px;margin-top:1px">' + now + '</div></div>';
+  container.insertBefore(entry, container.firstChild);
+}
 
 /* ═══════════════════════════════════════════════════
    PRICING CALCULATOR — KPI + Deals Table
@@ -1089,6 +1269,7 @@ const DEMO_PROPOSALS_EXTRA = `
 function toggleDemo() {
   demoOn = !demoOn;
   document.getElementById('demo-toggle').classList.toggle('on', demoOn);
+  document.getElementById('demo-banner').style.display = demoOn ? '' : 'none';
 
   document.getElementById('pricing-kpi').innerHTML    = demoOn ? DEMO_PRICING_KPI    : EMPTY_PRICING_KPI;
   document.getElementById('pricing-tbody').innerHTML   = demoOn ? DEMO_PRICING_ROWS   : EMPTY_PRICING_ROWS;
@@ -1096,6 +1277,15 @@ function toggleDemo() {
   document.getElementById('proposals-kpi').innerHTML   = demoOn ? DEMO_PROPOSALS_KPI  : EMPTY_PROPOSALS_KPI;
   document.getElementById('proposals-tbody').innerHTML  = demoOn ? DEMO_PROPOSALS_ROWS  : EMPTY_PROPOSALS_ROWS;
   document.getElementById('proposals-extra').innerHTML  = demoOn ? DEMO_PROPOSALS_EXTRA : '';
+
+  // Log to sync panel
+  if (demoOn) {
+    addSyncLogEntry('🔮 Demo mode enabled — showing sample data', 'info');
+    addSyncLogEntry('✅ Pricing Calculator — demo data loaded', 'success');
+    addSyncLogEntry('✅ Proposal Generator — demo data loaded', 'success');
+  } else {
+    addSyncLogEntry('Demo mode disabled — cleared sample data', 'info');
+  }
 }
 
 /* ═══════════════════════════════════════════════════
