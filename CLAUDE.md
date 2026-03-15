@@ -1,5 +1,32 @@
 # Project Instructions
 
+## Session Context from Notion (READ THIS FIRST)
+
+At the start of every Claude Code session on this repo, fetch the latest session logs from Notion to understand prior work, decisions, and architectural context.
+
+**Notion Parent Page:** "Claude Code Log/DB/Dump"
+**Page ID:** `32401f61-8de2-80c0-bb83-c67614b4ac93`
+
+### How to load context:
+1. Read the Notion API key from `.env.local` (variable: `VITE_NOTION_API_KEY`)
+2. Use the Notion MCP server (configured in `.mcp.json`) OR call the Notion API directly
+3. Fetch child pages of the parent page above — these are session logs
+4. Read the MOST RECENT session log to understand: what was built, what decisions were made, what's pending, and any architectural corrections
+5. If a prior session log references corrections or pending work, treat those as active requirements
+
+### What gets logged to Notion:
+- Every Claude Code session should create a new child page under the parent page above
+- Include: full conversation transcript, thinking/reasoning, decisions made, commits created, architectural corrections
+- Title format: `Session Log — YYYY-MM-DD — [brief description]`
+- At session end, push the log to Notion before closing
+
+### Key architectural decisions (from prior sessions):
+- Claude API is a **processing engine**, NOT a data sync agent — it processes user-uploaded inputs and returns outputs
+- Sync button is a general app artifact — it is NOT used for Pricing Calculator or Proposal Generator
+- Data flow: User uploads → App sends to Claude → Claude processes → Output returned to app
+- Notion integration is for audit logging and session context persistence
+- Token stored in `.env.local` (gitignored) — must be recreated per environment
+
 ## Communicating with Gaurav
 
 When giving instructions that involve actions outside this environment (terminal commands, clicking things, navigating UIs, etc.), ALWAYS be extremely granular:
