@@ -1,57 +1,224 @@
 # Context Transfer — P2 Fixes (Quality & Polish)
 
-> **Branch:** Create from `main` AFTER P0/P1 merge lands
+> **Branch:** Create from `main` AFTER commit `8a4769d2` (P0/P1 merge from PR #34)
 > **Parent session:** claude/init-refero-mcp-x1icS (March 15, 2026)
 > **Estimated total effort:** ~2.5 hours
+> **Repo:** gkg-aerchain/aerchain-salesos
 
 ---
 
-## Overview
+## What This App Is
 
-This session handles 7 quality-of-life and polish fixes identified during a full scenario analysis of the codebase. These are NOT crash bugs — the app works without them — but they cause confusing UX, wasted resources, or silent failures that compound over time.
+Aerchain SalesOS is a **single-page React application** deployed on Vercel. It's a multi-module enterprise tools dashboard with:
 
-**All P0 and P1 items were handled in a prior session.** This branch should be created from `main` after those changes are merged to avoid conflicts (P1 includes splitting App.jsx and extracting theme tokens, which restructures the files these fixes touch).
+- **Pricing Calculator** — upload pricing data, process with Claude API, view structured output
+- **Proposal Generator** — upload proposal docs, process with Claude API
+- **Design Extractor** — upload HTML/CSS/images, extract design tokens via Claude API or instant programmatic extraction
+- **Settings** — theme selector (dark/light/clean), Claude memory viewer
+
+The app uses **NO React Router** — module switching is done via a sidebar that sets `selected` state, and `ModuleContent` conditionally renders the appropriate view. All data persists in `localStorage`. There is a Notion audit log integration that syncs every 30 minutes.
+
+**Deployment:** Vercel with serverless functions in `/api/` directory. Claude API key lives server-side only.
 
 ---
 
-## Item 1: No retry logic on callExtractAPI (Bug 10)
+## Architecture Overview (Post-P0/P1)
 
-**File:** `DesignExtractorView.jsx:148-194`
-**Effort:** 20 min
-**Impact:** Inconsistent resilience — sync flow retries, extraction does not
+### File Structure (5,026 total lines across key files)
 
-### What's wrong
-The regular `callClaude` function in `App.jsx:116` wraps its fetch in `withRetry()` with 3 retries and exponential backoff. The `callExtractAPI` function in `DesignExtractorView.jsx:148` has **zero retry logic**. A transient HTTP 500 or 429 (rate limit) from the Claude API immediately fails the extraction, while the same error on the sync flow would be silently retried.
+```
+aerchain-salesos/
+├── App.jsx                  (1,867 lines) — THE monolith: constants, utilities, UI components, state, rendering
+├── DesignExtractorView.jsx  (858 lines)   — Design Extractor module: file upload, Claude API SSE, instant extract, output tabs
+├── FileWorkspace.jsx        (619 lines)   — Shared file grid + detail canvas used by all modules
+├── lib/
+│   ├── generators.js        (248 lines)   — generateHTML/Markdown/JSON/ReactTheme from token JSON
+│   └── programmaticExtractor.js (523 lines) — Client-side HTML/CSS → design tokens (no API)
+├── demo-data/
+│   ├── index.js             (22 lines)    — Central re-export: DUMMY_DATA + SAMPLE_FILES
+│   ├── pricing-calculator.js (109 lines)
+│   ├── proposal-generator.js (170 lines)
+│   └── design-extractor.js  (317 lines)
+├── api/
+│   ├── process.js           (56 lines)    — Vercel serverless: general Claude API proxy
+│   ├── extract.js           (228 lines)   — Vercel serverless: Design Extractor with SSE streaming
+│   └── health.js            (9 lines)
+├── main.jsx                               — Entry point, renders <App moduleFilter={[...]} />
+├── vite.config.js                         — Vite config
+└── vercel.json                            — Vercel routing config
+```
 
-### Current code (DesignExtractorView.jsx:148-153)
+### State Architecture in App.jsx
+
+All state lives in the `AerchainSalesOS` component (line 1061):
+
 ```javascript
-async function callExtractAPI(contentBlocks, customPrompt, onProgress) {
+const [selected, setSelected]         = useState("pricing-calculator");  // Active module key
+const [moduleData, setModuleData]     = useState({});           // Synced data per module { [key]: { data, status, lastSynced, syncCount } }
+const [syncing, setSyncing]           = useState(new Set());    // Module keys currently syncing
+const [savedFiles, setSavedFiles]     = useState({});           // User-saved files per module { [key]: File[] }
+const [uploadedFiles, setUploadedFiles] = useState({});         // Browser File objects pending processing { [key]: File[] }
+const [processing, setProcessing]     = useState(new Set());    // Module keys being processed by Claude
+const [claudeMemory, setClaudeMemory] = useState([]);           // Last 200 Claude interactions
+const [referenceTokens, setReferenceTokens] = useState(null);   // Loaded design system for comparison
+const [extractorCache, setExtractorCache]   = useState(null);   // Persists DesignExtractorView results across module switches
+const [theme, setTheme]               = useState("dark");       // "dark" | "light" | "clean"
+const [showDummy, setShowDummy]       = useState(false);        // Demo mode toggle
+```
+
+### localStorage Keys
+
+| Key | Contents | Protected by try/catch | Uses safePersist |
+|-----|----------|----------------------|------------------|
+| `aerchain-module-data` | `moduleData` JSON | Yes (read) | Yes (write) |
+| `aerchain-saved-files` | `savedFiles` JSON | Yes (read) | Yes (write) |
+| `aerchain-claude-memory` | Last 200 interactions | Yes (read) | Yes (write) |
+| `aerchain-notion-audit` | Last 100 audit entries | Yes (read, fixed in P0/P1) | Yes (write) |
+
+### Theme System
+
+Three themes defined as CSS custom properties on `:root[data-theme="dark|light|clean"]` (App.jsx lines 1104-1200). Components reference via a `T` object that maps to `var(--xxx)`:
+
+```javascript
+// DUPLICATED in App.jsx, DesignExtractorView.jsx, and FileWorkspace.jsx
+const T = {
+  bg:        "var(--canvas)",
+  bgCard:    "var(--glass-1)",
+  border:    "var(--glass-border)",
+  text:      "var(--fg)",
+  muted:     "var(--fg2)",
+  accent:    "var(--primary)",
+  // ... etc
+};
+```
+
+### Data Flow
+
+```
+User uploads file → setUploadedFiles({[key]: files})
+                  → handleProcess(key) → reads files as text → callClaude() → /api/process
+                  → response parsed → setModuleData({[key]: {data, status}})
+                  → useEffect persists to localStorage
+
+Design Extractor: Two paths:
+  1. Claude API: handleExtract() → callExtractAPI() → /api/extract (SSE stream) → setTokens/setOutputs
+  2. Instant:    handleInstantExtract() → extractFromHTML/extractFromCSS (client-side) → setTokens/setOutputs
+```
+
+### Key Component Tree
+
+```
+<AerchainSalesOS>
+  ├── Sidebar (inline in App.jsx ~line 1590)
+  │   └── Module list grouped by GROUPS constant
+  ├── Top bar (inline ~line 1700)
+  └── Content area
+      └── <ModuleErrorBoundary moduleKey={selected}>  ← Added in P0/P1
+          └── <ModuleContent moduleKey={selected} ...props>
+              ├── if "settings" → <SettingsView>
+              ├── if "design-extractor" → <FileWorkspace> + <DesignExtractorView>
+              ├── if has files → <FileWorkspace> + upload zone
+              ├── if UPLOAD_MODULES → <EmptyState> with upload zone
+              └── else → <EmptyState> with "Sync Now" button
+```
+
+---
+
+## What Was Fixed in P0/P1 (PR #34, merged as 8a4769d2)
+
+You MUST understand these fixes because some P2 items interact with them:
+
+1. **localStorage persistence guard removed** — `App.jsx:1262-1268` now always calls `safePersist()`, no length check. This means even empty `{}` is written. Your debounce fix (Item 5) wraps these same lines.
+
+2. **`safePersist()` function added** — `App.jsx:103-106`. All 4 `localStorage.setItem` calls now go through this. Your debounce fix should modify `safePersist` or the useEffect calls, NOT add new raw `localStorage.setItem` calls.
+
+3. **SSE stream guarded** — `DesignExtractorView.jsx:161-206`. Added `res.body` null check, try/catch around reader loop, `data?.error` optional chaining.
+
+4. **ModuleErrorBoundary added** — `App.jsx:924-968`. Class component wrapping `<ModuleContent>`. Resets on module switch via `componentDidUpdate`.
+
+5. **AbortController added** — `DesignExtractorView.jsx:297` (`abortRef`), line 338-341 (creates controller on extract), line 405 (AbortError silenced in catch). `callExtractAPI` now takes a 4th `signal` parameter.
+
+6. **Multi-file merge** — `DesignExtractorView.jsx:424-467`. The instant extract loop now collects all tokens into `allTokens[]` and reduces them with shallow merge per token category.
+
+7. **extractorCache** — `App.jsx:1089` state, passed through `ModuleContent` (line 973 props) to `DesignExtractorView` (line 281 props, line 304-309 persist effect).
+
+---
+
+## P2 Items — Detailed Implementation Guide
+
+### Item 1: No retry logic on callExtractAPI
+
+**File:** `DesignExtractorView.jsx:148-207`
+**Effort:** 20 min
+
+**Current state of callExtractAPI (lines 148-207):**
+```javascript
+async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal) {
   const res = await fetch("/api/extract", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ contentBlocks, customPrompt: customPrompt || undefined }),
+    signal,
   });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.error || `HTTP ${res.status}`);
+  }
+  // ... SSE stream parsing follows
 ```
 
-### Fix
-Import or reimplement the `withRetry` wrapper from App.jsx (or from a shared util if P1 extracted it). Wrap the fetch call:
+**What's wrong:** `callClaude` in App.jsx:120 uses `withRetry()`:
 ```javascript
-const res = await withRetry(() => fetch("/api/extract", { ... }), 3);
+async function callClaude(prompt, { system, model, maxTokens, moduleKey } = {}) {
+  return withRetry(async () => {
+    const res = await fetch("/api/process", { ... });
+    // ...
+  }, { retries: 3, label: moduleKey });
+}
 ```
-Note: Only retry on non-streaming failures (the `!res.ok` path at line 155). Once SSE streaming starts, retrying mid-stream doesn't make sense.
+
+But `callExtractAPI` has no retry wrapper. Transient 500/429 errors fail immediately.
+
+**Fix:** Only retry the initial fetch, NOT after SSE streaming starts:
+```javascript
+async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal) {
+  const res = await withRetry(() => fetch("/api/extract", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contentBlocks, customPrompt: customPrompt || undefined }),
+    signal,
+  }), { retries: 2, label: "extract" });
+  if (!res.ok) { ... }
+  // SSE parsing unchanged
+```
+
+**IMPORTANT:** `withRetry` is defined in App.jsx:88-101 as a top-level function, NOT exported. You'll need to either:
+- Move it to a shared util file (e.g., `lib/retry.js`) and import in both files
+- Or duplicate the 14-line function in DesignExtractorView.jsx
+
+The `withRetry` function (App.jsx:88-101):
+```javascript
+async function withRetry(fn, { retries = 3, label = "" } = {}) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try { return await fn(); } catch (err) {
+      const status = err?.status || err?.statusCode;
+      if (status && status >= 400 && status < 500 && status !== 429) throw err;
+      if (attempt === retries) throw err;
+      const delay = Math.pow(2, attempt + 1) * 1000;
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+}
+```
 
 ---
 
-## Item 2: No duplicate prevention on Save to Library (Bug 6)
+### Item 2: No duplicate prevention on Save to Library
 
-**File:** `DesignExtractorView.jsx:443-459`
+**File:** `DesignExtractorView.jsx:487-503`
 **Effort:** 20 min
-**Impact:** Clicking "Save to Library" multiple times creates duplicate entries
 
-### What's wrong
-`handleSaveToLibrary` creates a new file object with `id: "ds-${Date.now()}"` every time it's called. There is no check for "already saved", no disabled state after saving, and no visual feedback (toast/badge). A user who double-clicks or clicks again "to be sure" ends up with 2-3 identical entries in their library.
-
-### Current code (DesignExtractorView.jsx:443-459)
+**Current code:**
 ```javascript
 const handleSaveToLibrary = () => {
   if (!tokens || !outputs || !onSaveToLibrary) return;
@@ -62,32 +229,41 @@ const handleSaveToLibrary = () => {
     name: tokens.meta?.name || "Untitled Design System",
     description: tokens.meta?.description || "",
     status: "final",
-    createdAt: now,
-    updatedAt: now,
+    createdAt: now, updatedAt: now,
     source: "Design Extractor",
     tags: ["extracted"],
-    tokens,
-    outputs,
+    tokens, outputs,
   });
 };
 ```
 
-### Fix
-1. Add a `const [saved, setSaved] = useState(false)` state
-2. Set `setSaved(true)` after calling `onSaveToLibrary`
-3. Reset `saved` to `false` when a new extraction starts (`handleExtract`/`handleInstantExtract`)
-4. Disable the button and change label to "Saved" when `saved === true`
+**What's wrong:** Every call creates a new entry with a new `Date.now()` id. No "already saved" state, no disabled button, no toast.
+
+**Fix:**
+1. Add state: `const [saved, setSaved] = useState(false);`
+2. In `handleSaveToLibrary`: add `setSaved(true)` after `onSaveToLibrary(...)`.
+3. Reset: add `setSaved(false)` at the start of `handleExtract` (line 343) and `handleInstantExtract` (line 424).
+4. The Save button is rendered around line 700-720 (search for `handleSaveToLibrary`). Add `disabled={saved}` and change label to `saved ? "Saved to Library" : "Save to Library"`.
+5. Include `saved` in the `extractorCache` persist effect (line 304-309) so it survives module switches.
 
 ---
 
-## Item 3: backdrop-filter blur tanks GPU on many FileCards (Bug 13)
+### Item 3: backdrop-filter blur on FileCards
 
-**File:** `FileWorkspace.jsx:133` + `App.jsx:1150-1155`
+**File:** `FileWorkspace.jsx:118-135`
 **Effort:** 30 min
-**Impact:** Scroll becomes laggy with 50+ files, unusable with 100+
 
-### What's wrong
-Every `FileCard` component has `className="glass-surface"` (line 133), which applies:
+**Current FileCard (line 118-135):**
+```javascript
+<div onClick={onClick} style={{
+  borderRadius: 14, padding: "16px 18px", cursor: "pointer",
+  background: isSelected ? T.bgActive : T.bgCard,
+  border: `1px solid ${isSelected ? T.borderAcc : T.border}`,
+  boxShadow: isSelected ? "var(--s-glow)" : "var(--s-glass)",
+}} className="glass-surface">  // ← THIS applies backdrop-filter: blur(40px)
+```
+
+**The CSS class (App.jsx:1207-1212):**
 ```css
 .glass-surface {
   background: var(--glass-1);
@@ -96,155 +272,66 @@ Every `FileCard` component has `className="glass-surface"` (line 133), which app
   border: 1px solid var(--glass-border);
 }
 ```
-`backdrop-filter: blur()` is one of the most GPU-expensive CSS properties — it composites every pixel behind the element. With 100+ cards in a scrollable grid, this causes severe rendering lag, especially on laptops.
 
-### Fix
-Two options (pick one):
-- **Option A (simple):** Remove `className="glass-surface"` from FileCard. Use a simple `background: var(--glass-1)` with `border` directly in the inline style. The blur effect isn't visually essential for small cards.
-- **Option B (conditional):** Apply `glass-surface` only to the first N cards (e.g., 20) and use a plain background for the rest. Or use `IntersectionObserver` to only apply blur to visible cards.
-
-Option A is recommended — the blur on small grid cards is barely noticeable anyway.
+**Fix:** Remove `className="glass-surface"` from FileCard at line 133. The inline `style` already sets `background`, `border`, and `boxShadow`. **Do NOT** remove `glass-surface` from sidebar, top bar, or large panels — only from FileCard.
 
 ---
 
-## Item 4: Saved files store regeneratable outputs, wasting storage (Bug 15)
+### Item 4: Saved files store regeneratable outputs
 
-**File:** `DesignExtractorView.jsx:447-458`
+**File:** `DesignExtractorView.jsx:487-503`
 **Effort:** 30 min
-**Impact:** Each saved file is ~30 KB instead of ~15 KB, accelerates 5 MB localStorage wall
 
-### What's wrong
-When saving to library, the file object includes both `tokens` AND `outputs`:
-```javascript
-onSaveToLibrary({
-  ...
-  tokens,   // ~5 KB — the actual extracted data
-  outputs,  // ~15 KB — generated HTML, Markdown, JSON, React theme
-});
-```
-The `outputs` object contains HTML, Markdown, JSON, and React theme strings that are **entirely regeneratable** from `tokens` using `buildOutputs(tokens)` (from `lib/generators.js`). Storing both roughly doubles the per-file storage cost and directly accelerates hitting the 5 MB localStorage limit (see Bug 14, handled in P1).
+**What's wrong:** `outputs` in saved file is 100% regeneratable from `tokens` via `buildOutputs(tokens)` (from `lib/generators.js`). Storing both doubles per-file localStorage cost (~30 KB vs ~15 KB).
 
-### Fix
-1. Don't store `outputs` in the saved file — only store `tokens`
-2. When displaying a saved file, regenerate outputs on-the-fly: `const outputs = buildOutputs(file.tokens)`
-3. This may require a small change in `DesignExtractorView` where it checks for `file.outputs` — replace with `buildOutputs(file.tokens)`
+**Fix:**
+1. Remove `outputs` from the save payload in `handleSaveToLibrary`.
+2. Where saved files need outputs, call `buildOutputs(file.tokens)`.
+3. The `referenceTokens` effect (line 316-323) already calls `buildOutputs(referenceTokens)`, so loading references works.
+4. **Migration:** Use `file.outputs || buildOutputs(file.tokens)` where needed to handle old saved data.
 
 ---
 
-## Item 5: Debounce localStorage writes
+### Item 5: Debounce localStorage writes
 
-**File:** `App.jsx:1202-1214` (and similar useEffect blocks)
+**File:** `App.jsx:1261-1269`
 **Effort:** 30 min
-**Impact:** Performance improvement for rapid state changes
 
-### What's wrong
-Every state change to `moduleData` or `savedFiles` triggers an immediate `localStorage.setItem` with a full JSON serialization:
+**Current persist effects:**
 ```javascript
-// App.jsx:1202-1206
-useEffect(() => {
-  if (Object.keys(moduleData).length > 0) {
-    localStorage.setItem("aerchain-module-data", JSON.stringify(moduleData));
-  }
-}, [moduleData]);
+useEffect(() => { safePersist("aerchain-module-data", moduleData); }, [moduleData]);
+useEffect(() => { safePersist("aerchain-saved-files", savedFiles); }, [savedFiles]);
 ```
-For rapid operations (bulk delete, multi-file save, fast switching), this causes dozens of synchronous `JSON.stringify` + `setItem` calls. With large data objects, this blocks the main thread.
 
-### Fix
-Debounce the write with a 500ms delay:
-```javascript
-useEffect(() => {
-  const timer = setTimeout(() => {
-    localStorage.setItem("aerchain-module-data", JSON.stringify(moduleData));
-  }, 500);
-  return () => clearTimeout(timer);
-}, [moduleData]);
-```
-Apply the same pattern to the `savedFiles` persistence effect and `claudeMemory` effect.
+**Fix:** Wrap in `setTimeout` with 500ms delay + cleanup. Add `beforeunload` handler to flush pending writes on tab close. Do NOT debounce the `claudeMemory` persist at line 1312 — it's inside a callback, not a useEffect, and fires infrequently.
 
 ---
 
-## Item 6: Deduplicate SAMPLE_FILES + savedFiles by ID
+### Item 6: Deduplicate SAMPLE_FILES + savedFiles by ID
 
-**File:** `App.jsx:1217-1226` (the `getModuleFiles` function)
+**File:** `App.jsx:1272-1281` (`getModuleFiles`)
 **Effort:** 30 min
-**Impact:** Prevents duplicate file entries in the grid
 
-### What's wrong
-`getModuleFiles` concatenates sample files and saved files with no deduplication:
-```javascript
-const getModuleFiles = useCallback((moduleKey) => {
-  if (moduleKey === "design-extractor") {
-    const refs = SAMPLE_FILES["design-extractor"] || [];
-    const saved = savedFiles["design-extractor"] || [];
-    return [...refs, ...saved];  // <-- no dedup
-  }
-  ...
-}, [showDummy, savedFiles]);
-```
-If a sample file's `id` collides with a saved file's `id` (unlikely but possible), or if the same file is somehow in both arrays, both appear in the grid.
-
-### Fix
-Deduplicate by `id` when merging:
-```javascript
-const allFiles = [...refs, ...saved];
-const seen = new Set();
-return allFiles.filter(f => {
-  if (seen.has(f.id)) return false;
-  seen.add(f.id);
-  return true;
-});
-```
+**Fix:** Filter `[...refs, ...saved]` with a `Set` of seen IDs. Sample file IDs are like `"ds-ref-aerchain"`, saved are like `"ds-1710523456789"`. Collision unlikely but dedup is cheap.
 
 ---
 
-## Item 7: Fix EmptyState sync button for upload modules
+### Item 7: Fix EmptyState sync button for upload modules
 
-**File:** `App.jsx:305-339` (EmptyState component) + `App.jsx:987-990`
+**File:** `App.jsx:21`
 **Effort:** 15 min
-**Impact:** UX clarity — removes confusing "Sync Now" button from upload-only modules
 
-### What's wrong
-The `EmptyState` component at line 305 correctly checks `UPLOAD_MODULES.has(moduleKey)` and shows a file upload zone for pricing-calculator and proposal-generator. However, the `design-extractor` module is NOT in `UPLOAD_MODULES` (line 21: only pricing-calculator and proposal-generator are listed). So if design-extractor ever hits the empty state path, it would show a "Sync Now" button — which does nothing meaningful for design extraction.
-
-Current UPLOAD_MODULES definition:
-```javascript
-const UPLOAD_MODULES = new Set(["pricing-calculator", "proposal-generator"]);
-```
-
-EmptyState routing at lines 987-990:
-```javascript
-if (isEmpty && UPLOAD_MODULES.has(moduleKey)) {
-  return <EmptyState moduleKey={moduleKey} onFilesSelected={onFilesSelected} />;
-}
-if (isEmpty) return <EmptyState moduleKey={moduleKey} onSync={onSync} loading={syncing} />;
-```
-
-### Fix
-Add `"design-extractor"` to `UPLOAD_MODULES`, or handle design-extractor as a special case in the EmptyState routing. The simplest fix:
-```javascript
-const UPLOAD_MODULES = new Set(["pricing-calculator", "proposal-generator", "design-extractor"]);
-```
-
----
-
-## File Map (lines referenced are pre-P1-refactor)
-
-| File | Lines | Size |
-|------|-------|------|
-| `App.jsx` | 1807 lines | Main app — persistence, state, EmptyState, getModuleFiles |
-| `DesignExtractorView.jsx` | 813 lines | Extraction UI — callExtractAPI, handleSaveToLibrary |
-| `FileWorkspace.jsx` | 619 lines | File grid — FileCard with glass-surface class |
-| `lib/generators.js` | — | buildOutputs() function for regenerating outputs from tokens |
-| `demo-data/index.js` | — | SAMPLE_FILES definitions |
+**Fix:** Add `"design-extractor"` to `UPLOAD_MODULES`. Side effects are safe — checked all 3 usage sites (getSyncPrompt:56, syncModule:1416, sidebar:1750).
 
 ---
 
 ## Testing Checklist
 
-- [ ] Save to Library only creates one entry per click, button disables after save
-- [ ] Delete all files in a module, refresh — files stay deleted (P0 fix prerequisite)
-- [ ] 50+ FileCards scroll smoothly without jank
-- [ ] Extraction failure on transient 500 retries automatically
-- [ ] localStorage usage stays reasonable with many saved files (check in DevTools > Application > Storage)
-- [ ] No duplicate files appear in the file grid
+- [ ] Save to Library only creates one entry per click; button shows "Saved" and is disabled
+- [ ] Upload HTML + CSS, save, reload — no duplicates in file grid
+- [ ] Scroll through 50+ FileCards smoothly (no `backdrop-filter` on cards)
+- [ ] localStorage usage per saved file is ~15 KB not ~30 KB (DevTools > Application > Storage)
+- [ ] Rapid module switching doesn't trigger multiple localStorage writes
+- [ ] Close tab within 1s of a change, reopen — data is persisted (beforeunload handler)
 - [ ] Design Extractor empty state shows upload zone, not "Sync Now"
+- [ ] Transient 500 on `/api/extract` retries automatically
