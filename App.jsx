@@ -3,7 +3,7 @@ import {
   RefreshCw, AlertCircle, Clock,
   Loader2, Activity, FileText, DollarSign, X,
   TrendingUp, Users, Wand2, Download, Settings, Brain,
-  ExternalLink, Link, Upload, CheckCircle, XCircle
+  ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon
 } from "lucide-react";
 import DUMMY_DATA from "./demo-data/index.js";
 
@@ -197,24 +197,30 @@ async function processWithClaude(moduleKey, inputText) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// DESIGN TOKENS (Dark Canvas v13)
+// DESIGN TOKENS (Dark Canvas v3 — CSS custom properties)
 // ═══════════════════════════════════════════════════════════
+// These map to CSS vars injected in useEffect. Components use T.xxx
+// which resolves to var(--xxx) at runtime, supporting dark/light themes.
 
 const T = {
-  bg:        "#0d0a1e",
-  bgCard:    "rgba(255,255,255,0.045)",
-  bgActive:  "rgba(139,92,246,0.18)",
-  border:    "rgba(255,255,255,0.08)",
-  borderAcc: "rgba(139,92,246,0.4)",
-  text:      "#ffffff",
-  muted:     "rgba(255,255,255,0.5)",
-  accent:    "#8b5cf6",
-  accentBg:  "rgba(139,92,246,0.15)",
-  success:   "#10b981",
-  warn:      "#f59e0b",
-  error:     "#ef4444",
-  topbar:    "rgba(13,10,30,0.92)",
-  sidebar:   "rgba(255,255,255,0.025)",
+  bg:        "var(--canvas)",
+  bgCard:    "var(--glass-1)",
+  bgActive:  "hsla(262,75%,62%,0.18)",
+  border:    "var(--glass-border)",
+  borderAcc: "hsla(262,75%,62%,0.4)",
+  text:      "var(--fg)",
+  muted:     "var(--fg2)",
+  mutedSoft: "var(--fg3)",
+  accent:    "var(--primary)",
+  accentBg:  "hsla(262,75%,62%,0.15)",
+  success:   "var(--green)",
+  warn:      "var(--amber)",
+  error:     "var(--red)",
+  topbar:    "rgba(255,255,255,0.03)",
+  sidebar:   "rgba(255,255,255,0.03)",
+  glass:     "var(--s-glass)",
+  elevated:  "var(--s-elevated)",
+  glow:      "var(--s-glow)",
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -291,11 +297,10 @@ function FileUploadZone({ onFilesSelected, acceptTypes = ".csv,.pdf,.docx,.xlsx,
 
 function Card({ children, style = {} }) {
   return (
-    <div style={{
-      background: T.bgCard,
-      border: `1px solid ${T.border}`,
-      borderRadius: 10,
+    <div className="glass-surface" style={{
+      borderRadius: 14,
       padding: "14px 16px",
+      boxShadow: "var(--s-glass)",
       ...style
     }}>
       {children}
@@ -418,7 +423,7 @@ function fmt$(n) {
 
 function StatCard({ label, value, sub, icon: Ic, color = T.accent }) {
   return (
-    <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 10, padding: "14px 16px", flex: 1, minWidth: 140 }}>
+    <div className="glass-surface" style={{ borderRadius: 14, padding: "14px 16px", flex: 1, minWidth: 140, boxShadow: "var(--s-glass)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
         {Ic && <Ic size={13} color={color} />}
         <span style={{ color: T.muted, fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</span>
@@ -851,6 +856,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const [showLog, setShowLog]           = useState(true);
   const [lastGlobalSync, setLastGlobalSync] = useState(null);
   const [showDummy, setShowDummy]       = useState(false);
+  const [theme, setTheme]               = useState("dark");
   const [claudeMemory, setClaudeMemory] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aerchain-claude-memory") || "[]"); } catch { return []; }
   });
@@ -858,20 +864,78 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [processing, setProcessing] = useState(new Set());
 
-  // Font injection
+  // Dark Canvas v3 theme + font injection
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
   useEffect(() => {
     const s = document.createElement("style");
     s.textContent = `
       @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
-      * { box-sizing: border-box; }
-      body { margin: 0; background: #0d0a1e; }
-      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; }
+
+      /* Dark Canvas v3 tokens */
+      :root[data-theme="dark"] {
+        --canvas:       linear-gradient(145deg, hsl(265 30% 7%) 0%, hsl(270 20% 5%) 40%, hsl(260 15% 4%) 100%);
+        --primary:      hsl(262 75% 62%);
+        --accent:       hsl(275 80% 65%);
+        --gp:           linear-gradient(135deg, hsl(262 75% 62%), hsl(275 80% 65%));
+        --green:        hsl(152 60% 52%);
+        --amber:        hsl(38 85% 58%);
+        --red:          hsl(0 72% 62%);
+        --glass-1:      rgba(255,255,255,0.04);
+        --glass-2:      rgba(255,255,255,0.07);
+        --glass-border: rgba(255,255,255,0.09);
+        --fg:           rgba(255,255,255,0.88);
+        --fg2:          rgba(255,255,255,0.60);
+        --fg3:          rgba(255,255,255,0.35);
+        --s-glass:      0 2px 16px rgba(0,0,0,0.40), 0 0 0 1px rgba(255,255,255,0.04) inset;
+        --s-elevated:   0 12px 40px -6px rgba(0,0,0,0.60), 0 0 0 1px rgba(255,255,255,0.07) inset;
+        --s-glow:       0 0 24px rgba(124,58,237,0.18);
+      }
+      :root[data-theme="light"] {
+        --canvas:       linear-gradient(145deg, hsl(220 20% 96%) 0%, hsl(220 15% 93%) 40%, hsl(220 10% 90%) 100%);
+        --primary:      hsl(262 65% 52%);
+        --accent:       hsl(275 70% 55%);
+        --gp:           linear-gradient(135deg, hsl(262 65% 52%), hsl(275 70% 55%));
+        --green:        hsl(152 55% 42%);
+        --amber:        hsl(38 80% 48%);
+        --red:          hsl(0 65% 52%);
+        --glass-1:      rgba(0,0,0,0.03);
+        --glass-2:      rgba(0,0,0,0.05);
+        --glass-border: rgba(0,0,0,0.10);
+        --fg:           rgba(0,0,0,0.85);
+        --fg2:          rgba(0,0,0,0.55);
+        --fg3:          rgba(0,0,0,0.35);
+        --s-glass:      0 2px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04) inset;
+        --s-elevated:   0 12px 40px -6px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.06) inset;
+        --s-glow:       0 0 24px rgba(124,58,237,0.10);
+      }
+
+      ::selection { background: hsla(262,80%,55%,0.30); }
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
       ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.20); }
+      [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+      [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.20); }
+
       @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
       @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
-      .module-item:hover { background: rgba(255,255,255,0.06) !important; }
-      .table-row:hover { background: rgba(255,255,255,0.04) !important; }
+      @keyframes orbA { 0%{transform:translate(0,0)scale(1)} 100%{transform:translate(30px,-25px)scale(1.08)} }
+      @keyframes orbB { 0%{transform:translate(0,0)scale(1)} 100%{transform:translate(-22px,28px)scale(1.06)} }
+
+      .module-item:hover { background: var(--glass-2) !important; }
+      .table-row:hover { background: var(--glass-1) !important; }
+
+      .glass-surface {
+        background: var(--glass-1);
+        -webkit-backdrop-filter: blur(40px) saturate(1.4);
+        backdrop-filter: blur(40px) saturate(1.4);
+        border: 1px solid var(--glass-border);
+      }
     `;
     document.head.appendChild(s);
     return () => s.remove();
@@ -1111,10 +1175,14 @@ ${document.getElementById("root").innerHTML}
   // ── Render ────────────────────────────────────────────────
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"100dvh", background:T.bg, fontFamily:"'Montserrat',sans-serif", color:T.text, overflow:"hidden" }}>
+    <div style={{ display:"flex", flexDirection:"column", height:"100dvh", background:T.bg, fontFamily:"'Montserrat',sans-serif", color:T.text, overflow:"hidden", position:"relative" }}>
+
+      {/* Animated background orbs */}
+      <div style={{ position:"absolute", width:700, height:700, top:-200, right:-150, background:"radial-gradient(circle, hsla(265,60%,25%,0.30) 0%, transparent 70%)", borderRadius:"50%", pointerEvents:"none", animation:"orbA 20s ease-in-out infinite alternate", zIndex:0 }} />
+      <div style={{ position:"absolute", width:550, height:550, bottom:-180, left:-80, background:"radial-gradient(circle, hsla(255,50%,22%,0.25) 0%, transparent 70%)", borderRadius:"50%", pointerEvents:"none", animation:"orbB 26s ease-in-out infinite alternate-reverse", zIndex:0 }} />
 
       {/* TOPBAR */}
-      <div style={{ height:56, background:T.topbar, borderBottom:`1px solid ${T.border}`, backdropFilter:"blur(20px)", display:"flex", alignItems:"center", padding:"0 20px", gap:16, flexShrink:0, zIndex:10 }}>
+      <div className="glass-surface" style={{ height:56, display:"flex", alignItems:"center", padding:"0 20px", gap:16, flexShrink:0, zIndex:10, position:"relative" }}>
         {/* Logo */}
         <div style={{ display:"flex", alignItems:"center", gap:10, marginRight:6 }}>
           <AerchainLogo height={18} />
@@ -1191,6 +1259,14 @@ ${document.getElementById("root").innerHTML}
           <Activity size={15} />
         </button>
 
+        {/* Theme toggle */}
+        <button onClick={() => setTheme(t => t === "dark" ? "light" : "dark")} title="Toggle theme" style={{
+          background:"none", border:"1px solid transparent", borderRadius:6, cursor:"pointer",
+          color:T.muted, padding:4, display:"flex", alignItems:"center", transition:"all 0.15s"
+        }}>
+          {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+        </button>
+
         {/* Settings gear */}
         <button onClick={() => setSelected("settings")} title="Settings" style={{
           background: selected==="settings" ? T.accentBg : "none",
@@ -1211,10 +1287,10 @@ ${document.getElementById("root").innerHTML}
       )}
 
       {/* BODY */}
-      <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
+      <div style={{ display:"flex", flex:1, overflow:"hidden", position:"relative", zIndex:1 }}>
 
         {/* SIDEBAR */}
-        <div style={{ width:210, background:T.sidebar, borderRight:`1px solid ${T.border}`, display:"flex", flexDirection:"column", overflow:"hidden", flexShrink:0 }}>
+        <div className="glass-surface" style={{ width:210, display:"flex", flexDirection:"column", overflow:"hidden", flexShrink:0, borderTop:"none", borderBottom:"none", borderLeft:"none", zIndex:2 }}>
 
           {/* Main groups (non-pinned) */}
           <div style={{ flex:1, overflowY:"auto", padding:"12px 8px" }}>
