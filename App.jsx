@@ -3,7 +3,7 @@ import {
   RefreshCw, AlertCircle, Clock,
   Loader2, Activity, FileText, DollarSign, X,
   TrendingUp, Users, Wand2, Download, Settings, Brain,
-  ExternalLink, Link
+  ExternalLink, Link, Upload, CheckCircle, XCircle
 } from "lucide-react";
 import DUMMY_DATA from "./demo-data/index.js";
 
@@ -15,8 +15,11 @@ import DUMMY_DATA from "./demo-data/index.js";
 // Structure: master DB → sub-pages per module → inline databases per sync type
 // Each audit entry: timestamp, action, module, summary, reference links array
 // Reference links can include: app internal, Gmail, Google Sheets, Drive, Notion pages
+// Modules that use upload→process→output flow instead of sync
+const UPLOAD_MODULES = new Set(["pricing-calculator", "proposal-generator"]);
+
 const NOTION_AUDIT_CONFIG = {
-  masterPageUrl: "https://www.notion.so/aerchain-salesos-notion-log", // placeholder — update when page is created
+  masterPageUrl: "https://www.notion.so/Claude-Code-Log-DB-Dump-32401f618de280c0bb83c67614b4ac93",
   masterDbName:  "Aerchain SalesOS Notion Log",
   modules: {
     "pricing-calculator": { pageName: "Pricing Calculator Log",   pageUrl: null }, // set when created
@@ -45,13 +48,9 @@ const MOD = {
 
 const getSyncPrompt = (key) => {
   const now = new Date().toISOString();
-  const prompts = {
-    "pricing-calculator": `You are a data sync agent for Aerchain SalesOS.
-Fetch current pricing intelligence for Aerchain's procurement platform.
-Return ONLY raw JSON — no markdown, no explanation:
-{"standardModel":{"per1BSpend":300000,"yoyEscalation":"10%","breakEven":"$500M-$1B"},"recentDeals":[{"client":"...","y1Amount":0,"spendUnderMgmt":"...","modules":"..."}],"syncedAt":"${now}"}`,
-  };
-  return prompts[key] || `Return ONLY raw JSON: {"message":"No sync configured for ${key}","syncedAt":"${now}"}`;
+  // pricing-calculator and proposal-generator use upload→process flow, not sync
+  if (UPLOAD_MODULES.has(key)) return null;
+  return `Return ONLY raw JSON: {"message":"No sync configured for ${key}","syncedAt":"${now}"}`;
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -113,7 +112,7 @@ async function callClaude(prompt, { system, model = "claude-sonnet-4-6", maxToke
     const body = {
       model,
       max_tokens: maxTokens,
-      system: system || "You are a data sync agent for Aerchain SalesOS. Return ONLY the raw JSON object requested — no markdown fences, no explanation, no preamble. Your response must start with { and end with }.",
+      system: system || "You are a processing engine for Aerchain SalesOS. Analyze the provided inputs and return structured JSON output. Your response must start with { and end with }.",
       messages: [{ role: "user", content: prompt }],
     };
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -146,11 +145,55 @@ async function callHubSpot(endpoint, { method = "GET", body } = {}) {
 }
 
 // ── Direct API: Notion ────────────────────────────────────
-// TODO: connect with VITE_NOTION_API_KEY when ready
-async function callNotion(endpoint, { method = "GET", body } = {}) {
-  // eslint-disable-next-line no-unused-vars
+async function callNotion(endpoint, { method = "POST", body } = {}) {
   const apiKey = import.meta.env.VITE_NOTION_API_KEY;
-  throw new Error("Notion direct API not yet connected — set VITE_NOTION_API_KEY and implement endpoint calls");
+  if (!apiKey) throw new Error("VITE_NOTION_API_KEY not set");
+  const res = await fetch(`https://api.notion.com/v1/${endpoint}`, {
+    method,
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "Notion-Version": "2022-06-28",
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.message || `Notion API HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+async function createNotionAuditEntry({ action, module, summary, refs = [] }) {
+  const parentPageId = "32401f61-8de2-80c0-bb83-c67614b4ac93";
+  return callNotion("blocks/" + parentPageId + "/children", {
+    method: "PATCH",
+    body: {
+      children: [{
+        object: "block",
+        type: "callout",
+        callout: {
+          rich_text: [{
+            type: "text",
+            text: { content: `[${new Date().toISOString()}] ${action} — ${module}: ${summary}` }
+          }],
+          icon: { type: "emoji", emoji: "📋" }
+        }
+      }]
+    }
+  });
+}
+
+// ── Process with Claude (upload→process→output flow) ──────
+const PROCESS_SYSTEM_PROMPTS = {
+  "pricing-calculator": "You are a pricing analysis engine for Aerchain SalesOS. Analyze the provided pricing data and return structured JSON output with the following shape: {\"standardModel\":{\"per1BSpend\":0,\"yoyEscalation\":\"\",\"breakEven\":\"\"},\"recentDeals\":[{\"client\":\"\",\"y1Amount\":0,\"spendUnderMgmt\":\"\",\"modules\":\"\"}],\"analysis\":\"\"}. Your response must start with { and end with }.",
+  "proposal-generator": "You are a proposal generation engine for Aerchain SalesOS. Using the provided inputs, generate a structured proposal in JSON format: {\"proposalTitle\":\"\",\"client\":\"\",\"value\":0,\"sections\":[{\"heading\":\"\",\"content\":\"\"}],\"summary\":\"\"}. Your response must start with { and end with }.",
+};
+
+async function processWithClaude(moduleKey, inputText) {
+  const system = PROCESS_SYSTEM_PROMPTS[moduleKey];
+  if (!system) throw new Error(`No processing prompt configured for ${moduleKey}`);
+  return callClaude(inputText, { system, maxTokens: 8000 });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -198,6 +241,54 @@ function SyncBtn({ onClick, loading, size = 13 }) {
   );
 }
 
+// ── FILE UPLOAD ZONE ──────────────────────────────────────
+
+function FileUploadZone({ onFilesSelected, acceptTypes = ".csv,.pdf,.docx,.xlsx,.json,.txt" }) {
+  const [dragOver, setDragOver] = useState(false);
+  const inputRef = useRef(null);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) onFilesSelected(files);
+  };
+
+  return (
+    <div
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+      onClick={() => inputRef.current?.click()}
+      style={{
+        border: `2px dashed ${dragOver ? T.accent : T.border}`,
+        borderRadius: 12,
+        padding: "28px 20px",
+        textAlign: "center",
+        cursor: "pointer",
+        background: dragOver ? T.accentBg : "transparent",
+        transition: "all 0.2s",
+      }}
+    >
+      <Upload size={24} color={dragOver ? T.accent : T.muted} style={{ marginBottom: 8 }} />
+      <div style={{ color: T.text, fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
+        Drop files here or click to browse
+      </div>
+      <div style={{ color: T.muted, fontSize: 11 }}>
+        Accepts: CSV, PDF, DOCX, XLSX, JSON, TXT
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        multiple
+        accept={acceptTypes}
+        onChange={(e) => { if (e.target.files.length > 0) onFilesSelected(Array.from(e.target.files)); }}
+        style={{ display: "none" }}
+      />
+    </div>
+  );
+}
+
 function Card({ children, style = {} }) {
   return (
     <div style={{
@@ -212,8 +303,15 @@ function Card({ children, style = {} }) {
   );
 }
 
-function EmptyState({ moduleKey, onSync, loading }) {
+function EmptyState({ moduleKey, onSync, loading, onFilesSelected }) {
   const { label, Icon } = MOD[moduleKey] || {};
+  const isUploadModule = UPLOAD_MODULES.has(moduleKey);
+  const uploadLabel = moduleKey === "pricing-calculator"
+    ? "Upload pricing data to get started"
+    : moduleKey === "proposal-generator"
+    ? "Upload proposal documents to get started"
+    : "No data yet — use Demo to preview, or Sync when APIs are connected";
+
   return (
     <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", gap:16, padding:40, textAlign:"center" }}>
       <div style={{ width:56, height:56, borderRadius:16, background:T.accentBg, display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -221,16 +319,22 @@ function EmptyState({ moduleKey, onSync, loading }) {
       </div>
       <div>
         <div style={{ color:T.text, fontWeight:600, marginBottom:6 }}>{label}</div>
-        <div style={{ color:T.muted, fontSize:13 }}>No data yet — use Demo to preview, or Sync when APIs are connected</div>
+        <div style={{ color:T.muted, fontSize:13 }}>{uploadLabel}</div>
       </div>
-      <button onClick={onSync} disabled={loading} style={{
-        background: T.accentBg, border:`1px solid ${T.borderAcc}`, borderRadius:8, padding:"8px 20px",
-        color:T.accent, fontSize:13, fontWeight:500, cursor:loading?"default":"pointer",
-        display:"flex", alignItems:"center", gap:6
-      }}>
-        {loading ? <Spinner size={12}/> : <RefreshCw size={12}/>}
-        {loading ? "Syncing…" : "Sync Now"}
-      </button>
+      {isUploadModule ? (
+        <div style={{ width: "100%", maxWidth: 400 }}>
+          <FileUploadZone onFilesSelected={onFilesSelected} />
+        </div>
+      ) : (
+        <button onClick={onSync} disabled={loading} style={{
+          background: T.accentBg, border:`1px solid ${T.borderAcc}`, borderRadius:8, padding:"8px 20px",
+          color:T.accent, fontSize:13, fontWeight:500, cursor:loading?"default":"pointer",
+          display:"flex", alignItems:"center", gap:6
+        }}>
+          {loading ? <Spinner size={12}/> : <RefreshCw size={12}/>}
+          {loading ? "Syncing…" : "Sync Now"}
+        </button>
+      )}
     </div>
   );
 }
@@ -327,12 +431,37 @@ function StatCard({ label, value, sub, icon: Ic, color = T.accent }) {
 
 // ── PRICING CALC VIEW ─────────────────────────────────────
 
-function PricingCalcView({ data }) {
+function PricingCalcView({ data, onFilesSelected, uploadedFiles, processing, onProcess }) {
   const model = data.standardModel || {};
   const deals = data.recentDeals || [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Upload & Process area */}
+      <Card>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <Upload size={13} color={T.accent} />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Upload Pricing Data</span>
+        </div>
+        <FileUploadZone onFilesSelected={onFilesSelected} />
+        {uploadedFiles && uploadedFiles.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ color: T.muted, fontSize: 11, marginBottom: 6 }}>{uploadedFiles.length} file(s) ready:</div>
+            {uploadedFiles.map((f, i) => (
+              <div key={i} style={{ color: T.text, fontSize: 11, padding: "3px 0" }}>📄 {f.name} ({(f.size / 1024).toFixed(1)} KB)</div>
+            ))}
+            <button onClick={onProcess} disabled={processing} style={{
+              marginTop: 10, background: processing ? T.bgCard : `linear-gradient(135deg,${T.accent},#6d28d9)`,
+              border: "none", borderRadius: 7, padding: "8px 18px", color: "#fff", fontSize: 12, fontWeight: 600,
+              cursor: processing ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6
+            }}>
+              {processing ? <Spinner size={12} /> : <Brain size={12} />}
+              {processing ? "Processing…" : "Process with Claude"}
+            </button>
+          </div>
+        )}
+      </Card>
+
       {/* Standard Model KPIs */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <StatCard label="Per $1B Spend" value={fmt$(model.per1BSpend)} sub="Annual platform fee" icon={DollarSign} />
@@ -348,7 +477,7 @@ function PricingCalcView({ data }) {
           <span style={{ color: T.muted, fontSize: 11 }}>({deals.length})</span>
         </div>
         {deals.length === 0 ? (
-          <div style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: 20 }}>No deals synced yet</div>
+          <div style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: 20 }}>No deals processed yet — upload pricing data above</div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={tableStyle}>
@@ -374,6 +503,17 @@ function PricingCalcView({ data }) {
           </div>
         )}
       </Card>
+
+      {/* Analysis output */}
+      {data.analysis && (
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <Brain size={13} color={T.accent} />
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Claude Analysis</span>
+          </div>
+          <div style={{ color: T.text, fontSize: 12, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{data.analysis}</div>
+        </Card>
+      )}
     </div>
   );
 }
@@ -402,13 +542,55 @@ function statusBadge(status) {
   return <span style={{ color, fontSize: 11, fontWeight: 500 }}>{status || "—"}</span>;
 }
 
-function ProposalsView({ data }) {
+function ProposalsView({ data, onFilesSelected, uploadedFiles, processing, onProcess }) {
   const proposals = data.activeProposals || [];
   const total = data.total || proposals.length;
   const totalValue = data.totalValue || proposals.reduce((s, p) => s + (p.value || 0), 0);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Upload & Generate area */}
+      <Card>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <Upload size={13} color={T.accent} />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Upload Proposal Documents</span>
+        </div>
+        <FileUploadZone onFilesSelected={onFilesSelected} />
+        {uploadedFiles && uploadedFiles.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ color: T.muted, fontSize: 11, marginBottom: 6 }}>{uploadedFiles.length} file(s) ready:</div>
+            {uploadedFiles.map((f, i) => (
+              <div key={i} style={{ color: T.text, fontSize: 11, padding: "3px 0" }}>📄 {f.name} ({(f.size / 1024).toFixed(1)} KB)</div>
+            ))}
+            <button onClick={onProcess} disabled={processing} style={{
+              marginTop: 10, background: processing ? T.bgCard : `linear-gradient(135deg,${T.accent},#6d28d9)`,
+              border: "none", borderRadius: 7, padding: "8px 18px", color: "#fff", fontSize: 12, fontWeight: 600,
+              cursor: processing ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6
+            }}>
+              {processing ? <Spinner size={12} /> : <Brain size={12} />}
+              {processing ? "Generating…" : "Generate Proposal"}
+            </button>
+          </div>
+        )}
+      </Card>
+
+      {/* Generated proposal output */}
+      {data.proposalTitle && (
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <Brain size={13} color={T.accent} />
+            <span style={{ fontSize: 12, fontWeight: 600 }}>Generated Proposal: {data.proposalTitle}</span>
+          </div>
+          {data.summary && <div style={{ color: T.muted, fontSize: 12, marginBottom: 12 }}>{data.summary}</div>}
+          {data.sections?.map((s, i) => (
+            <div key={i} style={{ marginBottom: 12 }}>
+              <div style={{ color: T.text, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{s.heading}</div>
+              <div style={{ color: T.muted, fontSize: 12, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{s.content}</div>
+            </div>
+          ))}
+        </Card>
+      )}
+
       {/* KPI Row */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <StatCard label="Active Proposals" value={total} sub="In pipeline" icon={FileText} />
@@ -420,11 +602,11 @@ function ProposalsView({ data }) {
       <Card>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <FileText size={13} color={T.accent} />
-          <span style={{ fontSize: 12, fontWeight: 600 }}>Active Proposals</span>
+          <span style={{ fontSize: 12, fontWeight: 600 }}>Proposals</span>
           <span style={{ color: T.muted, fontSize: 11 }}>({proposals.length})</span>
         </div>
         {proposals.length === 0 ? (
-          <div style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: 20 }}>No active proposals synced yet</div>
+          <div style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: 20 }}>No proposals generated yet — upload documents above</div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={tableStyle}>
@@ -577,7 +759,7 @@ function SettingsView({ claudeMemory, onClearMemory }) {
             {[
               { name:"Claude (Anthropic)", envKey:"VITE_ANTHROPIC_KEY",  status:"configured", note:"Direct API — no MCP" },
               { name:"HubSpot",            envKey:"VITE_HUBSPOT_API_KEY", status:"stub",       note:"Direct API — not yet connected" },
-              { name:"Notion",             envKey:"VITE_NOTION_API_KEY",  status:"stub",       note:"Direct API — not yet connected" },
+              { name:"Notion",             envKey:"VITE_NOTION_API_KEY",  status:"configured", note:"Direct API — audit logging active" },
             ].map(api => (
               <div key={api.name} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:7 }}>
                 <div style={{ flex:1 }}>
@@ -630,16 +812,20 @@ function GenericView({ data }) {
 
 // ── MODULE CONTENT ROUTER ─────────────────────────────────
 
-function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory }) {
+function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess }) {
   // Settings is never empty — always show view
   if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} />;
 
   const isEmpty = !data || Object.keys(data).length === 0 || (Object.keys(data).length === 1 && data.syncedAt);
+
+  if (isEmpty && UPLOAD_MODULES.has(moduleKey)) {
+    return <EmptyState moduleKey={moduleKey} onFilesSelected={onFilesSelected} />;
+  }
   if (isEmpty) return <EmptyState moduleKey={moduleKey} onSync={onSync} loading={syncing} />;
 
   switch (moduleKey) {
-    case "pricing-calculator": return <PricingCalcView data={data} />;
-    case "proposal-generator": return <ProposalsView data={data} />;
+    case "pricing-calculator": return <PricingCalcView data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />;
+    case "proposal-generator": return <ProposalsView data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />;
     default:                   return <GenericView data={data} />;
   }
 }
@@ -669,6 +855,8 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     try { return JSON.parse(localStorage.getItem("aerchain-claude-memory") || "[]"); } catch { return []; }
   });
   const notionSyncTimerRef = useRef(null);
+  const [uploadedFiles, setUploadedFiles] = useState({});
+  const [processing, setProcessing] = useState(new Set());
 
   // Font injection
   useEffect(() => {
@@ -735,10 +923,65 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     addLog("🧹 Claude memory cleared", "info");
   }, [addLog]);
 
-  // ── Notion 30-min periodic audit sync (stubbed) ──────────
+  // ── File upload handler ──────────────────────────────────
+
+  const handleFilesSelected = useCallback((moduleKey, files) => {
+    setUploadedFiles(prev => ({ ...prev, [moduleKey]: files }));
+    addLog(`📎 ${files.length} file(s) uploaded for ${MOD[moduleKey]?.label || moduleKey}`, "info");
+  }, [addLog]);
+
+  // ── Process uploaded files with Claude ──────────────────
+
+  const handleProcess = useCallback(async (moduleKey) => {
+    const files = uploadedFiles[moduleKey];
+    if (!files || files.length === 0) return;
+    if (processing.has(moduleKey)) return;
+
+    setProcessing(prev => new Set([...prev, moduleKey]));
+    const label = MOD[moduleKey]?.label || moduleKey;
+    addLog(`🧠 Processing ${label} with Claude…`, "info");
+
+    try {
+      // Read file contents as text
+      const fileContents = await Promise.all(
+        files.map(async (f) => {
+          const text = await f.text();
+          return `--- File: ${f.name} (${f.type || "unknown"}) ---\n${text}`;
+        })
+      );
+      const inputText = `Process the following uploaded data for ${label}:\n\n${fileContents.join("\n\n")}`;
+
+      const text = await processWithClaude(moduleKey, inputText);
+      logClaudeInteraction(moduleKey, inputText.slice(0, 500), text);
+      const parsed = extractJSON(text);
+
+      if (parsed) {
+        const prevCount = moduleData[moduleKey]?.syncCount || 0;
+        const entry = { data: parsed, status: "🟢 Fresh", lastSynced: new Date().toISOString(), staleAfterHrs: 24, syncCount: prevCount + 1 };
+        setModuleData(prev => ({ ...prev, [moduleKey]: entry }));
+        addLog(`✅ ${label} — processed successfully`, "success");
+
+        // Audit to Notion
+        try {
+          await createNotionAuditEntry({ action: "PROCESS", module: moduleKey, summary: `Processed ${files.length} file(s) with Claude` });
+        } catch (e) {
+          console.warn("Notion audit failed:", e.message);
+        }
+      } else {
+        addLog(`⚠️ ${label} — no parseable JSON returned from Claude`, "warn");
+      }
+    } catch (e) {
+      addLog(`❌ ${label} — processing error: ${e.message}`, "error");
+    } finally {
+      setProcessing(prev => { const n = new Set(prev); n.delete(moduleKey); return n; });
+    }
+  }, [uploadedFiles, processing, moduleData, addLog, logClaudeInteraction]);
+
+  // ── Notion 30-min periodic audit sync ───────────────────
 
   useEffect(() => {
-    const doNotionSync = () => {
+    const doNotionSync = async () => {
+      // Write to localStorage as fallback
       const entry = {
         timestamp: new Date().toISOString(),
         action: "PERIODIC_SYNC",
@@ -749,8 +992,18 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
       const existing = JSON.parse(localStorage.getItem("aerchain-notion-audit") || "[]");
       const updated = [entry, ...existing].slice(0, 100);
       localStorage.setItem("aerchain-notion-audit", JSON.stringify(updated));
-      addLog("📓 Notion audit sync queued (direct API not yet connected)", "info");
-      // TODO: replace above with callNotion() once VITE_NOTION_API_KEY is set
+
+      // Also push to Notion API
+      try {
+        await createNotionAuditEntry({
+          action: "PERIODIC_SYNC",
+          module: "all",
+          summary: `Periodic audit — ${Object.keys(moduleData).length} modules active`,
+        });
+        addLog("📓 Notion audit synced", "success");
+      } catch (e) {
+        addLog(`📓 Notion audit sync failed: ${e.message}`, "warn");
+      }
     };
 
     notionSyncTimerRef.current = setInterval(doNotionSync, 30 * 60 * 1000); // 30 min
@@ -761,6 +1014,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
 
   const syncModule = useCallback(async (key) => {
     if (key === "settings") return; // settings has no sync
+    if (UPLOAD_MODULES.has(key)) return; // upload modules use processWithClaude
     if (syncing.has(key)) return;
     setSyncing(prev => new Set([...prev, key]));
     const label = MOD[key]?.label || key;
@@ -793,7 +1047,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     if (syncingAll) return;
     setSyncingAll(true);
     addLog(`🚀 Full sync started — all ${Object.keys(MOD).length} modules`, "info");
-    const syncableKeys = Object.keys(MOD).filter(k => k !== "settings");
+    const syncableKeys = Object.keys(MOD).filter(k => k !== "settings" && !UPLOAD_MODULES.has(k));
     for (const key of syncableKeys) {
       await syncModule(key);
       await new Promise(r => setTimeout(r, 300));
@@ -1046,7 +1300,7 @@ ${document.getElementById("root").innerHTML}
             )}
             {/* Notion audit link */}
             <NotionAuditLink moduleKey={selected} />
-            {selected !== "settings" && <SyncBtn onClick={() => syncModule(selected)} loading={isSyncing} size={14}/>}
+            {selected !== "settings" && !UPLOAD_MODULES.has(selected) && <SyncBtn onClick={() => syncModule(selected)} loading={isSyncing} size={14}/>}
           </div>
 
           {/* Content */}
@@ -1059,6 +1313,10 @@ ${document.getElementById("root").innerHTML}
                 syncing={isSyncing}
                 claudeMemory={claudeMemory}
                 onClearMemory={clearClaudeMemory}
+                onFilesSelected={(files) => handleFilesSelected(selected, files)}
+                uploadedFiles={uploadedFiles[selected]}
+                processing={processing.has(selected)}
+                onProcess={() => handleProcess(selected)}
               />
             </div>
           </div>
@@ -1097,7 +1355,7 @@ ${document.getElementById("root").innerHTML}
             <div style={{ padding:"10px", borderTop:`1px solid ${T.border}`, flexShrink:0 }}>
               <div style={{ color:T.muted, fontSize:10, fontWeight:600, letterSpacing:1, marginBottom:8 }}>QUICK SYNC</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
-                {Object.keys(MOD).filter(k => k !== "settings").map(key => (
+                {Object.keys(MOD).filter(k => k !== "settings" && !UPLOAD_MODULES.has(k)).map(key => (
                   <button key={key} onClick={() => syncModule(key)} disabled={syncing.has(key)} style={{
                     background: syncing.has(key) ? T.accentBg : T.bgCard,
                     border:`1px solid ${syncing.has(key) ? T.borderAcc : T.border}`,
