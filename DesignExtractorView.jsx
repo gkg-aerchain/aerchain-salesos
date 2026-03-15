@@ -8,12 +8,12 @@
 import { useState, useRef, useCallback } from "react";
 import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle } from "lucide-react";
 
-// ── EXTRACTION SYSTEM PROMPT ──────────────────────────────
-// Edit this string to fine-tune what Claude extracts and how.
-// This is the equivalent of prompts/extraction-prompt.md from
-// the standalone tool, inlined here for zero-server operation.
+// ── DEFAULT EXTRACTION PROMPT (editable in UI) ───────────
+// This is only used as the default value for the prompt editor.
+// The actual prompt used for extraction is sent to /api/extract
+// which holds the canonical version server-side.
 
-const EXTRACTION_PROMPT = `You are a design system analyst. Your job is to analyze any input — screenshots, HTML/CSS code, design files, PDFs, or text descriptions — and extract a complete, structured design system specification.
+const DEFAULT_EXTRACTION_PROMPT = `You are a design system analyst. Your job is to analyze any input — screenshots, HTML/CSS code, design files, PDFs, or text descriptions — and extract a complete, structured design system specification.
 
 ## Your Task
 
@@ -372,36 +372,21 @@ export const styles = {
 }
 
 
-// ── CLAUDE API (direct browser call) ──────────────────────
+// ── SERVER API CALL ───────────────────────────────────────
+// Calls /api/extract (Vercel serverless function) which holds the API key.
+// No secrets in the browser.
 
-async function callClaudeWithVision(contentBlocks, { maxTokens = 8000 } = {}) {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_KEY;
-  if (!apiKey) throw new Error("VITE_ANTHROPIC_KEY not set in .env.local");
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+async function callExtractAPI(contentBlocks, customPrompt) {
+  const res = await fetch("/api/extract", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: maxTokens,
-      system: EXTRACTION_PROMPT,
-      messages: [{ role: "user", content: contentBlocks }],
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contentBlocks, customPrompt: customPrompt || undefined }),
   });
-
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
-    throw new Error(e.error?.message || `HTTP ${res.status}`);
+    throw new Error(e.error || `HTTP ${res.status}`);
   }
-
-  const data = await res.json();
-  const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
-  return { text, usage: data.usage, model: data.model };
+  return res.json();
 }
 
 function fileToBase64(file) {
@@ -464,7 +449,7 @@ export default function DesignExtractorView() {
   const [dragOver, setDragOver] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [customPrompt, setCustomPrompt] = useState(EXTRACTION_PROMPT);
+  const [customPrompt, setCustomPrompt] = useState(DEFAULT_EXTRACTION_PROMPT);
   const fileInputRef = useRef(null);
 
   const handleDrop = useCallback((e) => {
@@ -519,25 +504,20 @@ export default function DesignExtractorView() {
         text: "Analyze all the inputs above and extract a complete design system. Return ONLY the JSON object as specified in your system prompt.",
       });
 
-      const result = await callClaudeWithVision(contentBlocks);
-      setUsage(result.usage);
+      // Call server-side API (API key is on the server, not in the browser)
+      const result = await callExtractAPI(contentBlocks, customPrompt);
 
-      // Parse JSON from response
-      let parsed;
-      try {
-        const jsonMatch = result.text.match(/```(?:json)?\s*([\s\S]*?)```/);
-        const jsonStr = jsonMatch ? jsonMatch[1].trim() : result.text.trim();
-        parsed = JSON.parse(jsonStr);
-      } catch (parseErr) {
-        throw new Error(`Failed to parse response as JSON: ${parseErr.message}\n\nRaw response:\n${result.text.slice(0, 500)}`);
+      if (!result.success) {
+        throw new Error(result.error || "Extraction failed");
       }
 
-      setTokens(parsed);
+      setUsage(result.usage);
+      setTokens(result.tokens);
       setOutputs({
-        html: generateHTML(parsed),
-        markdown: generateMarkdown(parsed),
-        json: generateJSON(parsed),
-        react: generateReactTheme(parsed),
+        html: generateHTML(result.tokens),
+        markdown: generateMarkdown(result.tokens),
+        json: generateJSON(result.tokens),
+        react: generateReactTheme(result.tokens),
       });
     } catch (err) {
       setError(err.message);

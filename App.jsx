@@ -108,34 +108,24 @@ function timeAgo(date) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-// ── Direct API: Claude ────────────────────────────────────
-// Direct call to Anthropic API — no MCP middleman
-async function callClaude(prompt, { system, model = "claude-sonnet-4-6", maxTokens = 4000 } = {}) {
+// ── Server-side API: Claude ───────────────────────────────
+// Calls /api/process (Vercel serverless function) which holds the API key.
+// No secrets in the browser.
+async function callClaude(prompt, { system, model = "claude-sonnet-4-6", maxTokens = 4000, moduleKey } = {}) {
   return withRetry(async () => {
-    const body = {
-      model,
-      max_tokens: maxTokens,
-      system: system || "You are a processing engine for Aerchain SalesOS. Analyze the provided inputs and return structured JSON output. Your response must start with { and end with }.",
-      messages: [{ role: "user", content: prompt }],
-    };
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch("/api/process", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": import.meta.env.VITE_ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
-      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, system, model, maxTokens, moduleKey }),
     });
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
-      const err = new Error(e.error?.message || `HTTP ${res.status}`);
+      const err = new Error(e.error?.message || e.error || `HTTP ${res.status}`);
       err.status = res.status;
       throw err;
     }
     const data = await res.json();
-    return (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+    return data.text;
   }, { retries: 3, label: "callClaude" });
 }
 
@@ -766,7 +756,7 @@ function SettingsView({ claudeMemory, onClearMemory }) {
           <div style={{ fontSize:12, fontWeight:600, marginBottom:12 }}>API Connections</div>
           <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
             {[
-              { name:"Claude (Anthropic)", envKey:"VITE_ANTHROPIC_KEY",  status:"configured", note:"Direct API — no MCP" },
+              { name:"Claude (Anthropic)", envKey:"ANTHROPIC_API_KEY",  status:"configured", note:"Server-side via /api/ routes" },
               { name:"HubSpot",            envKey:"VITE_HUBSPOT_API_KEY", status:"stub",       note:"Direct API — not yet connected" },
               { name:"Notion",             envKey:"VITE_NOTION_API_KEY",  status:"configured", note:"Direct API — audit logging active" },
             ].map(api => (
