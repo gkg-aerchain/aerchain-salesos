@@ -4,8 +4,6 @@ import {
   Activity, X,
   Wand2, Download, Settings, Sun, Moon, Monitor, Link
 } from "lucide-react";
-import DUMMY_DATA, { SAMPLE_FILES } from "./demo-data/index.js";
-
 // ── Lib imports ──────────────────────────────────────────
 import { UPLOAD_MODULES, GROUPS, MOD, getSyncPrompt } from "./lib/constants.js";
 import { extractJSON, isStale, safePersist, timeAgo } from "./lib/utils.js";
@@ -43,7 +41,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const [syncLog, setSyncLog]           = useState([]);
   const [showLog, setShowLog]           = useState(true);
   const [lastGlobalSync, setLastGlobalSync] = useState(null);
-  // Demo toggle removed — data is seeded from demo-data on first load
+  // Demo toggle removed — data lives in Supabase
   const [theme, setTheme]               = useState("dark");
   const [claudeMemory, setClaudeMemory] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aerchain-claude-memory") || "[]"); } catch { return []; }
@@ -93,7 +91,6 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
       } else {
         // Fall back to localStorage
         const cached = localStorage.getItem("aerchain-module-data");
-        let loaded = false;
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
@@ -101,31 +98,23 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
               setModuleData(parsed);
               const fresh = Object.values(parsed).filter(v => v.status?.includes("Fresh")).length;
               addLog(`📦 Loaded ${Object.keys(parsed).length} modules from cache (${fresh} fresh)`, "success");
-              loaded = true;
             }
-          } catch { /* corrupted cache — will seed below */ }
-        }
-        if (!loaded) {
-          // Seed with demo data on first load so modules are never empty
-          setModuleData(DUMMY_DATA);
-          addLog("📦 Loaded default data — upload files or sync to refresh", "success");
+          } catch { /* corrupted cache */ }
         }
       }
 
       if (sbFiles && Object.keys(sbFiles).length > 0) {
         setSavedFiles(sbFiles);
       } else {
-        // Seed saved files from demo data if nothing in Supabase
+        // Fall back to localStorage
         const cachedFiles = localStorage.getItem("aerchain-saved-files");
-        let filesLoaded = false;
         if (cachedFiles) {
           try {
             const parsed = JSON.parse(cachedFiles);
-            if (Object.keys(parsed).length > 0) filesLoaded = true;
-          } catch { /* will seed below */ }
-        }
-        if (!filesLoaded) {
-          setSavedFiles(SAMPLE_FILES);
+            if (Object.keys(parsed).length > 0) {
+              setSavedFiles(parsed);
+            }
+          } catch { /* corrupted cache */ }
         }
       }
       if (sbMem) setClaudeMemory(sbMem);
@@ -480,7 +469,7 @@ body { margin: 0; padding: 0; }
           {syncingAll ? "Syncing All…" : "Sync All"}
         </button>
 
-        {/* Demo toggle removed — data seeded on first load */}
+        {/* Demo toggle removed — data lives in Supabase */}
 
         {/* Download app snapshot */}
         <button className="icon-btn" onClick={downloadSnapshot} title="Download app snapshot as HTML">
@@ -518,7 +507,7 @@ body { margin: 0; padding: 0; }
         </button>
       </div>
 
-      {/* Demo banner removed — data seeded by default */}
+      {/* Demo banner removed — data lives in Supabase */}
 
       {/* BODY */}
       <div style={{ display:"flex", flex:1, overflow:"hidden", position:"relative", zIndex:1 }}>
