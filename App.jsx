@@ -926,17 +926,23 @@ function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClear
     if (files.length > 0) {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
-          <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} />
+          <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} onLoadReference={(file) => setReferenceTokens(file.tokens)} />
           <div className="glass-surface" style={{ borderRadius: 14, padding: "12px 16px", boxShadow: "var(--s-glass)" }}>
             <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
               <Palette size={12} color={T.accent} /> Extract New Design System
             </div>
-            <DesignExtractorView />
+            <DesignExtractorView
+              onSaveToLibrary={(file) => setSavedFiles(prev => ({ ...prev, "design-extractor": [...(prev["design-extractor"] || []), file] }))}
+              referenceTokens={referenceTokens}
+            />
           </div>
         </div>
       );
     }
-    return <DesignExtractorView />;
+    return <DesignExtractorView
+      onSaveToLibrary={(file) => setSavedFiles(prev => ({ ...prev, "design-extractor": [...(prev["design-extractor"] || []), file] }))}
+      referenceTokens={referenceTokens}
+    />;
   }
 
   // File workspace for modules with saved files
@@ -1021,6 +1027,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const [savedFiles, setSavedFiles] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aerchain-saved-files") || "{}"); } catch { return {}; }
   });
+  const [referenceTokens, setReferenceTokens] = useState(null);
 
   // Dark Canvas v3 theme + font injection
   useEffect(() => {
@@ -1208,6 +1215,12 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
 
   // ── File management callbacks ──────────────────────────
   const getModuleFiles = useCallback((moduleKey) => {
+    // Design Extractor always shows reference files + user-saved files
+    if (moduleKey === "design-extractor") {
+      const refs = SAMPLE_FILES["design-extractor"] || [];
+      const saved = savedFiles["design-extractor"] || [];
+      return [...refs, ...saved];
+    }
     if (showDummy) return SAMPLE_FILES[moduleKey] || [];
     return savedFiles[moduleKey] || [];
   }, [showDummy, savedFiles]);

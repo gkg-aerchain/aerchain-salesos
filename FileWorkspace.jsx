@@ -295,7 +295,7 @@ function ProposalDetail({ file }) {
   );
 }
 
-function DesignSystemDetail({ file }) {
+function DesignSystemDetail({ file, onLoadReference }) {
   const tokens = file.tokens || {};
   const meta = tokens.meta || {};
   const colors = tokens.colors || {};
@@ -316,7 +316,19 @@ function DesignSystemDetail({ file }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* Meta info */}
       <div className="glass-surface" style={{ borderRadius: 12, padding: "14px 16px", boxShadow: "var(--s-glass)" }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 4 }}>{meta.name || file.name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: T.text, flex: 1 }}>{meta.name || file.name}</div>
+          {onLoadReference && file.tokens && (
+            <button onClick={() => onLoadReference(file)} style={{
+              background: "none", border: `1.5px solid ${T.borderAcc}`,
+              color: T.accent, borderRadius: 100,
+              padding: "5px 14px", fontSize: 11, fontWeight: 600, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
+            }}>
+              <Eye size={11} /> Load as Reference
+            </button>
+          )}
+        </div>
         <div style={{ fontSize: 12, color: T.muted, lineHeight: 1.5, marginBottom: 8 }}>{meta.description}</div>
         <div style={{ display: "flex", gap: 16 }}>
           {[
@@ -448,11 +460,11 @@ function DesignSystemDetail({ file }) {
 }
 
 // Module-specific detail renderer
-function FileDetailContent({ moduleKey, file }) {
+function FileDetailContent({ moduleKey, file, onLoadReference }) {
   switch (moduleKey) {
     case "pricing-calculator": return <PricingDetail file={file} />;
     case "proposal-generator": return <ProposalDetail file={file} />;
-    case "design-extractor":   return <DesignSystemDetail file={file} />;
+    case "design-extractor":   return <DesignSystemDetail file={file} onLoadReference={onLoadReference} />;
     default: return (
       <div className="glass-surface" style={{ borderRadius: 12, padding: 14, boxShadow: "var(--s-glass)" }}>
         <pre style={{ fontSize: 10, color: T.text, whiteSpace: "pre-wrap", margin: 0 }}>{JSON.stringify(file, null, 2)}</pre>
@@ -465,7 +477,7 @@ function FileDetailContent({ moduleKey, file }) {
 // FILE WORKSPACE — Main export
 // ══════════════════════════════════════════════════════════
 
-export default function FileWorkspace({ moduleKey, files, onCreateNew, onDuplicate, onDelete, onExport }) {
+export default function FileWorkspace({ moduleKey, files, onCreateNew, onDuplicate, onDelete, onExport, onLoadReference }) {
   const [selectedId, setSelectedId] = useState(null);
 
   const selectedFile = files.find(f => f.id === selectedId);
@@ -598,7 +610,7 @@ export default function FileWorkspace({ moduleKey, files, onCreateNew, onDuplica
 
           {/* Detail content */}
           <div style={{ padding: "14px 0", flex: 1 }}>
-            <FileDetailContent moduleKey={moduleKey} file={selectedFile} />
+            <FileDetailContent moduleKey={moduleKey} file={selectedFile} onLoadReference={onLoadReference} />
           </div>
         </div>
       )}
