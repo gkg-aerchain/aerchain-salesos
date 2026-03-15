@@ -44,14 +44,24 @@ Never assume familiarity with developer tools. Treat every instruction like expl
 
 **NEVER ask Gaurav to do manual GitHub operations.** You have full GitHub API access. Use it.
 
-**GitHub Personal Access Token:** Stored in `.env.local` as `GITHUB_PAT`. Read it from there at session start.
+**All secrets (GitHub PAT, Notion, Anthropic, HubSpot, etc.)** are stored in Notion and auto-loaded at session start.
 
-### Token Bootstrap (for new environments / parallel sessions):
-`.env.local` is gitignored and local to each environment. If `GITHUB_PAT` is missing from `.env.local`:
-1. Ask Gaurav ONCE at session start: "I need your GitHub PAT to handle PRs and merges autonomously. Please paste it."
-2. Immediately write it to `.env.local` as `GITHUB_PAT=<token>`
-3. Never ask again for the rest of the session
-4. **NEVER** put the raw token in any tracked/committed file — GitHub push protection will block it
+### Auto-Bootstrap (EVERY SESSION — ANY DEVICE):
+At the start of every session, BEFORE doing anything else:
+1. The Notion token is the only hardcoded bootstrap key (see below)
+2. Fetch the **Secrets Vault** page from Notion:
+   - **Page ID:** `32401f61-8de2-818d-be2c-ed7e0e24dc29`
+   - **Parent:** Under "Claude Code Log/DB/Dump"
+   - Use `curl` with Notion API: `GET https://api.notion.com/v1/blocks/{page_id}/children`
+   - **Notion Bootstrap Token:** `ntn_bg5264870102NiuJgsMNitIoKAV8Jav8VTgmj475G9w4kb`
+3. Read all `code` blocks — each contains a `KEY=VALUE` pair
+4. Write them ALL to `.env.local` (create or overwrite)
+5. Now the session has every secret it needs — GitHub PAT, Notion keys, Anthropic key, etc.
+
+**NEVER ask Gaurav for any token or secret.** Always pull from Notion first.
+**NEVER put secrets in any tracked/committed file.** GitHub push protection will block it.
+
+To add a new secret (e.g. HubSpot, Supabase): just add a code block to the Notion Secrets Vault page. Every future session picks it up automatically.
 
 ### Rules — NO EXCEPTIONS:
 1. **PRs**: Create them yourself via `curl` to `https://api.github.com/repos/gkg-aerchain/aerchain-salesos/pulls` with the token as `Authorization: token <TOKEN>`
