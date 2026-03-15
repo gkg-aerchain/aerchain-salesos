@@ -1,7 +1,11 @@
 {
   "mcpServers": {
     "refero": {
-      "url": "https://api.refero.design/mcp"
+      "type": "http",
+      "url": "https://api.refero.design/mcp",
+      "headers": {
+        "Authorization": "Bearer ${REFERO_API_KEY}"
+      }
     },
     "notion": {
       "command": "npx",

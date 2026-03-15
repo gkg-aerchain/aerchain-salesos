@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerchain — Canva Design System Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   AERCHAIN — CANVA DESIGN SYSTEM VISUAL REFERENCE
+   Complete styleguide with all tokens, components, patterns
+   ═══════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ── COLORS: Primary ── */
+  --purple: #8B5CF6;
+  --purple-hover: #7C3AED;
+  --purple-light: #F3F0FF;
+  --purple-border: #DDD6FE;
+  --purple-50: #FAF5FF;
+
+  /* ── COLORS: Secondary ── */
+  --teal: #06B6D4;
+  --teal-light: #ECFEFF;
+  --teal-border: #A5F3FC;
+
+  /* ── COLORS: Semantic ── */
+  --emerald: #10B981;
+  --emerald-light: #ECFDF5;
+  --emerald-border: #A7F3D0;
+  --amber: #F59E0B;
+  --amber-light: #FFFBEB;
+  --amber-border: #FDE68A;
+  --red: #EF4444;
+  --red-light: #FEF2F2;
+  --red-border: #FECACA;
+  --blue: #3B82F6;
+  --blue-light: #EFF6FF;
+
+  /* ── COLORS: Brand ── */
+  --aerchain: #DC5F40;
+  --aerchain-light: #FEF2EE;
+  --aerchain-border: #FDCFBF;
+
+  /* ── COLORS: Surfaces ── */
+  --content-bg: #FAFAFA;
+  --card-bg: #FFFFFF;
+  --card-border: #F0F0F0;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.03);
+  --card-shadow-hover: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+  --sidebar-bg: #F5F5F5;
+  --sidebar-hover: #EBEBEB;
+  --sidebar-divider: #E5E7EB;
+
+  /* ── COLORS: Text ── */
+  --text-primary: #1F2937;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --text-inverse: #FFFFFF;
+
+  /* ── GRADIENTS ── */
+  --gradient-primary: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  --gradient-header: linear-gradient(135deg, #DBEAFE, #E9D5FF, #CFFAFE);
+  --gradient-warm: linear-gradient(135deg, #8B5CF6, #EC4899);
+  --gradient-avatar-1: linear-gradient(135deg, #8B5CF6, #3B82F6);
+  --gradient-avatar-2: linear-gradient(135deg, #06B6D4, #10B981);
+  --gradient-avatar-3: linear-gradient(135deg, #F59E0B, #EF4444);
+  --gradient-avatar-4: linear-gradient(135deg, #EC4899, #8B5CF6);
+  --gradient-sidebar-active: linear-gradient(135deg, #8B5CF6, #06B6D4);
+
+  /* ── RADIUS ── */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 100px;
+
+  /* ── SPACING ── */
+  --sp-2: 2px;
+  --sp-4: 4px;
+  --sp-6: 6px;
+  --sp-8: 8px;
+  --sp-10: 10px;
+  --sp-12: 12px;
+  --sp-16: 16px;
+  --sp-20: 20px;
+  --sp-24: 24px;
+  --sp-32: 32px;
+
+  /* ── TYPOGRAPHY ── */
+  --font-sans: 'DM Sans', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  background: var(--content-bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: rgba(139,92,246,0.2); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--purple-border); border-radius: 3px; }
+
+/* ── LAYOUT ── */
+.page { max-width: 1200px; margin: 0 auto; padding: 40px 32px 80px; }
+
+.section { margin-bottom: 56px; }
+.section-title {
+  font-size: 24px; font-weight: 800; margin-bottom: 8px;
+  background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.section-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+.subsection { margin-bottom: 32px; }
+.subsection-title { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--text-primary); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.flex-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.flex-col { display: flex; flex-direction: column; gap: 20px; }
+
+/* ── PAGE HEADER ── */
+.page-header {
+  background: var(--gradient-header);
+  border-radius: var(--r-xl);
+  padding: 40px;
+  margin-bottom: 48px;
+  position: relative;
+  overflow: hidden;
+}
+.page-header::before {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%);
+  top: -80px; right: -40px; border-radius: 50%;
+}
+.page-header h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; position: relative; }
+.page-header p { font-size: 15px; color: var(--text-secondary); max-width: 600px; position: relative; }
+
+/* ── SAMPLE CARD ── */
+.sample-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-lg);
+  padding: 24px;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.sample-card:hover {
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* ── COLOR SWATCH ── */
+.swatch-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.swatch {
+  width: 100px; height: 80px; border-radius: var(--r-md);
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 8px; font-size: 10px; font-family: var(--font-mono);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.swatch.light-text { color: white; }
+.swatch.dark-text { color: var(--text-primary); }
+.swatch-name { font-weight: 600; font-family: var(--font-sans); font-size: 11px; }
+
+/* ── GRADIENT STRIP ── */
+.gradient-strip {
+  height: 56px; border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; color: white;
+  margin-bottom: 10px; letter-spacing: 0.5px;
+}
+
+/* ── TYPOGRAPHY SPECIMEN ── */
+.type-specimen { padding: 16px 0; border-bottom: 1px solid var(--card-border); }
+.type-specimen:last-child { border-bottom: none; }
+.type-meta { font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); margin-top: 4px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  padding: 10px 24px; border-radius: var(--r-pill); border: none;
+  cursor: pointer; transition: all 0.2s; line-height: 1;
+}
+.btn-primary {
+  background: var(--gradient-primary); color: white;
+  box-shadow: 0 4px 14px rgba(139,92,246,0.3);
+}
+.btn-primary:hover { box-shadow: 0 6px 20px rgba(139,92,246,0.4); transform: translateY(-1px); }
+.btn-secondary {
+  background: white; color: var(--text-primary);
+  border: 1.5px solid var(--card-border);
+}
+.btn-secondary:hover { background: var(--content-bg); border-color: var(--purple-border); }
+.btn-success {
+  background: linear-gradient(135deg, var(--emerald), #059669); color: white;
+  box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+}
+.btn-danger {
+  background: linear-gradient(135deg, var(--red), #DC2626); color: white;
+  box-shadow: 0 4px 14px rgba(239,68,68,0.3);
+}
+.btn-ghost {
+  background: transparent; color: var(--purple);
+  border: 1.5px solid var(--purple-border);
+}
+.btn-ghost:hover { background: var(--purple-light); }
+.btn-sm { padding: 6px 16px; font-size: 12px; }
+.btn-lg { padding: 14px 32px; font-size: 15px; }
+
+/* ── BADGES / PILLS ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: var(--r-pill);
+  font-size: 11px; font-weight: 600;
+}
+.badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+.badge-purple { background: var(--purple-light); color: var(--purple); border: 1px solid var(--purple-border); }
+.badge-purple .dot { background: var(--purple); }
+.badge-emerald { background: var(--emerald-light); color: var(--emerald); border: 1px solid var(--emerald-border); }
+.badge-emerald .dot { background: var(--emerald); }
+.badge-amber { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-border); }
+.badge-amber .dot { background: var(--amber); }
+.badge-red { background: var(--red-light); color: var(--red); border: 1px solid var(--red-border); }
+.badge-red .dot { background: var(--red); }
+.badge-teal { background: var(--teal-light); color: var(--teal); border: 1px solid var(--teal-border); }
+.badge-teal .dot { background: var(--teal); }
+.badge-aerchain { background: var(--aerchain-light); color: var(--aerchain); border: 1px solid var(--aerchain-border); }
+
+/* ── KPI CARDS ── */
+.kpi-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--r-lg);
+  padding: 22px 24px;
+  box-shadow: var(--card-shadow);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 4px;
+}
+.kpi-card.purple::before { background: var(--gradient-primary); }
+.kpi-card.emerald::before { background: linear-gradient(135deg, var(--emerald), var(--teal)); }
+.kpi-card.amber::before { background: linear-gradient(135deg, var(--amber), #F97316); }
+.kpi-card.red::before { background: linear-gradient(135deg, var(--red), #EC4899); }
+.kpi-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;
+}
+.kpi-value {
+  font-size: 28px; font-weight: 800;
+  font-family: var(--font-sans); letter-spacing: -0.5px; margin-bottom: 6px;
+}
+.kpi-value.gradient { background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.kpi-delta {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; padding: 2px 10px;
+  border-radius: var(--r-pill);
+}
+.kpi-delta.up { color: var(--emerald); background: var(--emerald-light); }
+.kpi-delta.down { color: var(--red); background: var(--red-light); }
+.kpi-delta.flat { color: var(--text-muted); background: var(--content-bg); }
+
+/* ── DATA TABLE ── */
+.data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.data-table th {
+  text-align: left; padding: 10px 16px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+  text-transform: uppercase; color: var(--text-muted);
+  border-bottom: 2px solid var(--card-border);
+  background: var(--content-bg);
+}
+.data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--card-border);
+  color: var(--text-primary);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--purple-50); }
+.mono { font-family: var(--font-mono); }
+.fw-600 { font-weight: 600; }
+.text-muted { color: var(--text-secondary); }
+
+/* ── FORM INPUTS ── */
+.form-label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 6px;
+}
+.form-input, .form-select {
+  width: 100%; padding: 10px 14px;
+  background: var(--card-bg);
+  border: 1.5px solid var(--card-border);
+  border-radius: var(--r-md); color: var(--text-primary);
+  font-family: var(--font-sans); font-size: 13px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
+}
+.form-input::placeholder { color: var(--text-muted); }
+
+/* ── DROP ZONE ── */
+.drop-zone {
+  border: 2px dashed var(--purple-border);
+  border-radius: var(--r-lg);
+  padding: 32px;
+  text-align: center;
+  background: var(--purple-50);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.drop-zone:hover {
+  border-color: var(--purple);
+  background: var(--purple-light);
+}
+
+/* ── FILE BADGES ── */
+.file-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: var(--r-xs);
+  font-size: 10px; font-weight: 700; font-family: var(--font-mono);
+}
+.file-csv { background: #DBEAFE; color: #2563EB; }
+.file-pdf { background: #FEE2E2; color: #DC2626; }
+.file-xlsx { background: #D1FAE5; color: #059669; }
+.file-docx { background: #E0E7FF; color: #4338CA; }
+.file-json { background: #FEF3C7; color: #D97706; }
+.file-txt { background: #F3F4F6; color: #6B7280; }
+
+/* ── AVATAR ── */
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: white;
+  flex-shrink: 0;
+}
+.avatar-lg { width: 40px; height: 40px; font-size: 14px; }
+
+/* ── MODULE CHIP ── */
+.module-chip {
+  padding: 10px 14px; border-radius: var(--r-md);
+  font-size: 12px; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+  transition: all 0.2s;
+}
+.module-chip.active {
+  background: var(--purple-light); border: 1.5px solid var(--purple-border);
+  color: var(--purple);
+}
+.module-chip.inactive {
+  background: var(--content-bg); border: 1.5px solid var(--card-border);
+  color: var(--text-muted);
+}
+.module-chip .price { margin-left: auto; font-family: var(--font-mono); font-size: 11px; }
+
+/* ── SIDEBAR PREVIEW ── */
+.sidebar-preview {
+  width: 250px; background: var(--sidebar-bg);
+  border-radius: var(--r-lg); overflow: hidden;
+  border: 1px solid var(--sidebar-divider);
+}
+.sidebar-preview-header { padding: 18px 16px; border-bottom: 1px solid var(--sidebar-divider); }
+.sidebar-preview-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; margin: 3px 8px; border-radius: var(--r-md);
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
+}
+.sidebar-preview-item.active {
+  background: var(--gradient-sidebar-active);
+  color: white; box-shadow: 0 4px 14px rgba(139,92,246,0.3);
+}
+.sidebar-preview-footer { padding: 12px 16px; border-top: 1px solid var(--sidebar-divider); font-size: 11px; color: var(--text-muted); }
+
+/* ── TOPBAR PREVIEW ── */
+.topbar-preview {
+  background: var(--gradient-header);
+  border-radius: var(--r-lg);
+  padding: 16px 24px;
+  display: flex; align-items: center; gap: 16px;
+  border: 1px solid rgba(139,92,246,0.12);
+}
+
+/* ── PROGRESS BAR ── */
+.progress-bar { height: 6px; border-radius: 3px; background: var(--content-bg); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; }
+
+/* ── PRICE ROW ── */
+.price-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid var(--card-border);
+  font-size: 13px;
+}
+.price-row:last-child { border-bottom: none; }
+
+/* ── FILTER PILLS ── */
+.filter-pill {
+  padding: 6px 18px; border-radius: var(--r-pill);
+  font-size: 12px; font-weight: 600;
+  border: 1.5px solid var(--card-border);
+  background: white; color: var(--text-secondary);
+  cursor: pointer; transition: all 0.2s;
+}
+.filter-pill.active {
+  background: var(--gradient-primary); color: white;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(139,92,246,0.25);
+}
+
+/* ── HIGHLIGHT BOX ── */
+.highlight-box {
+  padding: 16px 20px; border-radius: var(--r-md);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.highlight-box.purple {
+  background: var(--purple-light); border: 1px solid var(--purple-border);
+}
+
+/* ── DISCOUNT TIER ── */
+.tier-card {
+  padding: 18px; border-radius: var(--r-md);
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE HEADER
+     ═══════════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <h1>Aerchain Design System</h1>
+  <p>Canva-inspired visual reference — All tokens, components, and patterns with representative Aerchain data across Sales, Product, and Pricing contexts.</p>
+  <div style="display:flex;gap:10px;margin-top:16px;">
+    <span class="badge badge-purple"><span class="dot"></span> Canva Theme</span>
+    <span class="badge badge-teal"><span class="dot"></span> v1.0 — March 2026</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     1. COLORS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">1. Color Palette</div>
+  <div class="section-desc">Core colors, semantic tokens, and surface definitions</div>
+
+  <div class="subsection">
+    <div class="subsection-title">Primary & Secondary</div>
+    <div class="swatch-row">
+      <div class="swatch light-text" style="background:#8B5CF6;"><span class="swatch-name">Purple</span>#8B5CF6</div>
+      <div class="swatch light-text" style="background:#7C3AED;"><span class="swatch-name">Purple Hover</span>#7C3AED</div>
+      <div class="swatch dark-text" style="background:#F3F0FF;"><span class="swatch-name">Purple Light</span>#F3F0FF</div>
+      <div class="swatch dark-text" style="background:#DDD6FE;"><span class="swatch-name">Purple Border</span>#DDD6FE</div>
+      <div class="swatch light-text" style="background:#06B6D4;"><span class="swatch-name">Teal</span>#06B6D4</div>
+      <div class="swatch dark-text" style="background:#ECFEFF;"><span class="swatch-name">Teal Light</span>#ECFEFF</div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Semantic Colors</div>
+    <div class="swatch-row">
+      <div class="swatch light-text" style="background:#10B981;"><span class="swatch-name">Emerald</span>#10B981</div>
+      <div class="swatch dark-text" style="background:#ECFDF5;"><span class="swatch-name">Emerald Light</span>#ECFDF5</div>
+      <div class="swatch light-text" style="background:#F59E0B;"><span class="swatch-name">Amber</span>#F59E0B</div>
+      <div class="swatch dark-text" style="background:#FFFBEB;"><span class="swatch-name">Amber Light</span>#FFFBEB</div>
+      <div class="swatch light-text" style="background:#EF4444;"><span class="swatch-name">Red</span>#EF4444</div>
+      <div class="swatch dark-text" style="background:#FEF2F2;"><span class="swatch-name">Red Light</span>#FEF2F2</div>
+      <div class="swatch light-text" style="background:#DC5F40;"><span class="swatch-name">Aerchain</span>#DC5F40</div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Surfaces & Text</div>
+    <div class="swatch-row">
+      <div class="swatch dark-text" style="background:#FAFAFA;border:1px solid #E5E7EB;"><span class="swatch-name">Content BG</span>#FAFAFA</div>
+      <div class="swatch dark-text" style="background:#FFFFFF;border:1px solid #E5E7EB;"><span class="swatch-name">Card BG</span>#FFFFFF</div>
+      <div class="swatch dark-text" style="background:#F5F5F5;border:1px solid #E5E7EB;"><span class="swatch-name">Sidebar BG</span>#F5F5F5</div>
+      <div class="swatch dark-text" style="background:#F0F0F0;"><span class="swatch-name">Card Border</span>#F0F0F0</div>
+      <div class="swatch light-text" style="background:#1F2937;"><span class="swatch-name">Text Primary</span>#1F2937</div>
+      <div class="swatch light-text" style="background:#6B7280;"><span class="swatch-name">Text Secondary</span>#6B7280</div>
+      <div class="swatch light-text" style="background:#9CA3AF;"><span class="swatch-name">Text Muted</span>#9CA3AF</div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Gradients</div>
+    <div class="gradient-strip" style="background:var(--gradient-primary);">Primary — #8B5CF6 → #06B6D4</div>
+    <div class="gradient-strip" style="background:var(--gradient-header);">Header — #DBEAFE → #E9D5FF → #CFFAFE</div>
+    <div class="gradient-strip" style="background:var(--gradient-warm);">Warm — #8B5CF6 → #EC4899</div>
+    <div class="gradient-strip" style="background:var(--gradient-avatar-1);">Avatar 1 — #8B5CF6 → #3B82F6</div>
+    <div class="gradient-strip" style="background:var(--gradient-avatar-2);">Avatar 2 — #06B6D4 → #10B981</div>
+    <div class="gradient-strip" style="background:var(--gradient-avatar-3);">Avatar 3 — #F59E0B → #EF4444</div>
+    <div class="gradient-strip" style="background:var(--gradient-avatar-4);">Avatar 4 — #EC4899 → #8B5CF6</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     2. TYPOGRAPHY
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">2. Typography</div>
+  <div class="section-desc">DM Sans + Plus Jakarta Sans for UI, JetBrains Mono for data/numbers</div>
+
+  <div class="sample-card">
+    <div class="type-specimen">
+      <div style="font-size:32px;font-weight:800;letter-spacing:-0.5px;">Aerchain Sales OS Platform</div>
+      <div class="type-meta">32px / 800 / -0.5px tracking — Page Title</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:24px;font-weight:800;background:var(--gradient-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Pricing Calculator Dashboard</div>
+      <div class="type-meta">24px / 800 / gradient — Section Title</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:18px;font-weight:700;">Contract Management Module</div>
+      <div class="type-meta">18px / 700 — Card Title</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:15px;font-weight:700;">Recent Deal Activity</div>
+      <div class="type-meta">15px / 700 — Subsection Title</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:14px;font-weight:400;color:var(--text-primary);">Aerchain offers a cloud-native, AI-powered procurement platform that delivers 15-30% savings on addressable spend through autonomous sourcing.</div>
+      <div class="type-meta">14px / 400 — Body Text</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:13px;font-weight:500;color:var(--text-secondary);">Source-to-Pay &middot; e-Sourcing &middot; Spend Analytics</div>
+      <div class="type-meta">13px / 500 — Secondary Body</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-muted);">ANNUAL PLATFORM FEE</div>
+      <div class="type-meta">11px / 600 / 0.8px tracking / uppercase — Label</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-family:var(--font-mono);font-size:28px;font-weight:700;">$1,390,200</div>
+      <div class="type-meta">JetBrains Mono 28px / 700 — KPI Value</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-family:var(--font-mono);font-size:13px;font-weight:500;">$420,000 &middot; $2.1B &middot; 10%</div>
+      <div class="type-meta">JetBrains Mono 13px / 500 — Table Data</div>
+    </div>
+    <div class="type-specimen">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);">14 Mar 2026, 10:00 UTC</div>
+      <div class="type-meta">JetBrains Mono 10px — Timestamp / Meta</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     3. SPACING & RADIUS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">3. Spacing & Radius</div>
+  <div class="section-desc">Generous whitespace, friendly rounded corners</div>
+  <div class="grid-2">
+    <div class="sample-card">
+      <div class="subsection-title">Border Radius Scale</div>
+      <div class="flex-row">
+        <div style="width:50px;height:50px;background:var(--purple-light);border:2px solid var(--purple-border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--font-mono);">6px</div>
+        <div style="width:50px;height:50px;background:var(--purple-light);border:2px solid var(--purple-border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--font-mono);">8px</div>
+        <div style="width:50px;height:50px;background:var(--purple-light);border:2px solid var(--purple-border);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--font-mono);">12px</div>
+        <div style="width:60px;height:50px;background:var(--purple-light);border:2px solid var(--purple-border);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--font-mono);">16px</div>
+        <div style="width:60px;height:50px;background:var(--purple-light);border:2px solid var(--purple-border);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:var(--font-mono);">20px</div>
+        <div style="width:80px;height:36px;background:var(--gradient-primary);border-radius:100px;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;font-family:var(--font-mono);">pill</div>
+      </div>
+    </div>
+    <div class="sample-card">
+      <div class="subsection-title">Shadow Scale</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="padding:14px;background:white;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.03);font-size:12px;">Card — Default</div>
+        <div style="padding:14px;background:white;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);font-size:12px;">Card — Hover / Elevated</div>
+        <div style="padding:14px;background:white;border-radius:12px;box-shadow:0 4px 14px rgba(139,92,246,0.3);font-size:12px;">Button — Purple Glow</div>
+        <div style="padding:14px;background:white;border-radius:12px;box-shadow:0 4px 14px rgba(16,185,129,0.3);font-size:12px;">Button — Green Glow</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     4. BUTTONS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">4. Buttons</div>
+  <div class="section-desc">Pill-shaped, gradient primary, generous padding</div>
+  <div class="sample-card">
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="flex-row">
+        <button class="btn btn-primary">Generate Proposal</button>
+        <button class="btn btn-secondary">Export CSV</button>
+        <button class="btn btn-success">Close Deal</button>
+        <button class="btn btn-danger">Cancel Contract</button>
+        <button class="btn btn-ghost">View Details</button>
+      </div>
+      <div class="flex-row">
+        <button class="btn btn-primary btn-sm">Small Button</button>
+        <button class="btn btn-primary">Default Button</button>
+        <button class="btn btn-primary btn-lg">Large Button</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     5. BADGES & PILLS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">5. Badges & Status Pills</div>
+  <div class="section-desc">Semantic colored pills with dot indicators</div>
+  <div class="sample-card">
+    <div class="flex-row" style="gap:10px;">
+      <span class="badge badge-emerald"><span class="dot"></span> Active</span>
+      <span class="badge badge-amber"><span class="dot"></span> Submitted</span>
+      <span class="badge badge-purple"><span class="dot"></span> In Review</span>
+      <span class="badge badge-red"><span class="dot"></span> Draft</span>
+      <span class="badge badge-teal"><span class="dot"></span> Sourcing, CLM</span>
+      <span class="badge badge-aerchain">Full Suite</span>
+      <span class="badge badge-emerald">Closed Won</span>
+      <span class="badge badge-amber">Negotiation</span>
+      <span class="badge badge-purple">Proposal</span>
+    </div>
+    <div style="margin-top:16px;">
+      <div class="subsection-title" style="margin-bottom:10px;">File Type Badges</div>
+      <div class="flex-row">
+        <span class="file-badge file-csv">CSV</span>
+        <span class="file-badge file-pdf">PDF</span>
+        <span class="file-badge file-xlsx">XLSX</span>
+        <span class="file-badge file-docx">DOCX</span>
+        <span class="file-badge file-json">JSON</span>
+        <span class="file-badge file-txt">TXT</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     6. AVATARS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">6. Avatars</div>
+  <div class="section-desc">Gradient backgrounds with initials</div>
+  <div class="sample-card">
+    <div class="flex-row" style="gap:14px;">
+      <div class="avatar" style="background:var(--gradient-avatar-1);">TS</div>
+      <div class="avatar" style="background:var(--gradient-avatar-2);">HI</div>
+      <div class="avatar" style="background:var(--gradient-avatar-3);">JS</div>
+      <div class="avatar" style="background:var(--gradient-avatar-4);">MM</div>
+      <div class="avatar avatar-lg" style="background:var(--gradient-avatar-1);">RK</div>
+      <div class="avatar avatar-lg" style="background:var(--gradient-avatar-2);">PS</div>
+      <div class="avatar avatar-lg" style="background:var(--gradient-avatar-3);">AP</div>
+      <div class="avatar avatar-lg" style="background:var(--gradient-avatar-4);">SG</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     7. KPI CARDS (Aerchain Data)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">7. KPI Cards</div>
+  <div class="section-desc">Top-gradient accent bar, large values, delta badges</div>
+
+  <div class="subsection-title">Pricing Calculator KPIs</div>
+  <div class="grid-3">
+    <div class="kpi-card purple">
+      <div class="kpi-label">Standard Model (per $1B)</div>
+      <div class="kpi-value gradient">$300K</div>
+      <div class="kpi-delta up">+10% YoY</div>
+    </div>
+    <div class="kpi-card emerald">
+      <div class="kpi-label">Break-even Threshold</div>
+      <div class="kpi-value" style="color:var(--emerald);">$500M–$1B</div>
+      <div class="kpi-delta flat">Stable</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">Active Deals</div>
+      <div class="kpi-value" style="color:var(--amber);">3</div>
+      <div class="kpi-delta up">+1 this week</div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;">
+    <div class="subsection-title">Proposal Pipeline KPIs</div>
+    <div class="grid-3">
+      <div class="kpi-card purple">
+        <div class="kpi-label">Total Pipeline</div>
+        <div class="kpi-value gradient">$4.63M</div>
+        <div class="kpi-delta up">+$680K closed</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Active Proposals</div>
+        <div class="kpi-value" style="color:var(--amber);">4</div>
+        <div class="kpi-delta flat">3 open, 1 won</div>
+      </div>
+      <div class="kpi-card emerald">
+        <div class="kpi-label">Win Rate</div>
+        <div class="kpi-value" style="color:var(--emerald);">25%</div>
+        <div class="kpi-delta up">1 of 4</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;">
+    <div class="subsection-title">Product / Platform KPIs</div>
+    <div class="grid-4">
+      <div class="kpi-card purple">
+        <div class="kpi-label">ARR</div>
+        <div class="kpi-value gradient">$6M</div>
+        <div class="kpi-delta up">+42% YoY</div>
+      </div>
+      <div class="kpi-card emerald">
+        <div class="kpi-label">Spend Managed</div>
+        <div class="kpi-value" style="color:var(--emerald);">$20B+</div>
+        <div class="kpi-delta up">+$4B QoQ</div>
+      </div>
+      <div class="kpi-card amber">
+        <div class="kpi-label">Enterprise Clients</div>
+        <div class="kpi-value" style="color:var(--amber);">47</div>
+        <div class="kpi-delta up">+8 this quarter</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-label">Churn Rate</div>
+        <div class="kpi-value" style="color:var(--red);">2.1%</div>
+        <div class="kpi-delta down">-0.3% MoM</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     8. DATA TABLES
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">8. Data Tables</div>
+  <div class="section-desc">Clean rows, mono data, avatar + badge combos, hover highlight</div>
+
+  <div class="subsection-title">Recent Deals</div>
+  <div class="sample-card" style="padding:0;overflow:hidden;">
+    <table class="data-table">
+      <thead><tr><th>Client</th><th>Y1 Amount</th><th>Spend Under Mgmt</th><th>Modules</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><div class="flex-row" style="gap:10px;"><div class="avatar" style="background:var(--gradient-avatar-1);font-size:11px;">TS</div><span class="fw-600">Tata Steel</span></div></td>
+          <td class="mono fw-600">$420,000</td>
+          <td class="mono text-muted">$2.1B</td>
+          <td><span class="badge badge-purple">Sourcing, CLM, SXM</span></td>
+          <td><span class="badge badge-emerald"><span class="dot"></span> Active</span></td>
+        </tr>
+        <tr>
+          <td><div class="flex-row" style="gap:10px;"><div class="avatar" style="background:var(--gradient-avatar-2);font-size:11px;">HI</div><span class="fw-600">Hindalco</span></div></td>
+          <td class="mono fw-600">$285,000</td>
+          <td class="mono text-muted">$1.4B</td>
+          <td><span class="badge badge-purple">Sourcing, Analytics</span></td>
+          <td><span class="badge badge-emerald"><span class="dot"></span> Active</span></td>
+        </tr>
+        <tr>
+          <td><div class="flex-row" style="gap:10px;"><div class="avatar" style="background:var(--gradient-avatar-3);font-size:11px;">JS</div><span class="fw-600">JSW Group</span></div></td>
+          <td class="mono fw-600">$510,000</td>
+          <td class="mono text-muted">$3.2B</td>
+          <td><span class="badge badge-aerchain">Full Suite</span></td>
+          <td><span class="badge badge-emerald"><span class="dot"></span> Active</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:24px;">
+    <div class="subsection-title">Active Proposals</div>
+    <div class="sample-card" style="padding:0;overflow:hidden;">
+      <table class="data-table">
+        <thead><tr><th>Client</th><th>Value</th><th>Stage</th><th>Status</th><th>Contact</th><th>Submitted</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="fw-600">Mahindra & Mahindra</td>
+            <td class="mono fw-600">$750,000</td>
+            <td><span class="badge badge-purple">Proposal</span></td>
+            <td><span class="badge badge-amber"><span class="dot"></span> Submitted</span></td>
+            <td class="text-muted">Rajesh Kumar</td>
+            <td class="mono text-muted" style="font-size:12px;">10 Mar 2026</td>
+          </tr>
+          <tr>
+            <td class="fw-600">Larsen & Toubro</td>
+            <td class="mono fw-600">$1,200,000</td>
+            <td><span class="badge badge-amber">Negotiation</span></td>
+            <td><span class="badge badge-purple"><span class="dot"></span> In Review</span></td>
+            <td class="text-muted">Priya Sharma</td>
+            <td class="mono text-muted" style="font-size:12px;">05 Mar 2026</td>
+          </tr>
+          <tr>
+            <td class="fw-600">Reliance Industries</td>
+            <td class="mono fw-600">$2,000,000</td>
+            <td><span class="badge badge-purple">Proposal</span></td>
+            <td><span class="badge badge-red"><span class="dot"></span> Draft</span></td>
+            <td class="text-muted">Amit Patel</td>
+            <td class="mono text-muted" style="font-size:12px;">12 Mar 2026</td>
+          </tr>
+          <tr>
+            <td class="fw-600">Adani Ports</td>
+            <td class="mono fw-600">$680,000</td>
+            <td><span class="badge badge-emerald">Closed Won</span></td>
+            <td><span class="badge badge-emerald"><span class="dot"></span> Won</span></td>
+            <td class="text-muted">Sneha Gupta</td>
+            <td class="mono text-muted" style="font-size:12px;">28 Feb 2026</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     9. PRICING MODEL
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">9. Pricing Model Display</div>
+  <div class="section-desc">Breakdown rows, highlight box, year projection table</div>
+  <div class="grid-2">
+    <div class="sample-card">
+      <div class="subsection-title">Standard Pricing Model</div>
+      <div class="price-row"><span class="text-muted">Base Platform Fee</span><span class="mono fw-600">$120,000</span></div>
+      <div class="price-row"><span class="text-muted">Source-to-Pay Module</span><span class="mono fw-600">$80,000</span></div>
+      <div class="price-row"><span class="text-muted">e-Sourcing Module</span><span class="mono fw-600">$60,000</span></div>
+      <div class="price-row"><span class="text-muted">Contract Management</span><span class="mono fw-600">$55,000</span></div>
+      <div class="price-row"><span class="text-muted">Spend Analytics</span><span class="mono fw-600">$45,000</span></div>
+      <div class="price-row"><span class="text-muted">Implementation</span><span class="mono fw-600">$45,000</span></div>
+      <div class="price-row"><span class="text-muted">YoY Escalation</span><span class="badge badge-amber">10%</span></div>
+    </div>
+    <div class="sample-card">
+      <div class="subsection-title">3-Year Projection (Tata Steel)</div>
+      <table class="data-table" style="font-size:12px;">
+        <thead><tr><th>Year</th><th>License</th><th>Escalation</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr><td class="mono fw-600">Year 1</td><td class="mono">$420,000</td><td class="mono text-muted">—</td><td class="mono fw-600">$420,000</td></tr>
+          <tr><td class="mono fw-600">Year 2</td><td class="mono">$420,000</td><td class="mono" style="color:var(--amber);">+10%</td><td class="mono fw-600">$462,000</td></tr>
+          <tr><td class="mono fw-600">Year 3</td><td class="mono">$420,000</td><td class="mono" style="color:var(--amber);">+10%</td><td class="mono fw-600">$508,200</td></tr>
+        </tbody>
+      </table>
+      <div class="highlight-box purple" style="margin-top:16px;">
+        <span style="font-size:13px;font-weight:600;">3-Year TCV</span>
+        <span class="mono" style="font-size:22px;font-weight:800;background:var(--gradient-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">$1,390,200</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     10. MODULE CHIPS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">10. Module Availability Grid</div>
+  <div class="section-desc">Selectable module chips with pricing</div>
+  <div class="grid-4">
+    <div class="module-chip active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Source-to-Pay<span class="price">$80K</span></div>
+    <div class="module-chip active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>e-Sourcing<span class="price">$60K</span></div>
+    <div class="module-chip inactive"><div style="width:14px;height:14px;border-radius:4px;border:1.5px solid var(--card-border);"></div>Contract Mgmt<span class="price">$55K</span></div>
+    <div class="module-chip inactive"><div style="width:14px;height:14px;border-radius:4px;border:1.5px solid var(--card-border);"></div>Supplier Portal<span class="price">$35K</span></div>
+    <div class="module-chip inactive"><div style="width:14px;height:14px;border-radius:4px;border:1.5px solid var(--card-border);"></div>Spend Analytics<span class="price">$45K</span></div>
+    <div class="module-chip inactive"><div style="width:14px;height:14px;border-radius:4px;border:1.5px solid var(--card-border);"></div>Invoice Auto<span class="price">$40K</span></div>
+    <div class="module-chip inactive"><div style="width:14px;height:14px;border-radius:4px;border:1.5px solid var(--card-border);"></div>Catalog Mgmt<span class="price">$30K</span></div>
+    <div class="module-chip inactive"><div style="width:14px;height:14px;border-radius:4px;border:1.5px solid var(--card-border);"></div>AP Automation<span class="price">$50K</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     11. VOLUME DISCOUNT TIERS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">11. Volume Discount Tiers</div>
+  <div class="section-desc">Tiered pricing cards with color coding</div>
+  <div class="grid-3">
+    <div class="tier-card" style="background:var(--content-bg);border:1.5px solid var(--card-border);border-radius:var(--r-lg);">
+      <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Under $500M</div>
+      <div class="mono" style="font-size:20px;font-weight:700;color:var(--text-muted);">$0</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">No discount</div>
+    </div>
+    <div class="tier-card" style="background:var(--amber-light);border:1.5px solid var(--amber-border);border-radius:var(--r-lg);">
+      <div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">$500M – $1B</div>
+      <div class="mono" style="font-size:20px;font-weight:700;color:var(--emerald);">-$8,000</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Mid-tier discount</div>
+    </div>
+    <div class="tier-card" style="background:var(--emerald-light);border:1.5px solid var(--emerald-border);border-radius:var(--r-lg);">
+      <div style="font-size:10px;color:var(--emerald);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Over $1B</div>
+      <div class="mono" style="font-size:20px;font-weight:700;color:var(--emerald);">-$15,000</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Enterprise discount</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     12. FORMS & INPUTS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">12. Forms & Inputs</div>
+  <div class="section-desc">Rounded inputs with purple focus ring, dropdowns, upload zone</div>
+  <div class="grid-2">
+    <div class="sample-card">
+      <div style="margin-bottom:16px;">
+        <div class="form-label">Company Name</div>
+        <input class="form-input" value="Tata Steel" />
+      </div>
+      <div style="margin-bottom:16px;">
+        <div class="form-label">Annual Procurement Spend</div>
+        <input class="form-input" placeholder="e.g. 2,000,000,000" />
+      </div>
+      <div style="margin-bottom:16px;">
+        <div class="form-label">Contract Duration</div>
+        <select class="form-select"><option>1 Year</option><option selected>3 Years</option><option>5 Years</option></select>
+      </div>
+      <div>
+        <div class="form-label">Region</div>
+        <select class="form-select"><option>India</option><option>Middle East (GCCC)</option><option>Southeast Asia</option><option>Global</option></select>
+      </div>
+    </div>
+    <div class="sample-card">
+      <div class="form-label">Upload Pricing Data</div>
+      <div class="drop-zone" style="margin-bottom:16px;">
+        <div style="font-size:28px;margin-bottom:8px;">&#128194;</div>
+        <div style="font-weight:600;margin-bottom:4px;">Drop files here or click to browse</div>
+        <div style="font-size:12px;color:var(--text-muted);">Accepts: <span class="file-badge file-csv" style="font-size:9px;">CSV</span> <span class="file-badge file-pdf" style="font-size:9px;">PDF</span> <span class="file-badge file-xlsx" style="font-size:9px;">XLSX</span> <span class="file-badge file-docx" style="font-size:9px;">DOCX</span> <span class="file-badge file-json" style="font-size:9px;">JSON</span> <span class="file-badge file-txt" style="font-size:9px;">TXT</span></div>
+      </div>
+      <div class="form-label">Special Instructions for Claude</div>
+      <textarea class="form-input" style="min-height:100px;resize:vertical;font-family:var(--font-sans);" placeholder="e.g. Include 90-day pilot clause, reference GCCC compliance..."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     13. FILTER PILLS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">13. Filter Pills & Tabs</div>
+  <div class="section-desc">Pill-shaped tab selectors with gradient active state</div>
+  <div class="sample-card">
+    <div class="flex-row">
+      <span class="filter-pill active">Overview</span>
+      <span class="filter-pill">Deals</span>
+      <span class="filter-pill">Model</span>
+      <span class="filter-pill">Modules</span>
+    </div>
+    <div style="margin-top:16px;">
+      <div class="flex-row">
+        <span class="filter-pill active">Monthly</span>
+        <span class="filter-pill">Quarterly</span>
+        <span class="filter-pill">Annual</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     14. PIPELINE PROGRESS BARS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">14. Progress Bars & Pipeline</div>
+  <div class="section-desc">Colored progress bars for pipeline stages</div>
+  <div class="sample-card">
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;"><span class="text-muted">Draft</span><span class="mono text-muted">1 deal &middot; $2.0M</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:43%;background:var(--red);"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;"><span class="text-muted">Proposal</span><span class="mono text-muted">1 deal &middot; $750K</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:16%;background:var(--purple);"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;"><span class="text-muted">Negotiation</span><span class="mono text-muted">1 deal &middot; $1.2M</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:26%;background:var(--amber);"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;"><span class="text-muted">Closed Won</span><span class="mono text-muted">1 deal &middot; $680K</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:15%;background:var(--emerald);"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     15. SIDEBAR & TOPBAR LAYOUT
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">15. Layout Components</div>
+  <div class="section-desc">Sidebar navigation, gradient topbar, breadcrumbs</div>
+  <div class="grid-2">
+    <div>
+      <div class="subsection-title">Sidebar</div>
+      <div class="sidebar-preview">
+        <div class="sidebar-preview-header">
+          <div style="font-weight:700;font-size:15px;background:var(--gradient-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AERCHAIN</div>
+        </div>
+        <div style="padding:10px 8px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);padding:8px 14px 4px;">WORKSPACE</div>
+          <div class="sidebar-preview-item active">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Pricing Calculator
+          </div>
+          <div class="sidebar-preview-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Proposal Generator
+          </div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);padding:14px 14px 4px;">SYSTEM</div>
+          <div class="sidebar-preview-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+            Settings
+          </div>
+        </div>
+        <div class="sidebar-preview-footer">
+          <div style="font-family:var(--font-mono);font-size:11px;">Aerchain &middot; $6M ARR</div>
+          <div style="margin-top:2px;">$20B+ spend managed</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="subsection-title">Topbar (Gradient Header)</div>
+      <div class="topbar-preview">
+        <div style="font-weight:700;background:var(--gradient-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">AERCHAIN</div>
+        <div style="width:1px;height:18px;background:rgba(139,92,246,0.2);"></div>
+        <div style="font-size:13px;color:var(--text-secondary);">
+          SalesOS <span style="color:var(--text-muted);margin:0 6px;">/</span>
+          Deal Desk <span style="color:var(--text-muted);margin:0 6px;">/</span>
+          <span style="color:var(--purple);font-weight:700;">Pricing Calculator</span>
+        </div>
+        <div style="flex:1;"></div>
+        <button class="btn btn-sm btn-ghost">Demo</button>
+        <div class="avatar" style="background:var(--gradient-avatar-1);width:28px;height:28px;font-size:10px;">GK</div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <div class="subsection-title">Lumos Badge</div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:var(--purple-light);border:1px solid var(--purple-border);border-radius:var(--r-sm);padding:8px 14px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h0"/><path d="M17.8 6.2 19 5"/><path d="M3 21l9-9"/><path d="M12.2 6.2 11 5"/></svg>
+          <span style="font-size:12px;font-weight:700;letter-spacing:0.8px;color:var(--purple);font-family:var(--font-mono);">Lumos</span>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <div class="subsection-title">Proposal Type Cards</div>
+        <div class="grid-3" style="gap:12px;">
+          <div class="sample-card" style="padding:18px;text-align:center;cursor:pointer;">
+            <div style="font-size:24px;margin-bottom:8px;">&#128203;</div>
+            <div style="font-size:13px;font-weight:600;">Internal Briefing</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Team alignment doc</div>
+          </div>
+          <div class="sample-card" style="padding:18px;text-align:center;cursor:pointer;">
+            <div style="font-size:24px;margin-bottom:8px;">&#128295;</div>
+            <div style="font-size:13px;font-weight:600;">Technical Proposal</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Architecture & integration</div>
+          </div>
+          <div class="sample-card" style="padding:18px;text-align:center;cursor:pointer;">
+            <div style="font-size:24px;margin-bottom:8px;">&#128196;</div>
+            <div style="font-size:13px;font-weight:600;">Full Commercial</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Technical + pricing</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     16. QUICK REFERENCE: ALL TOKENS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-title">16. Quick Token Reference</div>
+  <div class="section-desc">Copy-paste ready CSS custom properties</div>
+  <div class="sample-card" style="font-family:var(--font-mono);font-size:12px;line-height:2;color:var(--text-secondary);">
+    <pre style="white-space:pre-wrap;">
+/* ── COLORS ── */
+--purple: #8B5CF6;          --purple-hover: #7C3AED;
+--purple-light: #F3F0FF;    --purple-border: #DDD6FE;
+--teal: #06B6D4;            --teal-light: #ECFEFF;
+--emerald: #10B981;         --emerald-light: #ECFDF5;
+--amber: #F59E0B;           --amber-light: #FFFBEB;
+--red: #EF4444;             --red-light: #FEF2F2;
+--aerchain: #DC5F40;
+
+/* ── SURFACES ── */
+--content-bg: #FAFAFA;      --card-bg: #FFFFFF;
+--card-border: #F0F0F0;     --sidebar-bg: #F5F5F5;
+
+/* ── TEXT ── */
+--text-primary: #1F2937;    --text-secondary: #6B7280;
+--text-muted: #9CA3AF;
+
+/* ── GRADIENTS ── */
+--gradient-primary: linear-gradient(135deg, #8B5CF6, #06B6D4);
+--gradient-header: linear-gradient(135deg, #DBEAFE, #E9D5FF, #CFFAFE);
+
+/* ── TYPOGRAPHY ── */
+font-family: 'DM Sans', 'Plus Jakarta Sans', system-ui, sans-serif;
+font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+/* ── RADIUS ── */
+--r-sm: 8px;  --r-md: 12px;  --r-lg: 16px;
+--r-xl: 20px; --r-pill: 100px;
+
+/* ── SHADOWS ── */
+card: 0 2px 12px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.03);
+card-hover: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+btn-glow: 0 4px 14px rgba(139,92,246,0.3);
+    </pre>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+</body>
+</html>

@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aerchain SalesOS — Supercut Design Variant</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   SUPERCUT DESIGN SYSTEM — Dark theme, warm yellow accent
+   Team collaboration tool aesthetic
+   ═══════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #111111;
+  --sidebar-bg: #0D0D0D;
+  --sidebar-hover: #1A1A1A;
+  --sidebar-active: rgba(251,191,36,0.12);
+  --sidebar-text: #E5E5E5;
+  --sidebar-muted: #777777;
+  --sidebar-divider: #222222;
+
+  --content-bg: #111111;
+  --card-bg: #1A1A1A;
+  --card-border: #2A2A2A;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.4);
+
+  --text-primary: #F0F0F0;
+  --text-secondary: #999999;
+  --text-muted: #666666;
+
+  --accent: #FBBF24;
+  --accent-dim: rgba(251,191,36,0.15);
+  --accent-border: rgba(251,191,36,0.35);
+  --emerald: #34D399;
+  --emerald-dim: rgba(52,211,153,0.12);
+  --amber: #FBBF24;
+  --amber-dim: rgba(251,191,36,0.12);
+  --red: #F87171;
+  --red-dim: rgba(248,113,113,0.12);
+
+  --topbar-bg: #151515;
+  --topbar-border: #222222;
+
+  --radius: 12px;
+  --radius-lg: 16px;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+}
+
+::selection { background: rgba(251,191,36,0.3); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555555; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+/* Layout */
+.shell { display: flex; height: 100vh; }
+
+/* ── SIDEBAR (workspace tree) ── */
+.sidebar {
+  width: 252px;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--sidebar-divider);
+}
+.sidebar-header {
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid var(--sidebar-divider);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sidebar-header .workspace-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sidebar-text);
+}
+.sidebar-header .workspace-title .dot {
+  color: var(--accent);
+}
+.invite-btn {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--accent);
+  color: #111111;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
+}
+.invite-btn:hover { background: #F5A623; }
+
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 8px; }
+.sidebar-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--sidebar-muted);
+  padding: 10px 12px 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sidebar-group-label .tree-icon {
+  width: 10px;
+  height: 10px;
+  border-left: 1.5px solid var(--sidebar-muted);
+  border-bottom: 1.5px solid var(--sidebar-muted);
+  display: inline-block;
+  margin-bottom: 3px;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--sidebar-muted);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  margin-left: 8px;
+  border-left: 1.5px solid var(--sidebar-divider);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.sidebar-item:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-text);
+  border-left-color: #444;
+}
+.sidebar-item.active {
+  background: var(--sidebar-active);
+  color: var(--accent);
+  border-left-color: var(--accent);
+  font-weight: 600;
+}
+.sidebar-item .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  margin-left: auto; flex-shrink: 0;
+}
+.sidebar-footer {
+  padding: 14px 16px;
+  border-top: 1px solid var(--sidebar-divider);
+  font-size: 11px;
+  color: var(--sidebar-muted);
+}
+.sidebar-bottom {
+  border-top: 1px solid var(--sidebar-divider);
+  padding: 8px;
+}
+
+/* ── MAIN AREA ── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Topbar */
+.topbar {
+  height: 56px;
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--topbar-border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.breadcrumb span.current { color: var(--text-primary); font-weight: 600; }
+.breadcrumb .sep { color: var(--text-muted); }
+
+/* Demo banner */
+.demo-banner {
+  background: var(--accent-dim);
+  border-bottom: 1px solid var(--accent-border);
+  padding: 6px 24px;
+  font-size: 12px;
+  color: var(--accent);
+  text-align: center;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* Filter bar */
+.filter-bar {
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--card-border);
+  background: var(--topbar-bg);
+  flex-shrink: 0;
+}
+.filter-bar .filter-item {
+  padding: 5px 14px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filter-bar .filter-item:hover { border-color: var(--accent); color: var(--accent); }
+.filter-bar .filter-item.active { background: var(--accent); color: #111111; border-color: var(--accent); font-weight: 600; }
+
+/* Content area */
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 18px 22px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.card-title .icon {
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── STAT CARDS with dotted borders ── */
+.stat-row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.stat-card {
+  flex: 1;
+  min-width: 160px;
+  background: var(--card-bg);
+  border: 2px dotted var(--card-border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover {
+  border-color: var(--accent-border);
+}
+.stat-card .stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+.stat-card .stat-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── TABLES ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--card-border);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--card-border);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.data-table tr:hover td { background: rgba(251,191,36,0.06); }
+.data-table .val-green { color: var(--emerald); font-weight: 600; }
+.data-table .val-muted { color: var(--text-secondary); }
+.data-table .client-name { font-weight: 600; }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-purple { background: var(--accent-dim); color: var(--accent); }
+.badge-green { background: var(--emerald-dim); color: var(--emerald); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); }
+.badge-red { background: var(--red-dim); color: var(--red); }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+.btn-primary { background: var(--accent); color: #111111; }
+.btn-primary:hover { background: #F5A623; }
+.btn-secondary { background: var(--card-bg); color: var(--text-secondary); border: 1px solid var(--card-border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost { background: none; border: none; color: var(--text-muted); padding: 6px; cursor: pointer; border-radius: var(--radius); }
+.btn-ghost:hover { color: var(--text-primary); background: rgba(255,255,255,0.06); }
+
+/* ── TOGGLE SWITCHES with yellow accent ── */
+.toggle-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  display: inline-block;
+  cursor: pointer;
+}
+.toggle-switch input { display: none; }
+.toggle-switch .slider {
+  position: absolute;
+  inset: 0;
+  background: #333333;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+.toggle-switch .slider::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  left: 3px;
+  bottom: 3px;
+  background: #888888;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+.toggle-switch input:checked + .slider {
+  background: var(--accent);
+}
+.toggle-switch input:checked + .slider::before {
+  transform: translateX(16px);
+  background: #111111;
+}
+
+/* Section grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* Module grid */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.module-chip {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  border: 1px solid var(--card-border);
+}
+.module-chip.available { background: var(--emerald-dim); color: var(--emerald); border-color: rgba(52,211,153,0.25); }
+.module-chip.unavailable { background: var(--card-bg); color: var(--text-muted); }
+
+/* Sync log panel */
+.log-panel {
+  width: 280px;
+  border-left: 1px solid var(--card-border);
+  background: var(--topbar-bg);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.log-panel.hidden { display: none; }
+.log-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+.log-entries { flex: 1; overflow-y: auto; padding: 10px 12px; }
+.log-entry {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  animation: fadeIn 0.2s ease;
+}
+.log-entry .log-bar { width: 3px; border-radius: 3px; flex-shrink: 0; align-self: stretch; }
+.log-entry .log-msg { font-size: 12px; color: var(--text-primary); line-height: 1.4; }
+.log-entry .log-time { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* Supercut badge */
+.supercut-badge {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.upload-zone:hover { border-color: var(--accent); background: var(--accent-dim); }
+.upload-zone .upload-icon { margin-bottom: 8px; color: var(--text-muted); }
+.upload-zone .upload-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+.upload-zone .upload-sub { font-size: 11px; color: var(--text-muted); }
+
+/* Hide sections */
+.view { display: none; }
+.view.active { display: block; animation: fadeIn 0.2s ease; }
+
+/* Volume discount table */
+.vd-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.vd-table th {
+  text-align: left; padding: 8px 12px; font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+  border-bottom: 2px solid var(--card-border);
+}
+.vd-table td {
+  padding: 8px 12px; border-bottom: 1px solid var(--card-border); color: var(--text-primary);
+}
+</style>
+</head>
+<body>
+
+<div class="shell" id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="workspace-title">AERCHAIN <span class="dot">&middot;</span> SALES OS</div>
+      <button class="invite-btn" onclick="addLogEntry('Invite link copied','success')">Invite</button>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="sidebar-group-label">
+        <span class="tree-icon"></span>
+        DEAL DESK
+      </div>
+      <div class="sidebar-item active" data-module="pricing-calculator" onclick="switchModule('pricing-calculator')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>Pricing Calculator</span>
+        <span class="dot" style="background:var(--emerald);"></span>
+      </div>
+      <div class="sidebar-item" data-module="proposal-generator" onclick="switchModule('proposal-generator')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Proposal Generator</span>
+        <span class="dot" style="background:var(--emerald);"></span>
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-group-label">
+        <span class="tree-icon"></span>
+        SYSTEM
+      </div>
+      <div class="sidebar-item" data-module="settings" onclick="switchModule('settings')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div>Aerchain &middot; $6M ARR</div>
+      <div style="margin-top:2px;">$20B+ spend managed</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <span>SalesOS</span>
+        <span class="sep">/</span>
+        <span>Deal Desk</span>
+        <span class="sep">/</span>
+        <span class="current" id="breadcrumb-current">Pricing Calculator</span>
+      </div>
+      <div style="flex:1;"></div>
+
+      <!-- Demo toggle (as toggle switch) -->
+      <label class="toggle-switch" title="Toggle demo mode">
+        <input type="checkbox" id="demo-checkbox" onchange="toggleDemo()">
+        <span class="slider"></span>
+      </label>
+      <span id="demo-label" style="font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;" onclick="document.getElementById('demo-checkbox').click()">Demo</span>
+
+      <!-- Log toggle -->
+      <button class="btn-ghost" id="log-toggle" onclick="toggleLog()" title="Toggle sync log">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Demo banner -->
+    <div class="demo-banner" id="demo-banner" style="display:none;">
+      Demo Mode &mdash; Showing sample data
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar" id="filter-bar">
+      <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">View:</span>
+      <div class="filter-item active" data-filter="overview" onclick="setFilter(this,'overview')">Overview</div>
+      <div class="filter-item" data-filter="deals" onclick="setFilter(this,'deals')">Deals</div>
+      <div class="filter-item" data-filter="model" onclick="setFilter(this,'model')">Pricing Model</div>
+      <div class="filter-item" data-filter="modules" onclick="setFilter(this,'modules')">Modules</div>
+      <div style="flex:1;"></div>
+      <span style="font-size:11px;color:var(--text-muted);" id="last-synced-display">Last synced: Mar 14, 2026 10:00 AM</span>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="main-content">
+
+      <!-- ═══ PRICING CALCULATOR VIEW ═══ -->
+      <div class="view active" id="view-pricing-calculator">
+
+        <!-- Upload zone -->
+        <div class="card" id="upload-section">
+          <div class="card-title">
+            <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+            Upload Pricing Data
+          </div>
+          <div class="upload-zone" id="upload-drop-zone">
+            <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div class="upload-title">Drop files here or click to browse</div>
+            <div class="upload-sub">Accepts: CSV, PDF, DOCX, XLSX, JSON, TXT</div>
+          </div>
+        </div>
+
+        <!-- KPI stat cards (dotted borders) -->
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Per $1B Spend
+            </div>
+            <div class="stat-value">$300K</div>
+            <div class="stat-sub">Annual platform fee</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              YoY Escalation
+            </div>
+            <div class="stat-value">10%</div>
+            <div class="stat-sub">Contract renewal rate</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Break-Even
+            </div>
+            <div class="stat-value">$500M-$1B</div>
+            <div class="stat-sub">Spend under mgmt threshold</div>
+          </div>
+        </div>
+
+        <!-- Recent Deals Table -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            Recent Deals
+            <span style="color:var(--text-muted);font-size:12px;font-weight:400;">(3)</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Y1 Amount</th>
+                <th>Spend Under Mgmt</th>
+                <th>Modules</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="client-name">Tata Steel</td>
+                <td class="val-green">$420K</td>
+                <td class="val-muted">$2.1B</td>
+                <td>Sourcing, CLM, SXM</td>
+              </tr>
+              <tr>
+                <td class="client-name">Hindalco</td>
+                <td class="val-green">$285K</td>
+                <td class="val-muted">$1.4B</td>
+                <td>Sourcing, Analytics</td>
+              </tr>
+              <tr>
+                <td class="client-name">JSW Group</td>
+                <td class="val-green">$510K</td>
+                <td class="val-muted">$3.2B</td>
+                <td>Full Suite</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pricing Model Breakdown -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+            Pricing Model Breakdown
+          </div>
+          <div class="grid-2">
+            <div>
+              <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text-secondary);">BASE MODEL</div>
+              <table class="vd-table">
+                <tbody>
+                  <tr><td style="font-weight:500;">Per $1B Spend</td><td style="text-align:right;font-weight:600;">$300,000</td></tr>
+                  <tr><td style="font-weight:500;">YoY Escalation</td><td style="text-align:right;font-weight:600;">10%</td></tr>
+                  <tr><td style="font-weight:500;">Break-Even Threshold</td><td style="text-align:right;font-weight:600;">$500M-$1B</td></tr>
+                  <tr><td style="font-weight:500;">Typical Contract</td><td style="text-align:right;font-weight:600;">3 Years</td></tr>
+                  <tr><td style="font-weight:500;">Implementation Fee</td><td style="text-align:right;font-weight:600;">15-20% of Y1</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text-secondary);">REVENUE DRIVERS</div>
+              <table class="vd-table">
+                <tbody>
+                  <tr><td style="font-weight:500;">Platform License</td><td style="text-align:right;font-weight:600;">60%</td></tr>
+                  <tr><td style="font-weight:500;">Implementation</td><td style="text-align:right;font-weight:600;">20%</td></tr>
+                  <tr><td style="font-weight:500;">Support & SLA</td><td style="text-align:right;font-weight:600;">12%</td></tr>
+                  <tr><td style="font-weight:500;">Training</td><td style="text-align:right;font-weight:600;">5%</td></tr>
+                  <tr><td style="font-weight:500;">Customization</td><td style="text-align:right;font-weight:600;">3%</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-Year Projection Table -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></span>
+            3-Year Projection Table
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Year 1</th>
+                <th>Year 2 (+10%)</th>
+                <th>Year 3 (+10%)</th>
+                <th>3-Year Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="client-name">Tata Steel</td>
+                <td>$420,000</td>
+                <td>$462,000</td>
+                <td>$508,200</td>
+                <td class="val-green" style="font-weight:700;">$1,390,200</td>
+              </tr>
+              <tr>
+                <td class="client-name">Hindalco</td>
+                <td>$285,000</td>
+                <td>$313,500</td>
+                <td>$344,850</td>
+                <td class="val-green" style="font-weight:700;">$943,350</td>
+              </tr>
+              <tr>
+                <td class="client-name">JSW Group</td>
+                <td>$510,000</td>
+                <td>$561,000</td>
+                <td>$617,100</td>
+                <td class="val-green" style="font-weight:700;">$1,688,100</td>
+              </tr>
+              <tr style="border-top:2px solid var(--card-border);">
+                <td style="font-weight:700;">TOTAL</td>
+                <td style="font-weight:700;">$1,215,000</td>
+                <td style="font-weight:700;">$1,336,500</td>
+                <td style="font-weight:700;">$1,470,150</td>
+                <td class="val-green" style="font-weight:800;font-size:14px;">$4,021,650</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Module Availability Grid -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+            Module Availability
+          </div>
+          <div class="module-grid">
+            <div class="module-chip available">Sourcing</div>
+            <div class="module-chip available">CLM</div>
+            <div class="module-chip available">SXM</div>
+            <div class="module-chip available">Analytics</div>
+            <div class="module-chip available">Spend Intelligence</div>
+            <div class="module-chip available">Contract Mgmt</div>
+            <div class="module-chip unavailable">AP Automation</div>
+            <div class="module-chip unavailable">Intake Mgmt</div>
+            <div class="module-chip available">Savings Tracking</div>
+            <div class="module-chip available">Supplier Portal</div>
+            <div class="module-chip unavailable">Invoice Matching</div>
+            <div class="module-chip available">Auction Engine</div>
+          </div>
+        </div>
+
+        <!-- Volume Discount Tiers -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
+            Volume Discount Tiers
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Spend Under Management</th>
+                <th>Discount</th>
+                <th>Effective Rate (per $1B)</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Up to $500M</td>
+                <td>0%</td>
+                <td>$300,000</td>
+                <td class="val-muted">Standard rate</td>
+              </tr>
+              <tr>
+                <td>$500M - $1B</td>
+                <td class="val-green">5%</td>
+                <td>$285,000</td>
+                <td class="val-muted">Break-even threshold</td>
+              </tr>
+              <tr>
+                <td>$1B - $3B</td>
+                <td class="val-green">10%</td>
+                <td>$270,000</td>
+                <td class="val-muted">Mid-market enterprise</td>
+              </tr>
+              <tr>
+                <td>$3B - $5B</td>
+                <td class="val-green">15%</td>
+                <td>$255,000</td>
+                <td class="val-muted">Large enterprise</td>
+              </tr>
+              <tr>
+                <td>$5B+</td>
+                <td class="val-green">20%</td>
+                <td>$240,000</td>
+                <td class="val-muted">Strategic accounts</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══ PROPOSAL GENERATOR VIEW ═══ -->
+      <div class="view" id="view-proposal-generator">
+        <!-- Upload zone -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+            Upload Proposal Documents
+          </div>
+          <div class="upload-zone">
+            <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div class="upload-title">Drop files here or click to browse</div>
+            <div class="upload-sub">Accepts: CSV, PDF, DOCX, XLSX, JSON, TXT</div>
+          </div>
+        </div>
+
+        <!-- KPI Row -->
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Active Proposals
+            </div>
+            <div class="stat-value">4</div>
+            <div class="stat-sub">In pipeline</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Total Value
+            </div>
+            <div class="stat-value">$4.6M</div>
+            <div class="stat-sub">Combined deal value</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              Avg Deal Size
+            </div>
+            <div class="stat-value">$1.2M</div>
+            <div class="stat-sub">Per proposal</div>
+          </div>
+        </div>
+
+        <!-- Proposals table -->
+        <div class="card">
+          <div class="card-title">
+            <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            Proposals
+            <span style="color:var(--text-muted);font-size:12px;font-weight:400;">(4)</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Value</th>
+                <th>Stage</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Contact</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="client-name">Mahindra & Mahindra</td>
+                <td class="val-green">$750K</td>
+                <td><span class="badge badge-purple">Proposal</span></td>
+                <td style="color:var(--emerald);font-weight:500;">Submitted</td>
+                <td class="val-muted">2026-03-10</td>
+                <td class="val-muted">Rajesh Kumar</td>
+              </tr>
+              <tr>
+                <td class="client-name">Larsen & Toubro</td>
+                <td class="val-green">$1.2M</td>
+                <td><span class="badge badge-amber">Negotiation</span></td>
+                <td style="color:var(--text-secondary);font-weight:500;">In Review</td>
+                <td class="val-muted">2026-03-05</td>
+                <td class="val-muted">Priya Sharma</td>
+              </tr>
+              <tr>
+                <td class="client-name">Reliance Industries</td>
+                <td class="val-green">$2.0M</td>
+                <td><span class="badge badge-purple">Proposal</span></td>
+                <td style="color:var(--amber);font-weight:500;">Draft</td>
+                <td class="val-muted">2026-03-12</td>
+                <td class="val-muted">Amit Patel</td>
+              </tr>
+              <tr>
+                <td class="client-name">Adani Ports</td>
+                <td class="val-green">$680K</td>
+                <td><span class="badge badge-green">Closed Won</span></td>
+                <td style="color:var(--emerald);font-weight:500;">Submitted</td>
+                <td class="val-muted">2026-02-28</td>
+                <td class="val-muted">Sneha Gupta</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══ SETTINGS VIEW ═══ -->
+      <div class="view" id="view-settings">
+        <div class="card">
+          <div class="card-title">Settings</div>
+          <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+            <p style="margin-bottom:12px;">Aerchain SalesOS configuration panel. API connections, Claude memory, and Notion audit logging are managed here.</p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--content-bg);border-radius:var(--radius);border:1px solid var(--card-border);">
+                <span style="font-weight:500;">Claude (Anthropic)</span>
+                <span style="flex:1;"></span>
+                <label class="toggle-switch"><input type="checkbox" checked disabled><span class="slider"></span></label>
+                <span class="badge badge-green">Connected</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--content-bg);border-radius:var(--radius);border:1px solid var(--card-border);">
+                <span style="font-weight:500;">HubSpot</span>
+                <span style="flex:1;"></span>
+                <label class="toggle-switch"><input type="checkbox" disabled><span class="slider"></span></label>
+                <span class="badge badge-amber">Stub</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--content-bg);border-radius:var(--radius);border:1px solid var(--card-border);">
+                <span style="font-weight:500;">Notion</span>
+                <span style="flex:1;"></span>
+                <label class="toggle-switch"><input type="checkbox" checked disabled><span class="slider"></span></label>
+                <span class="badge badge-green">Connected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SYNC LOG PANEL -->
+  <div class="log-panel" id="log-panel">
+    <div class="log-header">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      SYNC LOG
+      <div style="flex:1;"></div>
+      <button class="btn-ghost" onclick="clearLog()" style="font-size:10px;padding:2px 6px;">Clear</button>
+      <button class="btn-ghost" onclick="toggleLog()" style="padding:2px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="log-entries" id="log-entries">
+      <div class="log-entry">
+        <div class="log-bar" style="background:var(--emerald);"></div>
+        <div>
+          <div class="log-msg">Loaded 2 modules from cache (2 fresh)</div>
+          <div class="log-time">10:00 AM</div>
+        </div>
+      </div>
+      <div class="log-entry">
+        <div class="log-bar" style="background:var(--accent);"></div>
+        <div>
+          <div class="log-msg">Demo mode activated</div>
+          <div class="log-time">10:01 AM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUPERCUT BADGE -->
+<div class="supercut-badge">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+  Supercut
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SUPERCUT VARIANT — INTERACTIVE JS
+// ═══════════════════════════════════════════════════════════
+
+var currentModule = 'pricing-calculator';
+var demoMode = false;
+var logVisible = true;
+var currentFilter = 'overview';
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+  toggleDemo();
+});
+
+function switchModule(moduleKey) {
+  currentModule = moduleKey;
+
+  document.querySelectorAll('.sidebar-item').forEach(function(item) {
+    item.classList.remove('active');
+    if (item.getAttribute('data-module') === moduleKey) {
+      item.classList.add('active');
+    }
+  });
+
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('active'); });
+  var viewEl = document.getElementById('view-' + moduleKey);
+  if (viewEl) viewEl.classList.add('active');
+
+  var labels = {
+    'pricing-calculator': 'Pricing Calculator',
+    'proposal-generator': 'Proposal Generator',
+    'settings': 'Settings'
+  };
+  document.getElementById('breadcrumb-current').textContent = labels[moduleKey] || moduleKey;
+
+  var filterBar = document.getElementById('filter-bar');
+  if (moduleKey === 'pricing-calculator') {
+    filterBar.style.display = 'flex';
+  } else {
+    filterBar.style.display = 'none';
+  }
+
+  addLogEntry(labels[moduleKey] + ' selected', 'info');
+}
+
+function toggleDemo() {
+  demoMode = !demoMode;
+  var banner = document.getElementById('demo-banner');
+  var checkbox = document.getElementById('demo-checkbox');
+  var label = document.getElementById('demo-label');
+
+  checkbox.checked = demoMode;
+
+  if (demoMode) {
+    banner.style.display = 'block';
+    label.textContent = 'Demo ON';
+    label.style.color = 'var(--accent)';
+    addLogEntry('Demo mode activated', 'info');
+  } else {
+    banner.style.display = 'none';
+    label.textContent = 'Demo';
+    label.style.color = 'var(--text-muted)';
+    addLogEntry('Demo mode deactivated', 'info');
+  }
+}
+
+function toggleLog() {
+  logVisible = !logVisible;
+  var panel = document.getElementById('log-panel');
+  panel.style.display = logVisible ? 'flex' : 'none';
+}
+
+function clearLog() {
+  document.getElementById('log-entries').innerHTML = '';
+}
+
+function addLogEntry(msg, type) {
+  var colors = {
+    'success': 'var(--emerald)',
+    'error': 'var(--red)',
+    'warn': 'var(--amber)',
+    'info': 'var(--accent)'
+  };
+  var color = colors[type] || colors['info'];
+  var now = new Date();
+  var time = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+  var entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = '<div class="log-bar" style="background:' + color + ';"></div><div><div class="log-msg">' + msg + '</div><div class="log-time">' + time + '</div></div>';
+
+  var container = document.getElementById('log-entries');
+  container.insertBefore(entry, container.firstChild);
+
+  while (container.children.length > 50) {
+    container.removeChild(container.lastChild);
+  }
+}
+
+function setFilter(el, filterKey) {
+  currentFilter = filterKey;
+  document.querySelectorAll('.filter-item').forEach(function(f) { f.classList.remove('active'); });
+  el.classList.add('active');
+  addLogEntry('Filter: ' + filterKey, 'info');
+}
+</script>
+</body>
+</html>
