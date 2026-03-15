@@ -5,8 +5,9 @@ import {
   TrendingUp, Users, Wand2, Download, Settings, Brain,
   ExternalLink, Link, Upload, CheckCircle, XCircle, Sun, Moon, Monitor, Palette, Check
 } from "lucide-react";
-import DUMMY_DATA from "./demo-data/index.js";
+import DUMMY_DATA, { SAMPLE_FILES } from "./demo-data/index.js";
 import DesignExtractorView from "./DesignExtractorView.jsx";
+import FileWorkspace from "./FileWorkspace.jsx";
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -915,10 +916,66 @@ function GenericView({ data }) {
 
 // ── MODULE CONTENT ROUTER ─────────────────────────────────
 
-function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme }) {
+function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile }) {
   // Settings is never empty — always show view
   if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} />;
 
+  // Design Extractor always renders its own view — never show EmptyState
+  if (moduleKey === "design-extractor") {
+    const files = moduleFiles || [];
+    if (files.length > 0) {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
+          <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} />
+          <div className="glass-surface" style={{ borderRadius: 14, padding: "12px 16px", boxShadow: "var(--s-glass)" }}>
+            <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              <Palette size={12} color={T.accent} /> Extract New Design System
+            </div>
+            <DesignExtractorView />
+          </div>
+        </div>
+      );
+    }
+    return <DesignExtractorView />;
+  }
+
+  // File workspace for modules with saved files
+  const files = moduleFiles || [];
+  if (files.length > 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
+        <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} />
+        {/* Upload zone below the file list */}
+        {UPLOAD_MODULES.has(moduleKey) && (
+          <Card>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <Upload size={13} color={T.accent} />
+              <span style={{ fontSize: 12, fontWeight: 600 }}>Upload & Process New</span>
+            </div>
+            <FileUploadZone onFilesSelected={onFilesSelected} />
+            {uploadedFiles && uploadedFiles.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ color: T.muted, fontSize: 11, marginBottom: 6 }}>{uploadedFiles.length} file(s) ready:</div>
+                {uploadedFiles.map((f, i) => (
+                  <div key={i} style={{ color: T.text, fontSize: 11, padding: "3px 0" }}>📄 {f.name} ({(f.size / 1024).toFixed(1)} KB)</div>
+                ))}
+                <button onClick={onProcess} disabled={processing} style={{
+                  marginTop: 10, background: processing ? T.bgCard : `linear-gradient(135deg,${T.accent},#6d28d9)`,
+                  border: "none", borderRadius: 7, padding: "8px 18px", color: "#fff", fontSize: 12, fontWeight: 600,
+                  cursor: processing ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6
+                }}>
+                  {processing ? <Spinner size={12} /> : <Brain size={12} />}
+                  {processing ? "Processing…" : "Process with Claude"}
+                </button>
+              </div>
+            )}
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // Legacy: empty state or flat data views
   const isEmpty = !data || Object.keys(data).length === 0 || (Object.keys(data).length === 1 && data.syncedAt);
 
   if (isEmpty && UPLOAD_MODULES.has(moduleKey)) {
@@ -929,7 +986,6 @@ function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClear
   switch (moduleKey) {
     case "pricing-calculator": return <PricingCalcView data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />;
     case "proposal-generator": return <ProposalsView data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} />;
-    case "design-extractor":   return <DesignExtractorView />;
     default:                   return <GenericView data={data} />;
   }
 }
@@ -962,6 +1018,9 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const notionSyncTimerRef = useRef(null);
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [processing, setProcessing] = useState(new Set());
+  const [savedFiles, setSavedFiles] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("aerchain-saved-files") || "{}"); } catch { return {}; }
+  });
 
   // Dark Canvas v3 theme + font injection
   useEffect(() => {
@@ -1139,6 +1198,43 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
       localStorage.setItem("aerchain-module-data", JSON.stringify(moduleData));
     }
   }, [moduleData]);
+
+  // Persist savedFiles to localStorage
+  useEffect(() => {
+    if (Object.keys(savedFiles).length > 0) {
+      localStorage.setItem("aerchain-saved-files", JSON.stringify(savedFiles));
+    }
+  }, [savedFiles]);
+
+  // ── File management callbacks ──────────────────────────
+  const getModuleFiles = useCallback((moduleKey) => {
+    if (showDummy) return SAMPLE_FILES[moduleKey] || [];
+    return savedFiles[moduleKey] || [];
+  }, [showDummy, savedFiles]);
+
+  const createFile = useCallback((moduleKey) => {
+    const id = `${moduleKey.slice(0,2)}-${Date.now()}`;
+    const now = new Date().toISOString();
+    const newFile = { id, name: "Untitled", description: "", status: "draft", createdAt: now, updatedAt: now, tags: [], data: {} };
+    setSavedFiles(prev => ({ ...prev, [moduleKey]: [...(prev[moduleKey] || []), newFile] }));
+    addLog(`📄 New file created in ${MOD[moduleKey]?.label || moduleKey}`, "info");
+  }, [addLog]);
+
+  const duplicateFile = useCallback((moduleKey, file) => {
+    const id = `${moduleKey.slice(0,2)}-${Date.now()}`;
+    const now = new Date().toISOString();
+    const copy = { ...file, id, name: `${file.name} (Copy)`, status: "draft", createdAt: now, updatedAt: now };
+    setSavedFiles(prev => ({ ...prev, [moduleKey]: [...(prev[moduleKey] || []), copy] }));
+    addLog(`📄 Duplicated "${file.name}" in ${MOD[moduleKey]?.label || moduleKey}`, "info");
+  }, [addLog]);
+
+  const deleteFile = useCallback((moduleKey, fileId) => {
+    setSavedFiles(prev => ({
+      ...prev,
+      [moduleKey]: (prev[moduleKey] || []).filter(f => f.id !== fileId)
+    }));
+    addLog(`🗑 File deleted from ${MOD[moduleKey]?.label || moduleKey}`, "info");
+  }, [addLog]);
 
   // ── Claude Memory ────────────────────────────────────────
 
@@ -1546,7 +1642,7 @@ ${document.getElementById("root").innerHTML}
             )}
             {/* Notion audit link */}
             <NotionAuditLink moduleKey={selected} />
-            {selected !== "settings" && !UPLOAD_MODULES.has(selected) && <SyncBtn onClick={() => syncModule(selected)} loading={isSyncing} size={14}/>}
+            {selected !== "settings" && selected !== "design-extractor" && !UPLOAD_MODULES.has(selected) && <SyncBtn onClick={() => syncModule(selected)} loading={isSyncing} size={14}/>}
           </div>
 
           {/* Content */}
@@ -1565,6 +1661,10 @@ ${document.getElementById("root").innerHTML}
                 onProcess={() => handleProcess(selected)}
                 theme={theme}
                 setTheme={setTheme}
+                moduleFiles={getModuleFiles(selected)}
+                onCreateFile={() => createFile(selected)}
+                onDuplicateFile={(file) => duplicateFile(selected, file)}
+                onDeleteFile={(fileId) => deleteFile(selected, fileId)}
               />
             </div>
           </div>
