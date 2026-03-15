@@ -4,7 +4,7 @@ import {
   Activity, X,
   Wand2, Download, Settings, Sun, Moon, Monitor, Link
 } from "lucide-react";
-// demo-data is lazy-loaded on first Demo Mode toggle to reduce initial bundle (~104 KB)
+import DUMMY_DATA, { SAMPLE_FILES } from "./demo-data/index.js";
 
 // ── Lib imports ──────────────────────────────────────────
 import { UPLOAD_MODULES, GROUPS, MOD, getSyncPrompt } from "./lib/constants.js";
@@ -43,8 +43,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const [syncLog, setSyncLog]           = useState([]);
   const [showLog, setShowLog]           = useState(true);
   const [lastGlobalSync, setLastGlobalSync] = useState(null);
-  const [showDummy, setShowDummy]       = useState(false);
-  const [demoData, setDemoData]         = useState({ DUMMY_DATA: {}, SAMPLE_FILES: {} });
+  // Demo toggle removed — data is seeded from demo-data on first load
   const [theme, setTheme]               = useState("dark");
   const [claudeMemory, setClaudeMemory] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aerchain-claude-memory") || "[]"); } catch { return []; }
@@ -59,15 +58,6 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const savedFilesRef = useRef(savedFiles);
   const [referenceTokens, setReferenceTokens] = useState(null);
   const [extractorCache, setExtractorCache] = useState(null);
-
-  // Lazy-load demo data only when Demo Mode is first activated
-  useEffect(() => {
-    if (showDummy && !demoData.DUMMY_DATA?.["pricing-calculator"]) {
-      import("./demo-data/index.js").then(mod => {
-        setDemoData({ DUMMY_DATA: mod.default, SAMPLE_FILES: mod.SAMPLE_FILES });
-      });
-    }
-  }, [showDummy]);
 
   // Dark Canvas v3 theme + font injection
   useEffect(() => {
@@ -96,13 +86,14 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
       ]);
       if (cancelled) return;
 
-      if (sbMods) {
+      if (sbMods && Object.keys(sbMods).length > 0) {
         setModuleData(sbMods);
         const fresh = Object.values(sbMods).filter(v => v.status?.includes("Fresh")).length;
         addLog(`☁️ Loaded ${Object.keys(sbMods).length} modules from Supabase (${fresh} fresh)`, "success");
       } else {
         // Fall back to localStorage
         const cached = localStorage.getItem("aerchain-module-data");
+        let loaded = false;
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
@@ -110,16 +101,33 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
               setModuleData(parsed);
               const fresh = Object.values(parsed).filter(v => v.status?.includes("Fresh")).length;
               addLog(`📦 Loaded ${Object.keys(parsed).length} modules from cache (${fresh} fresh)`, "success");
-            } else {
-              addLog("🆕 No cached data — sync a module to get started", "info");
+              loaded = true;
             }
-          } catch { addLog("🆕 No cached data — sync a module to get started", "info"); }
-        } else {
-          addLog("🆕 No cached data — sync a module to get started", "info");
+          } catch { /* corrupted cache — will seed below */ }
+        }
+        if (!loaded) {
+          // Seed with demo data on first load so modules are never empty
+          setModuleData(DUMMY_DATA);
+          addLog("📦 Loaded default data — upload files or sync to refresh", "success");
         }
       }
 
-      if (sbFiles) setSavedFiles(sbFiles);
+      if (sbFiles && Object.keys(sbFiles).length > 0) {
+        setSavedFiles(sbFiles);
+      } else {
+        // Seed saved files from demo data if nothing in Supabase
+        const cachedFiles = localStorage.getItem("aerchain-saved-files");
+        let filesLoaded = false;
+        if (cachedFiles) {
+          try {
+            const parsed = JSON.parse(cachedFiles);
+            if (Object.keys(parsed).length > 0) filesLoaded = true;
+          } catch { /* will seed below */ }
+        }
+        if (!filesLoaded) {
+          setSavedFiles(SAMPLE_FILES);
+        }
+      }
       if (sbMem) setClaudeMemory(sbMem);
     })();
     return () => { cancelled = true; };
@@ -159,15 +167,8 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
 
   // ── File management callbacks ──────────────────────────
   const getModuleFiles = useCallback((moduleKey) => {
-    if (moduleKey === "design-extractor") {
-      const refs = demoData.SAMPLE_FILES["design-extractor"] || [];
-      const saved = savedFiles["design-extractor"] || [];
-      const seen = new Set(refs.map(f => f.id));
-      return [...refs, ...saved.filter(f => !seen.has(f.id))];
-    }
-    if (showDummy) return demoData.SAMPLE_FILES[moduleKey] || [];
     return savedFiles[moduleKey] || [];
-  }, [showDummy, savedFiles, demoData.SAMPLE_FILES]);
+  }, [savedFiles]);
 
   const createFile = useCallback((moduleKey) => {
     const id = `${moduleKey.slice(0,2)}-${Date.now()}`;
@@ -403,12 +404,9 @@ body { margin: 0; padding: 0; }
 
   const downloadSnapshot = useCallback(() => {
     const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
-    const filename = `aerchain-salesos-${showDummy ? "demo-" : ""}${currentTheme}-${new Date().toISOString().slice(0,10)}.html`;
-    generateStandaloneHTML(
-      `Aerchain · SalesOS${showDummy ? " (Demo)" : ""}`,
-      filename
-    );
-  }, [showDummy, generateStandaloneHTML]);
+    const filename = `aerchain-salesos-${currentTheme}-${new Date().toISOString().slice(0,10)}.html`;
+    generateStandaloneHTML("Aerchain · SalesOS", filename);
+  }, [generateStandaloneHTML]);
 
   const downloadPrototype = useCallback(() => {
     generateStandaloneHTML(
@@ -421,7 +419,7 @@ body { margin: 0; padding: 0; }
 
   const mod = MOD[selected] || {};
   const { Icon } = mod;
-  const mData = showDummy ? demoData.DUMMY_DATA[selected] : moduleData[selected];
+  const mData = moduleData[selected];
   const mStatus = mData?.status || "⬜ Never Synced";
   const mLastSync = mData?.lastSynced;
   const stale = isStale(mLastSync, mData?.staleAfterHrs || 4);
@@ -482,21 +480,7 @@ body { margin: 0; padding: 0; }
           {syncingAll ? "Syncing All…" : "Sync All"}
         </button>
 
-        {/* Demo toggle */}
-        <button onClick={() => setShowDummy(p=>!p)} style={{
-          background: showDummy ? T.accentBg : "none",
-          border: showDummy ? `1px solid ${T.borderAcc}` : "1px solid transparent",
-          borderRadius:8, padding:"6px 12px", cursor:"pointer",
-          color: showDummy ? T.accent : T.muted,
-          fontSize:11, fontWeight:500,
-          display:"flex", alignItems:"center", gap:4,
-          transition:"all 0.2s"
-        }}>
-          <Wand2 size={12} />
-          {showDummy ? "Demo ON" : "Demo"}
-        </button>
-
-        <div style={{ width:1, height:18, background:T.divider, margin:"0 -4px" }} />
+        {/* Demo toggle removed — data seeded on first load */}
 
         {/* Download app snapshot */}
         <button className="icon-btn" onClick={downloadSnapshot} title="Download app snapshot as HTML">
@@ -534,12 +518,7 @@ body { margin: 0; padding: 0; }
         </button>
       </div>
 
-      {/* DEMO BANNER */}
-      {showDummy && (
-        <div style={{ background:T.accentBg, borderBottom:`1px solid ${T.borderAcc}`, padding:"4px 20px", fontSize:11, color:T.accent, textAlign:"center", flexShrink:0 }}>
-          Demo Mode — Showing sample data
-        </div>
-      )}
+      {/* Demo banner removed — data seeded by default */}
 
       {/* BODY */}
       <div style={{ display:"flex", flex:1, overflow:"hidden", position:"relative", zIndex:1 }}>

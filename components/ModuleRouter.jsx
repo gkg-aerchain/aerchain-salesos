@@ -10,7 +10,7 @@ const FileWorkspace = lazy(() => import("./FileWorkspace.jsx"));
 
 const MODULE_VIEWS = {
   "pricing-calculator": lazy(() => import("../views/PricingCalcView.jsx")),
-  "proposal-generator": lazy(() => import("../views/ProposalsView.jsx")),
+  "proposal-generator": lazy(() => import("../views/ProposalBuilderView.jsx")),
   "design-extractor": null, // handled specially (has FileWorkspace + extractor)
 };
 
