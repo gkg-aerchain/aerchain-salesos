@@ -1,13 +1,12 @@
 // Vercel Serverless Function — /api/extract
 // Handles Design Extractor requests with vision support (images + text).
-// Receives pre-built content blocks from the frontend, adds API key server-side.
+// Streams SSE events back to the client for real-time progress.
 
 import Anthropic from "@anthropic-ai/sdk";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // The extraction system prompt — edit here to fine-tune output.
-// In future this could be loaded from a database or config.
 const EXTRACTION_PROMPT = `You are a design system analyst. Your job is to analyze any input — screenshots, HTML/CSS code, design files, PDFs, or text descriptions — and extract a complete, structured design system specification.
 
 ## Your Task
@@ -135,7 +134,13 @@ export const config = {
       sizeLimit: "20mb",
     },
   },
+  maxDuration: 60,
 };
+
+// SSE helper — writes a named event to the response stream
+function sendEvent(res, event, data) {
+  res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -151,42 +156,73 @@ export default async function handler(req, res) {
 
     const systemPrompt = customPrompt || EXTRACTION_PROMPT;
 
-    const response = await anthropic.messages.create({
+    // Set up SSE streaming response
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    });
+
+    sendEvent(res, "status", { phase: "calling_api", message: "Connecting to Claude API" });
+
+    // Use streaming API
+    const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-6",
       max_tokens: 8000,
       system: systemPrompt,
       messages: [{ role: "user", content: contentBlocks }],
     });
 
-    const text = (response.content || [])
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("");
+    let fullText = "";
+    let chunkCount = 0;
 
-    // Parse JSON from response
+    stream.on("text", (text) => {
+      fullText += text;
+      chunkCount++;
+      // Send progress every 5 chunks to avoid flooding
+      if (chunkCount % 5 === 0) {
+        sendEvent(res, "progress", { chars: fullText.length });
+      }
+    });
+
+    // Wait for the full message to complete
+    const finalMessage = await stream.finalMessage();
+
+    sendEvent(res, "status", { phase: "parsing", message: "Validating JSON output" });
+
+    // Parse JSON from the accumulated text
     let tokens;
     try {
-      const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-      const jsonStr = jsonMatch ? jsonMatch[1].trim() : text.trim();
+      const jsonMatch = fullText.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const jsonStr = jsonMatch ? jsonMatch[1].trim() : fullText.trim();
       tokens = JSON.parse(jsonStr);
     } catch (parseErr) {
-      return res.status(500).json({
+      sendEvent(res, "error", {
         error: "Failed to parse Claude response as JSON",
-        raw: text.slice(0, 2000),
+        raw: fullText.slice(0, 2000),
         parseError: parseErr.message,
       });
+      res.end();
+      return;
     }
 
-    res.status(200).json({
+    sendEvent(res, "complete", {
       success: true,
       tokens,
-      usage: response.usage,
-      model: response.model,
+      usage: finalMessage.usage,
+      model: finalMessage.model,
     });
+    res.end();
   } catch (err) {
     console.error("Extract error:", err);
-    res.status(err.status || 500).json({
-      error: err.message || "Extraction failed",
-    });
+    // If headers already sent (SSE mode), send error event
+    if (res.headersSent) {
+      sendEvent(res, "error", { error: err.message || "Extraction failed" });
+      res.end();
+    } else {
+      res.status(err.status || 500).json({
+        error: err.message || "Extraction failed",
+      });
+    }
   }
 }
