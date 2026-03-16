@@ -60,16 +60,17 @@ export class ModuleErrorBoundary extends Component {
   }
 }
 
-export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache }) {
-  if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} />;
+export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, trashedFiles, onRestoreFile, onPermanentDelete, onEmptyTrash, allSavedFiles, allTrashedFiles, onEmptyAllTrash, onRestoreFileGlobal, onPermanentDeleteGlobal, onEmptyModuleTrash, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache }) {
+  if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} savedFiles={allSavedFiles} trashedFiles={allTrashedFiles} onEmptyAllTrash={onEmptyAllTrash} onRestoreFile={onRestoreFileGlobal} onPermanentDelete={onPermanentDeleteGlobal} onEmptyModuleTrash={onEmptyModuleTrash} />;
 
   if (moduleKey === "design-extractor") {
     const files = moduleFiles || [];
-    if (files.length > 0) {
+    const trash = trashedFiles || [];
+    if (files.length > 0 || trash.length > 0) {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
           <Suspense fallback={<Spinner />}>
-            <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} onLoadReference={onLoadReference} />
+            <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} onLoadReference={onLoadReference} trashedFiles={trashedFiles} onRestoreFile={onRestoreFile} onPermanentDelete={onPermanentDelete} onEmptyTrash={onEmptyTrash} />
           </Suspense>
           <div className="glass-surface" style={{ borderRadius: 14, padding: "12px 16px", boxShadow: "var(--s-glass)" }}>
             <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
@@ -100,11 +101,12 @@ export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSy
   }
 
   const files = moduleFiles || [];
-  if (files.length > 0) {
+  const trash = trashedFiles || [];
+  if (files.length > 0 || trash.length > 0) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
         <Suspense fallback={<Spinner />}>
-          <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} />
+          <FileWorkspace moduleKey={moduleKey} files={files} onCreateNew={onCreateFile} onDuplicate={onDuplicateFile} onDelete={onDeleteFile} trashedFiles={trashedFiles} onRestoreFile={onRestoreFile} onPermanentDelete={onPermanentDelete} onEmptyTrash={onEmptyTrash} />
         </Suspense>
         {UPLOAD_MODULES.has(moduleKey) && (
           <Card>

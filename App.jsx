@@ -13,6 +13,9 @@ import { SEED_DESIGN_FILES } from "./lib/seedDesignFiles.js";
 import {
   loadModuleData as sbLoadModules, saveAllModuleData as sbSaveModules,
   loadSavedFiles as sbLoadFiles, saveAllFiles as sbSaveFiles, saveFile as sbSaveFile, deleteFileFromDB as sbDeleteFile,
+  loadTrashedFiles as sbLoadTrashed, saveAllTrashedFiles as sbSaveTrashed,
+  trashFile as sbTrashFile, restoreFileFromTrash as sbRestoreFile,
+  permanentDeleteFile as sbPermanentDelete, emptyModuleTrashDB as sbEmptyModuleTrash, emptyAllTrashDB as sbEmptyAllTrash,
   loadClaudeMemory as sbLoadMemory, saveClaudeMemoryEntry as sbSaveMemEntry, clearClaudeMemoryDB as sbClearMemory,
   writeSyncLog as sbWriteLog,
 } from "./lib/supabase.js";
@@ -55,6 +58,10 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   });
   // Always-current ref used by beforeunload to avoid stale-closure writes
   const savedFilesRef = useRef(savedFiles);
+  const [trashedFiles, setTrashedFiles] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("aerchain-trashed-files") || "{}"); } catch { return {}; }
+  });
+  const trashedFilesRef = useRef(trashedFiles);
   const [referenceTokens, setReferenceTokens] = useState(null);
   const [extractorCache, setExtractorCache] = useState(null);
 
@@ -80,8 +87,8 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     let cancelled = false;
     (async () => {
       // Try Supabase first
-      const [sbMods, sbFiles, sbMem] = await Promise.all([
-        sbLoadModules(), sbLoadFiles(), sbLoadMemory(),
+      const [sbMods, sbFiles, sbTrashed, sbMem] = await Promise.all([
+        sbLoadModules(), sbLoadFiles(), sbLoadTrashed(), sbLoadMemory(),
       ]);
       if (cancelled) return;
 
@@ -118,6 +125,19 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
           } catch { /* corrupted cache */ }
         }
       }
+      // Load trashed files
+      if (sbTrashed && Object.keys(sbTrashed).length > 0) {
+        setTrashedFiles(sbTrashed);
+      } else {
+        const cachedTrash = localStorage.getItem("aerchain-trashed-files");
+        if (cachedTrash) {
+          try {
+            const parsed = JSON.parse(cachedTrash);
+            if (Object.keys(parsed).length > 0) setTrashedFiles(parsed);
+          } catch { /* corrupted cache */ }
+        }
+      }
+
       // Inject seed design files if they haven't been added yet
       setSavedFiles(prev => {
         const existing = prev["design-extractor"] || [];
@@ -141,8 +161,9 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     return () => clearTimeout(id);
   }, [moduleData]);
 
-  // Keep ref current so beforeunload always flushes the latest value
+  // Keep refs current so beforeunload always flushes the latest value
   useEffect(() => { savedFilesRef.current = savedFiles; }, [savedFiles]);
+  useEffect(() => { trashedFilesRef.current = trashedFiles; }, [trashedFiles]);
 
   // Persist savedFiles to localStorage + Supabase (debounced)
   useEffect(() => {
@@ -153,12 +174,21 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     return () => clearTimeout(id);
   }, [savedFiles]);
 
-  // Flush pending writes on tab close — use savedFilesRef so the handler
-  // always writes the latest state even if closed within the 500ms debounce window
+  // Persist trashedFiles to localStorage + Supabase (debounced)
+  useEffect(() => {
+    const id = setTimeout(() => {
+      safePersist("aerchain-trashed-files", trashedFiles);
+      sbSaveTrashed(trashedFiles);
+    }, 500);
+    return () => clearTimeout(id);
+  }, [trashedFiles]);
+
+  // Flush pending writes on tab close
   useEffect(() => {
     const flush = () => {
       safePersist("aerchain-module-data", moduleData);
       safePersist("aerchain-saved-files", savedFilesRef.current);
+      safePersist("aerchain-trashed-files", trashedFilesRef.current);
     };
     window.addEventListener("beforeunload", flush);
     return () => window.removeEventListener("beforeunload", flush);
@@ -185,14 +215,64 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     addLog(`📄 Duplicated "${file.name}" in ${MOD[moduleKey]?.label || moduleKey}`, "info");
   }, [addLog]);
 
+  // Soft-delete: move file to trash
   const deleteFile = useCallback((moduleKey, fileId) => {
-    setSavedFiles(prev => ({
+    setSavedFiles(prev => {
+      const files = prev[moduleKey] || [];
+      const file = files.find(f => f.id === fileId);
+      if (file) {
+        const trashedFile = { ...file, trashedAt: new Date().toISOString() };
+        setTrashedFiles(tp => ({ ...tp, [moduleKey]: [...(tp[moduleKey] || []), trashedFile] }));
+        sbTrashFile(moduleKey, trashedFile);
+      }
+      return { ...prev, [moduleKey]: files.filter(f => f.id !== fileId) };
+    });
+    addLog(`🗑 File moved to trash in ${MOD[moduleKey]?.label || moduleKey}`, "info");
+  }, [addLog]);
+
+  // Restore a file from trash back to active
+  const restoreFile = useCallback((moduleKey, fileId) => {
+    setTrashedFiles(prev => {
+      const files = prev[moduleKey] || [];
+      const file = files.find(f => f.id === fileId);
+      if (file) {
+        const { trashedAt, ...restored } = file;
+        restored.updatedAt = new Date().toISOString();
+        setSavedFiles(sp => ({ ...sp, [moduleKey]: [...(sp[moduleKey] || []), restored] }));
+        sbRestoreFile(moduleKey, file);
+      }
+      return { ...prev, [moduleKey]: files.filter(f => f.id !== fileId) };
+    });
+    addLog(`♻️ File restored from trash in ${MOD[moduleKey]?.label || moduleKey}`, "success");
+  }, [addLog]);
+
+  // Permanently delete a file from trash
+  const permanentlyDeleteFile = useCallback((moduleKey, fileId) => {
+    setTrashedFiles(prev => ({
       ...prev,
       [moduleKey]: (prev[moduleKey] || []).filter(f => f.id !== fileId)
     }));
-    sbDeleteFile(moduleKey, fileId);
-    addLog(`🗑 File deleted from ${MOD[moduleKey]?.label || moduleKey}`, "info");
+    sbPermanentDelete(fileId);
+    addLog(`💀 File permanently deleted from ${MOD[moduleKey]?.label || moduleKey}`, "warn");
   }, [addLog]);
+
+  // Empty all trash for a specific module
+  const emptyModuleTrash = useCallback((moduleKey) => {
+    setTrashedFiles(prev => ({ ...prev, [moduleKey]: [] }));
+    sbEmptyModuleTrash(moduleKey);
+    addLog(`🗑 Trash emptied for ${MOD[moduleKey]?.label || moduleKey}`, "info");
+  }, [addLog]);
+
+  // Empty all trash across all modules
+  const emptyAllTrash = useCallback(() => {
+    setTrashedFiles({});
+    sbEmptyAllTrash();
+    addLog(`🗑 All trash emptied`, "info");
+  }, [addLog]);
+
+  const getModuleTrash = useCallback((moduleKey) => {
+    return trashedFiles[moduleKey] || [];
+  }, [trashedFiles]);
 
   // ── Claude Memory ────────────────────────────────────────
 
@@ -633,6 +713,16 @@ body { margin: 0; padding: 0; }
                   onCreateFile={() => createFile(selected)}
                   onDuplicateFile={(file) => duplicateFile(selected, file)}
                   onDeleteFile={(fileId) => deleteFile(selected, fileId)}
+                  trashedFiles={getModuleTrash(selected)}
+                  onRestoreFile={(fileId) => restoreFile(selected, fileId)}
+                  onPermanentDelete={(fileId) => permanentlyDeleteFile(selected, fileId)}
+                  onEmptyTrash={() => emptyModuleTrash(selected)}
+                  allSavedFiles={savedFiles}
+                  allTrashedFiles={trashedFiles}
+                  onEmptyAllTrash={emptyAllTrash}
+                  onRestoreFileGlobal={restoreFile}
+                  onPermanentDeleteGlobal={permanentlyDeleteFile}
+                  onEmptyModuleTrash={emptyModuleTrash}
                   referenceTokens={referenceTokens}
                   onSaveToLibrary={(file) => setSavedFiles(prev => ({ ...prev, "design-extractor": [...(prev["design-extractor"] || []), file] }))}
                   onLoadReference={(file) => setReferenceTokens(file.tokens)}

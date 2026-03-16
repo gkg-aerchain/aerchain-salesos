@@ -1,14 +1,21 @@
 import { useState } from "react";
-import { Brain, Palette, ExternalLink, Sun, Moon, Monitor, Check } from "lucide-react";
+import {
+  Brain, Palette, ExternalLink, Sun, Moon, Monitor, Check,
+  HardDrive, FileText, Trash2, RotateCcw, ChevronDown, ChevronRight,
+  Download, AlertTriangle, DollarSign
+} from "lucide-react";
 import { T } from "../lib/theme.js";
-import { NOTION_AUDIT_CONFIG } from "../lib/constants.js";
+import { NOTION_AUDIT_CONFIG, MOD } from "../lib/constants.js";
 import { Card } from "../components/Common.jsx";
 import { NotionIcon } from "../components/Branding.jsx";
 
-export default function SettingsView({ claudeMemory, onClearMemory, theme, setTheme }) {
+export default function SettingsView({ claudeMemory, onClearMemory, theme, setTheme, savedFiles = {}, trashedFiles = {}, onEmptyAllTrash, onRestoreFile, onPermanentDelete, onEmptyModuleTrash }) {
   const [activeTab, setActiveTab] = useState("memory");
+  const [expandedModule, setExpandedModule] = useState(null);
+  const [confirmEmptyAll, setConfirmEmptyAll] = useState(false);
 
   const tabs = [
+    { id: "files",   label: "File System"   },
     { id: "memory",  label: "Claude Memory" },
     { id: "theme",   label: "Theme"         },
     { id: "notion",  label: "Notion Audit"  },
@@ -57,6 +64,211 @@ export default function SettingsView({ claudeMemory, onClearMemory, theme, setTh
           }}>{t.label}</button>
         ))}
       </div>
+
+      {/* File System tab */}
+      {activeTab === "files" && (() => {
+        const FILE_MODULES = ["pricing-calculator", "proposal-generator", "design-extractor"];
+        const moduleStats = FILE_MODULES.map(key => {
+          const active = savedFiles[key] || [];
+          const trashed = trashedFiles[key] || [];
+          const activeSize = JSON.stringify(active).length;
+          const trashedSize = JSON.stringify(trashed).length;
+          return { key, label: MOD[key]?.label || key, active, trashed, activeSize, trashedSize };
+        });
+        const totalActive = moduleStats.reduce((sum, m) => sum + m.active.length, 0);
+        const totalTrashed = moduleStats.reduce((sum, m) => sum + m.trashed.length, 0);
+        const totalSize = moduleStats.reduce((sum, m) => sum + m.activeSize + m.trashedSize, 0);
+
+        const fmtSize = (bytes) => bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+
+        const moduleIcons = {
+          "pricing-calculator": DollarSign,
+          "proposal-generator": FileText,
+          "design-extractor": Palette,
+        };
+
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Summary card */}
+            <Card>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <HardDrive size={13} color={T.accent} />
+                <span style={{ fontSize: 12, fontWeight: 600 }}>File System Overview</span>
+                <div style={{ flex: 1 }} />
+                {totalTrashed > 0 && (
+                  confirmEmptyAll ? (
+                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                      <span style={{ fontSize: 10, color: T.error, fontWeight: 600 }}>Delete all trash permanently?</span>
+                      <button onClick={() => { onEmptyAllTrash && onEmptyAllTrash(); setConfirmEmptyAll(false); }} style={{
+                        background: T.error, border: "none", borderRadius: 5, padding: "3px 10px",
+                        color: "#fff", fontSize: 10, fontWeight: 600, cursor: "pointer",
+                      }}>Yes, empty all</button>
+                      <button onClick={() => setConfirmEmptyAll(false)} style={{
+                        background: "none", border: `1px solid ${T.border}`, borderRadius: 5, padding: "3px 10px",
+                        color: T.muted, fontSize: 10, cursor: "pointer",
+                      }}>Cancel</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmEmptyAll(true)} style={{
+                      display: "flex", alignItems: "center", gap: 4,
+                      background: "none", border: `1px solid rgba(239,68,68,0.3)`,
+                      borderRadius: 6, padding: "4px 10px",
+                      color: T.error, fontSize: 10, fontWeight: 500, cursor: "pointer",
+                    }}>
+                      <Trash2 size={10} /> Empty All Trash ({totalTrashed})
+                    </button>
+                  )
+                )}
+              </div>
+
+              {/* Summary stats */}
+              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                {[
+                  { label: "Active Files", value: totalActive, color: T.success },
+                  { label: "In Trash", value: totalTrashed, color: T.error },
+                  { label: "Total Size", value: fmtSize(totalSize), color: T.accent },
+                ].map((stat, i) => (
+                  <div key={i} style={{
+                    flex: 1, padding: "12px 14px", borderRadius: 10,
+                    background: T.bgCard, border: `1px solid ${T.border}`,
+                    textAlign: "center",
+                  }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: stat.color }}>{stat.value}</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: T.muted, marginTop: 2, textTransform: "uppercase", letterSpacing: 0.5 }}>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Module breakdown table */}
+              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 11 }}>
+                <thead>
+                  <tr>
+                    {["Module", "Active", "Trashed", "Size"].map(h => (
+                      <th key={h} style={{
+                        textAlign: "left", padding: "8px 10px", fontSize: 9, fontWeight: 700,
+                        letterSpacing: 0.8, color: T.muted, borderBottom: `1px solid ${T.border}`,
+                        textTransform: "uppercase",
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {moduleStats.map(m => {
+                    const MIcon = moduleIcons[m.key] || FileText;
+                    const isExpanded = expandedModule === m.key;
+                    return [
+                      <tr key={m.key} onClick={() => setExpandedModule(isExpanded ? null : m.key)}
+                        style={{ cursor: "pointer", background: isExpanded ? T.accentBg : "transparent" }}
+                        className="table-row"
+                      >
+                        <td style={{ padding: "10px 10px", borderBottom: `1px solid ${T.border}`, fontWeight: 600, color: T.text }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            {isExpanded ? <ChevronDown size={10} color={T.muted} /> : <ChevronRight size={10} color={T.muted} />}
+                            <MIcon size={12} color={T.accent} />
+                            {m.label}
+                          </div>
+                        </td>
+                        <td style={{ padding: "10px 10px", borderBottom: `1px solid ${T.border}` }}>
+                          <span style={{ color: T.success, fontWeight: 600 }}>{m.active.length}</span>
+                        </td>
+                        <td style={{ padding: "10px 10px", borderBottom: `1px solid ${T.border}` }}>
+                          <span style={{ color: m.trashed.length > 0 ? T.error : T.muted, fontWeight: 600 }}>{m.trashed.length}</span>
+                        </td>
+                        <td style={{ padding: "10px 10px", borderBottom: `1px solid ${T.border}`, color: T.muted, fontFamily: "monospace", fontSize: 10 }}>
+                          {fmtSize(m.activeSize + m.trashedSize)}
+                        </td>
+                      </tr>,
+                      // Expanded detail rows
+                      isExpanded && (
+                        <tr key={`${m.key}-detail`}>
+                          <td colSpan={4} style={{ padding: 0, borderBottom: `1px solid ${T.border}` }}>
+                            <div style={{ padding: "8px 16px 12px 32px", background: T.bgCard }}>
+                              {/* Active files */}
+                              {m.active.length > 0 && (
+                                <div style={{ marginBottom: 8 }}>
+                                  <div style={{ fontSize: 9, fontWeight: 700, color: T.success, letterSpacing: 0.8, marginBottom: 4, textTransform: "uppercase" }}>Active Files</div>
+                                  {m.active.map(f => (
+                                    <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 11 }}>
+                                      <FileText size={10} color={T.muted} />
+                                      <span style={{ flex: 1, color: T.text, fontWeight: 500 }}>{f.name}</span>
+                                      <span style={{
+                                        fontSize: 9, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
+                                        background: (f.status || "").toLowerCase().includes("draft") ? "rgba(245,158,11,0.12)" : "rgba(16,185,129,0.12)",
+                                        color: (f.status || "").toLowerCase().includes("draft") ? T.warn : T.success,
+                                      }}>{f.status || "—"}</span>
+                                      <span style={{ fontSize: 10, color: T.muted, fontFamily: "monospace" }}>{fmtSize(JSON.stringify(f).length)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {/* Trashed files */}
+                              {m.trashed.length > 0 && (
+                                <div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                                    <span style={{ fontSize: 9, fontWeight: 700, color: T.error, letterSpacing: 0.8, textTransform: "uppercase" }}>Trashed Files</span>
+                                    <div style={{ flex: 1 }} />
+                                    <button onClick={(e) => { e.stopPropagation(); onEmptyModuleTrash && onEmptyModuleTrash(m.key); }} style={{
+                                      background: "none", border: `1px solid rgba(239,68,68,0.2)`, borderRadius: 4, padding: "1px 6px",
+                                      color: T.error, fontSize: 9, cursor: "pointer",
+                                    }}>Empty</button>
+                                  </div>
+                                  {m.trashed.map(f => (
+                                    <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 11, opacity: 0.7 }}>
+                                      <Trash2 size={10} color={T.error} />
+                                      <span style={{ flex: 1, color: T.muted }}>{f.name}</span>
+                                      <button onClick={(e) => { e.stopPropagation(); onRestoreFile && onRestoreFile(m.key, f.id); }} title="Restore" style={{
+                                        background: "none", border: "none", cursor: "pointer", padding: 2, color: T.success, display: "flex",
+                                      }}>
+                                        <RotateCcw size={11} />
+                                      </button>
+                                      <button onClick={(e) => { e.stopPropagation(); onPermanentDelete && onPermanentDelete(m.key, f.id); }} title="Delete forever" style={{
+                                        background: "none", border: "none", cursor: "pointer", padding: 2, color: T.error, display: "flex",
+                                      }}>
+                                        <Trash2 size={11} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {m.active.length === 0 && m.trashed.length === 0 && (
+                                <div style={{ color: T.muted, fontSize: 11, padding: "6px 0" }}>No files in this module</div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ),
+                    ];
+                  })}
+                </tbody>
+              </table>
+            </Card>
+
+            {/* Export all */}
+            <Card>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Download size={13} color={T.accent} />
+                <span style={{ fontSize: 12, fontWeight: 600 }}>Export All Files</span>
+                <div style={{ flex: 1 }} />
+                <button onClick={() => {
+                  const blob = new Blob([JSON.stringify({ savedFiles, trashedFiles }, null, 2)], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a"); a.href = url; a.download = `aerchain-files-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
+                  URL.revokeObjectURL(url);
+                }} style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  background: "none", border: `1px solid ${T.border}`, borderRadius: 6, padding: "5px 12px",
+                  color: T.text, fontSize: 11, fontWeight: 500, cursor: "pointer",
+                }}>
+                  <Download size={11} /> Download Backup JSON
+                </button>
+              </div>
+              <div style={{ color: T.muted, fontSize: 11, marginTop: 6 }}>
+                Exports all active and trashed files across every module as a single JSON file.
+              </div>
+            </Card>
+          </div>
+        );
+      })()}
 
       {/* Memory tab */}
       {activeTab === "memory" && (
