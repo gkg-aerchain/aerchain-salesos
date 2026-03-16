@@ -244,20 +244,51 @@ export default async function handler(req, res) {
 
     sendEvent(res, "status", { phase: "parsing", message: "Validating JSON output" });
 
-    // Parse JSON from the accumulated text
+    // Parse JSON from the accumulated text — try multiple extraction strategies
     let tokens;
     try {
-      const jsonMatch = fullText.match(/```(?:json)?\s*([\s\S]*?)```/);
-      const jsonStr = jsonMatch ? jsonMatch[1].trim() : fullText.trim();
+      let jsonStr = fullText.trim();
+
+      // Strategy 1: Strip markdown code fences (```json ... ``` or ``` ... ```)
+      const fenceMatch = jsonStr.match(/```(?:json|JSON)?\s*\n?([\s\S]*?)```/);
+      if (fenceMatch) jsonStr = fenceMatch[1].trim();
+
+      // Strategy 2: If still not valid JSON, find the first { and last }
+      if (!jsonStr.startsWith("{")) {
+        const firstBrace = jsonStr.indexOf("{");
+        const lastBrace = jsonStr.lastIndexOf("}");
+        if (firstBrace !== -1 && lastBrace > firstBrace) {
+          jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+        }
+      }
+
+      // Strategy 3: Strip trailing commas before } or ] (common LLM quirk)
+      jsonStr = jsonStr.replace(/,\s*([\]}])/g, "$1");
+
       tokens = JSON.parse(jsonStr);
     } catch (parseErr) {
-      sendEvent(res, "error", {
-        error: "Failed to parse Claude response as JSON",
-        raw: fullText.slice(0, 2000),
-        parseError: parseErr.message,
-      });
-      res.end();
-      return;
+      // One more attempt: try to find ANY valid JSON object in the response
+      let recovered = false;
+      try {
+        const braceStart = fullText.indexOf("{");
+        const braceEnd = fullText.lastIndexOf("}");
+        if (braceStart !== -1 && braceEnd > braceStart) {
+          const candidate = fullText.slice(braceStart, braceEnd + 1).replace(/,\s*([\]}])/g, "$1");
+          tokens = JSON.parse(candidate);
+          recovered = true;
+          console.log("[extract] Recovered JSON after initial parse failure");
+        }
+      } catch {}
+
+      if (!recovered) {
+        sendEvent(res, "error", {
+          error: "Failed to parse Claude response as JSON",
+          raw: fullText.slice(0, 3000),
+          parseError: parseErr.message,
+        });
+        res.end();
+        return;
+      }
     }
 
     sendEvent(res, "complete", {
