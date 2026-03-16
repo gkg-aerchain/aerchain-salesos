@@ -5,6 +5,9 @@
   "functions": {
     "api/extract.js": {
       "maxDuration": 60
+    },
+    "api/health.js": {
+      "maxDuration": 15
     }
   },
   "rewrites": [

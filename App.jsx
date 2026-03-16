@@ -64,6 +64,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const trashedFilesRef = useRef(trashedFiles);
   const [referenceTokens, setReferenceTokens] = useState(null);
   const [extractorCache, setExtractorCache] = useState(null);
+  const [apiStatus, setApiStatus] = useState({ status: "checking", hasApiKey: false });
 
   // Dark Canvas v3 theme + font injection
   useEffect(() => {
@@ -75,6 +76,24 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     s.textContent = buildThemeStylesheet();
     document.head.appendChild(s);
     return () => s.remove();
+  }, []);
+
+  // ── Claude API health check (poll every 60s, deep check on first load) ──
+  useEffect(() => {
+    let cancelled = false;
+    const check = async (deep = false) => {
+      try {
+        const url = deep ? "/api/health?deep=1" : "/api/health";
+        const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        const data = await res.json();
+        if (!cancelled) setApiStatus(data);
+      } catch {
+        if (!cancelled) setApiStatus({ status: "unreachable", hasApiKey: false });
+      }
+    };
+    check(true); // deep check on mount
+    const interval = setInterval(() => check(false), 60000); // shallow poll
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const addLog = useCallback((msg, type = "info") => {
@@ -536,6 +555,34 @@ body { margin: 0; padding: 0; }
         </div>
 
         <div style={{ flex:1 }} />
+
+        {/* Claude API Status */}
+        <button
+          onClick={async () => {
+            setApiStatus({ status: "checking", hasApiKey: apiStatus.hasApiKey });
+            try {
+              const res = await fetch("/api/health?deep=1", { signal: AbortSignal.timeout(10000) });
+              setApiStatus(await res.json());
+            } catch { setApiStatus({ status: "unreachable", hasApiKey: false }); }
+          }}
+          title={`Claude API: ${apiStatus.status}${apiStatus.error ? ` — ${apiStatus.error}` : ''}\nClick to re-check`}
+          style={{
+            display:"flex", alignItems:"center", gap:5, padding:"4px 10px",
+            background: apiStatus.status === "connected" ? "rgba(16,185,129,0.1)" : apiStatus.status === "checking" ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+            border: `1px solid ${apiStatus.status === "connected" ? "rgba(16,185,129,0.25)" : apiStatus.status === "checking" ? "rgba(245,158,11,0.25)" : "rgba(239,68,68,0.25)"}`,
+            borderRadius: 6, fontSize: 10, fontWeight: 600, cursor: "pointer",
+            color: apiStatus.status === "connected" ? "#10B981" : apiStatus.status === "checking" ? "#F59E0B" : "#EF4444",
+            transition: "all 0.2s",
+          }}
+        >
+          <span style={{
+            width: 6, height: 6, borderRadius: "50%",
+            background: apiStatus.status === "connected" ? "#10B981" : apiStatus.status === "checking" ? "#F59E0B" : "#EF4444",
+            boxShadow: `0 0 6px ${apiStatus.status === "connected" ? "#10B981" : apiStatus.status === "checking" ? "#F59E0B" : "#EF4444"}`,
+            animation: apiStatus.status === "checking" ? "pulse 1.5s ease-in-out infinite" : "none",
+          }} />
+          {apiStatus.status === "connected" ? "Claude API" : apiStatus.status === "checking" ? "Checking…" : apiStatus.status === "no_key" ? "No API Key" : apiStatus.status === "error" ? "API Error" : "Offline"}
+        </button>
 
         {/* Status indicators */}
         {anyStale && (

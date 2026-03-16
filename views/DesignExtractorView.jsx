@@ -198,7 +198,10 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
         if (event === "status" && onProgress) onProgress({ type: "status", ...data });
         if (event === "progress" && onProgress) onProgress({ type: "progress", ...data });
         if (event === "complete") result = data;
-        if (event === "error") throw new Error(data?.error || "Extraction failed");
+        if (event === "error") {
+          const hint = data?.hint ? `\n${data.hint}` : "";
+          throw new Error((data?.error || "Extraction failed") + hint);
+        }
       }
 
       if (done) break;
@@ -209,7 +212,7 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
     throw streamErr;
   }
 
-  if (!result) throw new Error("Stream ended without result");
+  if (!result) throw new Error("Stream ended without result — the API may have returned an empty response. Check that ANTHROPIC_API_KEY is set correctly in Vercel environment variables.");
   return result;
 }
 
