@@ -16,6 +16,15 @@ const SYSTEM_PROMPTS = {
 const DEFAULT_SYSTEM =
   "You are a processing engine for Aerchain SalesOS. Analyze the provided inputs and return structured JSON output. Your response must start with { and end with }.";
 
+// Allow large file payloads (CSV, DOCX text, etc.) up to 20 MB
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "20mb",
+    },
+  },
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
