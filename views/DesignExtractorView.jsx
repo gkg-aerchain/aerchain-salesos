@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle, Zap, Save, Monitor } from "lucide-react";
+import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle, Zap, Save, Monitor, RefreshCw } from "lucide-react";
 import { generateHTML, generateMarkdown, generateJSON, generateReactTheme, buildOutputs } from "../lib/generators.js";
 import { canExtractProgrammatically, extractFromHTML, extractFromCSS } from "../lib/programmaticExtractor.js";
 import { buildPreviewHTML } from "../lib/previewSkeleton.js";
@@ -525,6 +525,21 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
     setSaved(true);
   };
 
+  const handleRefresh = () => {
+    abortRef.current?.abort();
+    setTokens(null);
+    setOutputs(null);
+    setUsage(null);
+    setError(null);
+    setProgress({ pct: 0, label: "" });
+    setSaved(false);
+    setCopied(false);
+    setFiles([]);
+    setTextInput("");
+    setLoading(false);
+    if (onStateChange) onStateChange(null);
+  };
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -788,6 +803,16 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
               </span>
             )}
             <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+              {!saved && (
+                <button onClick={handleRefresh} title="Clear unsaved output" style={{
+                  background: "none", border: `1.5px solid ${T.borderAcc}`,
+                  color: T.muted, borderRadius: 100,
+                  padding: "7px 18px", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>
+                  <RefreshCw size={13} /> Refresh
+                </button>
+              )}
               {onSaveToLibrary && (
                 <button onClick={handleSaveToLibrary} disabled={saved} style={{
                   background: "none", border: `1.5px solid ${T.borderAcc}`,
