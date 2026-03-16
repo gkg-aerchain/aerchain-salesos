@@ -740,6 +740,20 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
             </div>
           )}
 
+          {(tokens || files.length > 0 || textInput) && (
+            <button
+              onClick={handleRefresh}
+              title="Clear all input and output"
+              style={{
+                background: "none", border: `1.5px solid ${T.border}`,
+                borderRadius: 100, padding: "8px 16px", fontSize: 11, fontWeight: 600,
+                color: T.muted, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 5,
+              }}
+            >
+              <RefreshCw size={12} /> Clear
+            </button>
+          )}
           <button
             onClick={() => setShowPrompt(!showPrompt)}
             style={{
@@ -962,7 +976,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
                   srcDoc={previewHTML}
                   title="Design System Preview"
                   style={{ width: "100%", height: "100%", border: "none" }}
-                  sandbox="allow-scripts"
+                  sandbox="allow-scripts allow-same-origin"
                 />
               </div>
             </div>
