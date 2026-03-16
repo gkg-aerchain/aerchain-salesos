@@ -191,7 +191,7 @@ export default async function handler(req, res) {
     try {
       stream = anthropic.messages.stream({
         model: selectedModel,
-        max_tokens: 8000,
+        max_tokens: 16384,
         system: systemPrompt,
         messages: [{ role: "user", content: contentBlocks }],
       });
