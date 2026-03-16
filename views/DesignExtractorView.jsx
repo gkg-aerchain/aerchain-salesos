@@ -203,7 +203,9 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
             if (event === "complete") result = data;
             if (event === "error") {
               const hint = data?.hint ? `\n${data.hint}` : "";
-              throw new Error((data?.error || "Extraction failed") + hint);
+              const parseDetail = data?.parseError ? `\nParse error: ${data.parseError}` : "";
+              const rawPreview = data?.raw ? `\nClaude returned: ${data.raw.slice(0, 300)}...` : "";
+              throw new Error((data?.error || "Extraction failed") + hint + parseDetail + rawPreview);
             }
           }
           continue;
