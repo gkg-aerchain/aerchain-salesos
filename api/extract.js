@@ -148,7 +148,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { contentBlocks, customPrompt } = req.body;
+    const { contentBlocks, customPrompt, model } = req.body;
 
     if (!contentBlocks || !Array.isArray(contentBlocks) || contentBlocks.length === 0) {
       return res.status(400).json({ error: "No content provided" });
@@ -165,13 +165,27 @@ export default async function handler(req, res) {
 
     sendEvent(res, "status", { phase: "calling_api", message: "Connecting to Claude API" });
 
-    // Use streaming API
-    const stream = anthropic.messages.stream({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8000,
-      system: systemPrompt,
-      messages: [{ role: "user", content: contentBlocks }],
-    });
+    const ALLOWED_MODELS = new Set(["claude-sonnet-4-6", "claude-haiku-4-5-20251001", "claude-opus-4-6"]);
+    const selectedModel = (model && ALLOWED_MODELS.has(model)) ? model : "claude-sonnet-4-6";
+
+    // Log input size for debugging
+    const inputSize = JSON.stringify(contentBlocks).length;
+    console.log(`[extract] model=${selectedModel} inputSize=${inputSize} blocks=${contentBlocks.length}`);
+    sendEvent(res, "status", { phase: "calling_api", message: `Calling ${selectedModel} (${Math.round(inputSize/1024)}KB input)` });
+
+    let stream;
+    try {
+      stream = anthropic.messages.stream({
+        model: selectedModel,
+        max_tokens: 8000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: contentBlocks }],
+      });
+    } catch (initErr) {
+      sendEvent(res, "error", { error: `Failed to initialize API stream: ${initErr.message}` });
+      res.end();
+      return;
+    }
 
     let fullText = "";
     let chunkCount = 0;
@@ -185,8 +199,29 @@ export default async function handler(req, res) {
       }
     });
 
+    // Listen for stream errors explicitly
+    stream.on("error", (err) => {
+      console.error("[extract] Stream error event:", err.message);
+    });
+
     // Wait for the full message to complete
-    const finalMessage = await stream.finalMessage();
+    let finalMessage;
+    try {
+      finalMessage = await stream.finalMessage();
+    } catch (apiErr) {
+      const status = apiErr.status || apiErr.statusCode || "unknown";
+      const msg = apiErr.message || "Anthropic API call failed";
+      console.error(`[extract] API error (${status}):`, msg);
+      sendEvent(res, "error", {
+        error: `Claude API error (${status}): ${msg}`,
+        hint: status === 401 ? "Invalid API key — check ANTHROPIC_API_KEY in Vercel env vars" :
+              status === 400 ? "Bad request — input may be too large for the model context window" :
+              status === 429 ? "Rate limited — wait a moment and try again" :
+              status === 529 ? "Anthropic API overloaded — try again shortly" : null,
+      });
+      res.end();
+      return;
+    }
 
     sendEvent(res, "status", { phase: "parsing", message: "Validating JSON output" });
 

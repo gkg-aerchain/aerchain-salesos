@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle, Zap, Save, Monitor } from "lucide-react";
+import { Upload, Download, Copy, Eye, FileText, Code, Loader2, X, Palette, AlertCircle, CheckCircle, Zap, Save, Monitor, RefreshCw } from "lucide-react";
 import { generateHTML, generateMarkdown, generateJSON, generateReactTheme, buildOutputs } from "../lib/generators.js";
 import { canExtractProgrammatically, extractFromHTML, extractFromCSS } from "../lib/programmaticExtractor.js";
 import { buildPreviewHTML } from "../lib/previewSkeleton.js";
@@ -171,12 +171,12 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
   try {
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+      if (!done) buffer += decoder.decode(value, { stream: true });
 
       // Process complete SSE messages (double newline delimited)
+      // On done, also flush any trailing content left in the buffer
       const messages = buffer.split("\n\n");
-      buffer = messages.pop(); // keep incomplete message in buffer
+      buffer = done ? "" : messages.pop(); // keep incomplete message in buffer (unless stream finished)
 
       for (const msg of messages) {
         if (!msg.trim()) continue;
@@ -185,14 +185,26 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
         if (!eventMatch || !dataMatch) continue;
 
         const event = eventMatch[1];
+        const raw = dataMatch[1].replace(/\r$/, ""); // strip trailing \r from CRLF transports
         let data;
-        try { data = JSON.parse(dataMatch[1]); } catch { continue; }
+        try { data = JSON.parse(raw); } catch (parseErr) {
+          // Silently skip progress/status parse failures, but surface errors for critical events
+          if (event === "complete" || event === "error") {
+            throw new Error(`Failed to parse ${event} event: ${parseErr.message}`);
+          }
+          continue;
+        }
 
         if (event === "status" && onProgress) onProgress({ type: "status", ...data });
         if (event === "progress" && onProgress) onProgress({ type: "progress", ...data });
         if (event === "complete") result = data;
-        if (event === "error") throw new Error(data?.error || "Extraction failed");
+        if (event === "error") {
+          const hint = data?.hint ? `\n${data.hint}` : "";
+          throw new Error((data?.error || "Extraction failed") + hint);
+        }
       }
+
+      if (done) break;
     }
   } catch (streamErr) {
     // Re-throw application errors (from "error" SSE event), catch network failures
@@ -200,7 +212,7 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
     throw streamErr;
   }
 
-  if (!result) throw new Error("Stream ended without result");
+  if (!result) throw new Error("Stream ended without result — the API may have returned an empty response. Check that ANTHROPIC_API_KEY is set correctly in Vercel environment variables.");
   return result;
 }
 
@@ -283,7 +295,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
   const [progress, setProgress] = useState({ pct: 0, label: "" });
   const [canInstant, setCanInstant] = useState(false);
   const [saved, setSaved] = useState(cachedState?.saved || false);
-  const [model, setModel] = useState("claude-sonnet-4-20250514");
+  const [model, setModel] = useState("claude-sonnet-4-6");
   const [previewDark, setPreviewDark] = useState(false);
   const fileInputRef = useRef(null);
   const abortRef = useRef(null);
@@ -516,6 +528,21 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
     setSaved(true);
   };
 
+  const handleRefresh = () => {
+    abortRef.current?.abort();
+    setTokens(null);
+    setOutputs(null);
+    setUsage(null);
+    setError(null);
+    setProgress({ pct: 0, label: "" });
+    setSaved(false);
+    setCopied(false);
+    setFiles([]);
+    setTextInput("");
+    setLoading(false);
+    if (onStateChange) onStateChange(null);
+  };
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -647,9 +674,9 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
                   cursor: "pointer", outline: "none",
                 }}
               >
-                <option value="claude-sonnet-4-20250514">Sonnet 4</option>
-                <option value="claude-opus-4-20250514">Opus 4</option>
-                <option value="claude-haiku-4-20250514">Haiku 4</option>
+                <option value="claude-sonnet-4-6">Sonnet 4.6</option>
+                <option value="claude-opus-4-6">Opus 4.6</option>
+                <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
               </select>
               {canInstant && (
                 <button
@@ -716,6 +743,20 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
             </div>
           )}
 
+          {(tokens || files.length > 0 || textInput) && (
+            <button
+              onClick={handleRefresh}
+              title="Clear all input and output"
+              style={{
+                background: "none", border: `1.5px solid ${T.border}`,
+                borderRadius: 100, padding: "8px 16px", fontSize: 11, fontWeight: 600,
+                color: T.muted, cursor: "pointer",
+                display: "flex", alignItems: "center", gap: 5,
+              }}
+            >
+              <RefreshCw size={12} /> Clear
+            </button>
+          )}
           <button
             onClick={() => setShowPrompt(!showPrompt)}
             style={{
@@ -779,6 +820,16 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
               </span>
             )}
             <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+              {!saved && (
+                <button onClick={handleRefresh} title="Clear unsaved output" style={{
+                  background: "none", border: `1.5px solid ${T.borderAcc}`,
+                  color: T.muted, borderRadius: 100,
+                  padding: "7px 18px", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>
+                  <RefreshCw size={13} /> Refresh
+                </button>
+              )}
               {onSaveToLibrary && (
                 <button onClick={handleSaveToLibrary} disabled={saved} style={{
                   background: "none", border: `1.5px solid ${T.borderAcc}`,
@@ -928,7 +979,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
                   srcDoc={previewHTML}
                   title="Design System Preview"
                   style={{ width: "100%", height: "100%", border: "none" }}
-                  sandbox="allow-scripts"
+                  sandbox="allow-scripts allow-same-origin"
                 />
               </div>
             </div>
