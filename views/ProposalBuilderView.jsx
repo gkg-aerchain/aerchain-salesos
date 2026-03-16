@@ -1,10 +1,12 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import {
   Upload, Brain, FileText, Download, Eye, Edit3, ChevronRight,
   Loader2, DollarSign, TrendingUp, X
 } from "lucide-react";
 import { PROPOSAL_FIELDS_DEFAULT, mergeProposalTemplate } from "../lib/proposal-template.js";
 import { T } from "../lib/theme.js";
+import { validateAllFiles } from "../lib/fileValidation.js";
+import { StatusPanel, FileValidationBar } from "../components/StatusPanel.jsx";
 
 function Spinner({ size = 14 }) {
   return <Loader2 size={size} style={{ animation: "spin 1s linear infinite", color: T.accent }} />;
@@ -124,6 +126,7 @@ export default function ProposalBuilderView({
   uploadedFiles,
   processing,
   onProcess,
+  processStatus,
   textInput = "",
   onTextInputChange,
 }) {
@@ -131,6 +134,13 @@ export default function ProposalBuilderView({
   const [fields, setFields] = useState(() => ({ ...PROPOSAL_FIELDS_DEFAULT }));
   const rawInput = textInput;
   const setRawInput = onTextInputChange || (() => {});
+
+  const validation = useMemo(
+    () => validateAllFiles(uploadedFiles, { allowImages: false }),
+    [uploadedFiles]
+  );
+  const canProcess = !processing && (rawInput.trim() || (uploadedFiles?.length > 0 && !validation.hasErrors));
+  const status = processStatus?.step || (processing ? "processing" : "idle");
   const [previewHtml, setPreviewHtml] = useState("");
   const [hasGenerated, setHasGenerated] = useState(false);
   const iframeRef = useRef(null);
@@ -326,31 +336,24 @@ export default function ProposalBuilderView({
               />
             </div>
 
-            {uploadedFiles && uploadedFiles.length > 0 && (
-              <div style={{ marginTop: 8 }}>
-                {uploadedFiles.map((f, i) => (
-                  <div key={i} style={{ color: T.text, fontSize: 11, padding: "3px 0" }}>
-                    📄 {f.name} ({(f.size / 1024).toFixed(1)} KB)
-                  </div>
-                ))}
-              </div>
-            )}
+            <FileValidationBar validationResults={validation} />
 
             {/* Generate button */}
             <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
               <button
                 onClick={handleProcessClick}
-                disabled={processing || (!rawInput.trim() && (!uploadedFiles || uploadedFiles.length === 0))}
+                disabled={!canProcess}
                 style={{
-                  background: processing ? T.bgCard : `linear-gradient(135deg,${T.accent},#6d28d9)`,
-                  border: "none", borderRadius: 7, padding: "10px 22px", color: "#fff",
-                  fontSize: 12, fontWeight: 600, cursor: processing ? "default" : "pointer",
+                  background: !canProcess ? T.bgCard : `linear-gradient(135deg,${T.accent},#6d28d9)`,
+                  border: "none", borderRadius: 7, padding: "10px 22px", color: !canProcess ? T.muted : "#fff",
+                  fontSize: 12, fontWeight: 600, cursor: !canProcess ? "default" : "pointer",
                   display: "flex", alignItems: "center", gap: 6,
-                  opacity: !rawInput.trim() && (!uploadedFiles || uploadedFiles.length === 0) ? 0.4 : 1,
+                  opacity: validation.hasErrors ? 0.5 : (!rawInput.trim() && (!uploadedFiles || uploadedFiles.length === 0)) ? 0.4 : 1,
+                  transition: "opacity 0.2s",
                 }}
               >
                 {processing ? <Spinner size={12} /> : <Brain size={12} />}
-                {processing ? "Extracting Fields…" : "Extract with Claude"}
+                {processing ? "Extracting Fields…" : validation.hasErrors ? "Fix Errors First" : "Extract with Claude"}
               </button>
 
               <button
@@ -371,6 +374,8 @@ export default function ProposalBuilderView({
               </button>
             </div>
           </Card>
+
+          <StatusPanel status={status} error={processStatus?.error} processingLabel="Extracting proposal fields" />
 
           {/* KPI row — show existing pipeline stats */}
           {total > 0 && (

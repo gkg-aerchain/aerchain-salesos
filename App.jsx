@@ -53,6 +53,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
   const notionSyncTimerRef = useRef(null);
   const [uploadedFiles, setUploadedFiles] = useState({});
   const [processing, setProcessing] = useState(new Set());
+  const [processStatus, setProcessStatus] = useState({});
   const [savedFiles, setSavedFiles] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aerchain-saved-files") || "{}"); } catch { return {}; }
   });
@@ -326,19 +327,26 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
     if (!files || files.length === 0) return;
     if (processing.has(moduleKey)) return;
 
+    const setStep = (step, error) => setProcessStatus(prev => ({ ...prev, [moduleKey]: { step, error: error || null } }));
+
     setProcessing(prev => new Set([...prev, moduleKey]));
+    setStep("upload");
     const label = MOD[moduleKey]?.label || moduleKey;
     addLog(`🧠 Processing ${label} with Claude…`, "info");
 
     try {
+      setStep("validate");
       const fileContents = await Promise.all(
         files.map(async (f) => {
           const text = await f.text();
           return `--- File: ${f.name} (${f.type || "unknown"}) ---\n${text}`;
         })
       );
+
+      setStep("sending");
       const inputText = `Process the following uploaded data for ${label}:\n\n${fileContents.join("\n\n")}`;
 
+      setStep("processing");
       const text = await processWithClaude(moduleKey, inputText);
       logClaudeInteraction(moduleKey, inputText.slice(0, 500), text);
       const parsed = extractJSON(text);
@@ -347,6 +355,7 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
         const prevCount = moduleData[moduleKey]?.syncCount || 0;
         const entry = { data: parsed, status: "🟢 Fresh", lastSynced: new Date().toISOString(), staleAfterHrs: 24, syncCount: prevCount + 1 };
         setModuleData(prev => ({ ...prev, [moduleKey]: entry }));
+        setStep("done");
         addLog(`✅ ${label} — processed successfully`, "success");
 
         try {
@@ -355,9 +364,11 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
           console.warn("Notion audit failed:", e.message);
         }
       } else {
+        setStep("error", "Claude returned data but it could not be parsed as structured JSON. Try a different file format.");
         addLog(`⚠️ ${label} — no parseable JSON returned from Claude`, "warn");
       }
     } catch (e) {
+      setStep("error", e.message);
       addLog(`❌ ${label} — processing error: ${e.message}`, "error");
     } finally {
       setProcessing(prev => { const n = new Set(prev); n.delete(moduleKey); return n; });
@@ -754,6 +765,7 @@ body { margin: 0; padding: 0; }
                   uploadedFiles={uploadedFiles[selected]}
                   processing={processing.has(selected)}
                   onProcess={() => handleProcess(selected)}
+                  processStatus={processStatus[selected]}
                   theme={theme}
                   setTheme={setTheme}
                   moduleFiles={getModuleFiles(selected)}

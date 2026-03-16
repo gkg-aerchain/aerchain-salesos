@@ -1,12 +1,23 @@
+import { useMemo } from "react";
 import { Upload, DollarSign, TrendingUp, Activity, Users, Brain } from "lucide-react";
 import { T } from "../lib/theme.js";
 import { fmt$ } from "../lib/utils.js";
+import { validateAllFiles } from "../lib/fileValidation.js";
 import { Card, FileUploadZone, Spinner } from "../components/Common.jsx";
 import { StatCard, tableStyle, thStyle, tdStyle } from "../components/DataDisplay.jsx";
+import { StatusPanel, FileValidationBar } from "../components/StatusPanel.jsx";
 
-export default function PricingCalcView({ data, onFilesSelected, uploadedFiles, processing, onProcess }) {
+export default function PricingCalcView({ data, onFilesSelected, uploadedFiles, processing, onProcess, processStatus }) {
   const model = data.standardModel || {};
   const deals = data.recentDeals || [];
+
+  const validation = useMemo(
+    () => validateAllFiles(uploadedFiles, { allowImages: false }),
+    [uploadedFiles]
+  );
+
+  const canProcess = uploadedFiles?.length > 0 && !validation.hasErrors && !processing;
+  const status = processStatus?.step || (processing ? "processing" : "idle");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -17,23 +28,25 @@ export default function PricingCalcView({ data, onFilesSelected, uploadedFiles, 
           <span style={{ fontSize: 12, fontWeight: 600 }}>Upload Pricing Data</span>
         </div>
         <FileUploadZone onFilesSelected={onFilesSelected} />
+        <FileValidationBar validationResults={validation} />
+
         {uploadedFiles && uploadedFiles.length > 0 && (
           <div style={{ marginTop: 10 }}>
-            <div style={{ color: T.muted, fontSize: 11, marginBottom: 6 }}>{uploadedFiles.length} file(s) ready:</div>
-            {uploadedFiles.map((f, i) => (
-              <div key={i} style={{ color: T.text, fontSize: 11, padding: "3px 0" }}>📄 {f.name} ({(f.size / 1024).toFixed(1)} KB)</div>
-            ))}
-            <button onClick={onProcess} disabled={processing} style={{
-              marginTop: 10, background: processing ? T.bgCard : `linear-gradient(135deg,${T.accent},#6d28d9)`,
-              border: "none", borderRadius: 7, padding: "8px 18px", color: "#fff", fontSize: 12, fontWeight: 600,
-              cursor: processing ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6
+            <button onClick={onProcess} disabled={!canProcess} style={{
+              background: !canProcess ? T.bgCard : `linear-gradient(135deg,${T.accent},#6d28d9)`,
+              border: "none", borderRadius: 7, padding: "8px 18px", color: !canProcess ? T.muted : "#fff",
+              fontSize: 12, fontWeight: 600,
+              cursor: !canProcess ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6,
+              opacity: validation.hasErrors ? 0.5 : 1, transition: "opacity 0.2s",
             }}>
               {processing ? <Spinner size={12} /> : <Brain size={12} />}
-              {processing ? "Processing…" : "Process with Claude"}
+              {processing ? "Processing…" : validation.hasErrors ? "Fix Errors First" : "Process with Claude"}
             </button>
           </div>
         )}
       </Card>
+
+      <StatusPanel status={status} error={processStatus?.error} processingLabel="Analyzing pricing data" />
 
       {/* Standard Model KPIs */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -77,7 +90,6 @@ export default function PricingCalcView({ data, onFilesSelected, uploadedFiles, 
         )}
       </Card>
 
-      {/* Analysis output */}
       {data.analysis && (
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>

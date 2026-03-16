@@ -12,6 +12,8 @@ import { canExtractProgrammatically, extractFromHTML, extractFromCSS } from "../
 import { buildPreviewHTML } from "../lib/previewSkeleton.js";
 import { withRetry } from "../lib/retry.js";
 import { T } from "../lib/theme.js";
+import { validateAllFiles } from "../lib/fileValidation.js";
+import { FileValidationBar } from "../components/StatusPanel.jsx";
 
 // ── DEFAULT EXTRACTION PROMPT (editable in UI) ───────────
 // This is only used as the default value for the prompt editor.
@@ -675,7 +677,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
 
         {/* File Chips */}
         {files.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
             {files.map((f, i) => (
               <span key={i} style={{
                 display: "inline-flex", alignItems: "center", gap: 5,
@@ -690,6 +692,12 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
             ))}
           </div>
         )}
+
+        {/* File Validation */}
+        {files.length > 0 && (() => {
+          const v = validateAllFiles(files, { allowImages: true });
+          return v.hasErrors || v.hasWarnings ? <div style={{ marginBottom: 10 }}><FileValidationBar validationResults={v} /></div> : null;
+        })()}
 
         {/* Actions Row */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
