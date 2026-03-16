@@ -4,7 +4,7 @@
   "outputDirectory": "dist",
   "functions": {
     "api/extract.js": {
-      "maxDuration": 60
+      "maxDuration": 300
     },
     "api/health.js": {
       "maxDuration": 15

@@ -134,7 +134,7 @@ export const config = {
       sizeLimit: "20mb",
     },
   },
-  maxDuration: 60,
+  maxDuration: 300,
 };
 
 // SSE helper — writes a named event to the response stream
@@ -173,8 +173,8 @@ export default async function handler(req, res) {
     console.log(`[extract] model=${selectedModel} inputSize=${inputSize} blocks=${contentBlocks.length}`);
     sendEvent(res, "status", { phase: "calling_api", message: `Calling ${selectedModel} (${Math.round(inputSize/1024)}KB input)` });
 
-    // Safety timeout — send error before Vercel's 60s kill
-    const SAFETY_TIMEOUT_MS = 52_000;
+    // Safety timeout — send error before Vercel's 300s kill (Pro plan)
+    const SAFETY_TIMEOUT_MS = 280_000;
     let timedOut = false;
     const safetyTimer = setTimeout(() => {
       timedOut = true;
