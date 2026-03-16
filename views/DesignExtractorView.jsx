@@ -332,8 +332,10 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
   const [saved, setSaved] = useState(cachedState?.saved || false);
   const [model, setModel] = useState("claude-sonnet-4-6");
   const [previewDark, setPreviewDark] = useState(false);
+  const [elapsed, setElapsed] = useState(cachedState?.elapsed || null);
   const fileInputRef = useRef(null);
   const abortRef = useRef(null);
+  const startTimeRef = useRef(null);
   const iframeRef = useRef(null);
 
   // Abort in-flight extraction on unmount
@@ -344,9 +346,9 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
   // Persist extraction results to parent so they survive unmount
   useEffect(() => {
     if (onStateChange && (tokens || textInput)) {
-      onStateChange({ tokens, outputs, usage, textInput, saved });
+      onStateChange({ tokens, outputs, usage, textInput, saved, elapsed });
     }
-  }, [tokens, outputs, usage, textInput, saved]);
+  }, [tokens, outputs, usage, textInput, saved, elapsed]);
 
   // Auto-detect if files support programmatic extraction
   useEffect(() => {
@@ -402,6 +404,8 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
     setTokens(null);
     setOutputs(null);
     setSaved(false);
+    setElapsed(null);
+    startTimeRef.current = Date.now();
     setProgress({ pct: 5, label: "Preparing input files" });
 
     try {
@@ -457,6 +461,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
 
       setProgress({ pct: 98, label: "Generating outputs" });
 
+      setElapsed(((Date.now() - startTimeRef.current) / 1000).toFixed(1));
       setUsage(result.usage);
       setTokens(result.tokens);
       setOutputs({
@@ -485,6 +490,8 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
     setTokens(null);
     setOutputs(null);
     setSaved(false);
+    setElapsed(null);
+    startTimeRef.current = Date.now();
     setProgress({ pct: 10, label: "Reading files" });
 
     try {
@@ -532,6 +539,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
 
       setProgress({ pct: 90, label: "Generating outputs" });
 
+      setElapsed(((Date.now() - startTimeRef.current) / 1000).toFixed(1));
       setTokens(extractedTokens);
       setOutputs(buildOutputs(extractedTokens));
       setUsage({ input_tokens: 0, output_tokens: 0 });
@@ -568,6 +576,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
     setTokens(null);
     setOutputs(null);
     setUsage(null);
+    setElapsed(null);
     setError(null);
     setProgress({ pct: 0, label: "" });
     setSaved(false);
@@ -858,6 +867,15 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
                 border: `1px solid ${T.borderAcc}`,
               }}>
                 {usage.input_tokens + usage.output_tokens} tokens
+              </span>
+            )}
+            {elapsed && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, background: "rgba(16,185,129,0.1)",
+                color: "#10B981", padding: "2px 8px", borderRadius: 100,
+                border: "1px solid rgba(16,185,129,0.25)",
+              }}>
+                {elapsed}s
               </span>
             )}
             <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
