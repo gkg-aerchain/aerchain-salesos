@@ -173,6 +173,20 @@ export default async function handler(req, res) {
     console.log(`[extract] model=${selectedModel} inputSize=${inputSize} blocks=${contentBlocks.length}`);
     sendEvent(res, "status", { phase: "calling_api", message: `Calling ${selectedModel} (${Math.round(inputSize/1024)}KB input)` });
 
+    // Safety timeout — send error before Vercel's 60s kill
+    const SAFETY_TIMEOUT_MS = 52_000;
+    let timedOut = false;
+    const safetyTimer = setTimeout(() => {
+      timedOut = true;
+      console.error("[extract] Safety timeout reached — aborting");
+      try { stream?.abort?.(); } catch {}
+      sendEvent(res, "error", {
+        error: "Request timed out — Claude took too long to respond",
+        hint: "Try using Claude Haiku (faster) or uploading a smaller file. Large HTML files may exceed the processing time limit.",
+      });
+      res.end();
+    }, SAFETY_TIMEOUT_MS);
+
     let stream;
     try {
       stream = anthropic.messages.stream({
@@ -182,6 +196,7 @@ export default async function handler(req, res) {
         messages: [{ role: "user", content: contentBlocks }],
       });
     } catch (initErr) {
+      clearTimeout(safetyTimer);
       sendEvent(res, "error", { error: `Failed to initialize API stream: ${initErr.message}` });
       res.end();
       return;
@@ -209,6 +224,8 @@ export default async function handler(req, res) {
     try {
       finalMessage = await stream.finalMessage();
     } catch (apiErr) {
+      clearTimeout(safetyTimer);
+      if (timedOut) return; // already handled by safety timer
       const status = apiErr.status || apiErr.statusCode || "unknown";
       const msg = apiErr.message || "Anthropic API call failed";
       console.error(`[extract] API error (${status}):`, msg);
@@ -222,6 +239,8 @@ export default async function handler(req, res) {
       res.end();
       return;
     }
+    clearTimeout(safetyTimer);
+    if (timedOut) return; // already handled by safety timer
 
     sendEvent(res, "status", { phase: "parsing", message: "Validating JSON output" });
 
