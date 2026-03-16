@@ -185,8 +185,15 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
         if (!eventMatch || !dataMatch) continue;
 
         const event = eventMatch[1];
+        const raw = dataMatch[1].replace(/\r$/, ""); // strip trailing \r from CRLF transports
         let data;
-        try { data = JSON.parse(dataMatch[1]); } catch { continue; }
+        try { data = JSON.parse(raw); } catch (parseErr) {
+          // Silently skip progress/status parse failures, but surface errors for critical events
+          if (event === "complete" || event === "error") {
+            throw new Error(`Failed to parse ${event} event: ${parseErr.message}`);
+          }
+          continue;
+        }
 
         if (event === "status" && onProgress) onProgress({ type: "status", ...data });
         if (event === "progress" && onProgress) onProgress({ type: "progress", ...data });
@@ -285,7 +292,7 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
   const [progress, setProgress] = useState({ pct: 0, label: "" });
   const [canInstant, setCanInstant] = useState(false);
   const [saved, setSaved] = useState(cachedState?.saved || false);
-  const [model, setModel] = useState("claude-sonnet-4-20250514");
+  const [model, setModel] = useState("claude-sonnet-4-6");
   const [previewDark, setPreviewDark] = useState(false);
   const fileInputRef = useRef(null);
   const abortRef = useRef(null);
@@ -649,9 +656,9 @@ export default function DesignExtractorView({ onSaveToLibrary, referenceTokens, 
                   cursor: "pointer", outline: "none",
                 }}
               >
-                <option value="claude-sonnet-4-20250514">Sonnet 4</option>
-                <option value="claude-opus-4-20250514">Opus 4</option>
-                <option value="claude-haiku-4-20250514">Haiku 4</option>
+                <option value="claude-sonnet-4-6">Sonnet 4.6</option>
+                <option value="claude-opus-4-6">Opus 4.6</option>
+                <option value="claude-haiku-4-5-20251001">Haiku 4.5</option>
               </select>
               {canInstant && (
                 <button
