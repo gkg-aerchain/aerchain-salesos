@@ -148,7 +148,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { contentBlocks, customPrompt } = req.body;
+    const { contentBlocks, customPrompt, model } = req.body;
 
     if (!contentBlocks || !Array.isArray(contentBlocks) || contentBlocks.length === 0) {
       return res.status(400).json({ error: "No content provided" });
@@ -166,8 +166,11 @@ export default async function handler(req, res) {
     sendEvent(res, "status", { phase: "calling_api", message: "Connecting to Claude API" });
 
     // Use streaming API
+    const ALLOWED_MODELS = new Set(["claude-sonnet-4-6", "claude-haiku-4-5-20251001", "claude-opus-4-6"]);
+    const selectedModel = (model && ALLOWED_MODELS.has(model)) ? model : "claude-sonnet-4-6";
+
     const stream = anthropic.messages.stream({
-      model: "claude-sonnet-4-6",
+      model: selectedModel,
       max_tokens: 8000,
       system: systemPrompt,
       messages: [{ role: "user", content: contentBlocks }],

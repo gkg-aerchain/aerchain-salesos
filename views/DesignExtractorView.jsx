@@ -171,12 +171,12 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
   try {
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
+      if (!done) buffer += decoder.decode(value, { stream: true });
 
       // Process complete SSE messages (double newline delimited)
+      // On done, also flush any trailing content left in the buffer
       const messages = buffer.split("\n\n");
-      buffer = messages.pop(); // keep incomplete message in buffer
+      buffer = done ? "" : messages.pop(); // keep incomplete message in buffer (unless stream finished)
 
       for (const msg of messages) {
         if (!msg.trim()) continue;
@@ -193,6 +193,8 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
         if (event === "complete") result = data;
         if (event === "error") throw new Error(data?.error || "Extraction failed");
       }
+
+      if (done) break;
     }
   } catch (streamErr) {
     // Re-throw application errors (from "error" SSE event), catch network failures
