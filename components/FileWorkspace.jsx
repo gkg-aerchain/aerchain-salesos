@@ -9,7 +9,7 @@ import {
   FileText, DollarSign, Palette, Plus, Copy, Trash2, Download,
   ChevronDown, ChevronRight, X, Clock, Tag, User, Edit3,
   Eye, Code, CheckCircle, AlertCircle, Loader2, TrendingUp,
-  Activity, Users, Brain
+  Activity, Users, Brain, RotateCcw, AlertTriangle
 } from "lucide-react";
 
 // ── Theme tokens (same as App.jsx) ────────────────────────
@@ -88,7 +88,7 @@ function getModuleIcon(moduleKey) {
 // FILE CARD (collapsed view in the grid)
 // ══════════════════════════════════════════════════════════
 
-const FileCard = memo(function FileCard({ file, moduleKey, isSelected, onClick }) {
+const FileCard = memo(function FileCard({ file, moduleKey, isSelected, onClick, isTrashed }) {
   const metrics = getCardMetrics(moduleKey, file);
   const Icon = getModuleIcon(moduleKey);
 
@@ -100,50 +100,57 @@ const FileCard = memo(function FileCard({ file, moduleKey, isSelected, onClick }
         padding: "16px 18px",
         cursor: "pointer",
         background: isSelected ? T.bgActive : T.bgCard,
-        border: `1px solid ${isSelected ? T.borderAcc : T.border}`,
+        border: `1px solid ${isSelected ? T.borderAcc : isTrashed ? "rgba(239,68,68,0.15)" : T.border}`,
         boxShadow: isSelected ? "var(--s-glow)" : "var(--s-glass)",
         transition: "all 0.2s",
         display: "flex",
         flexDirection: "column",
         gap: 10,
+        opacity: isTrashed ? 0.75 : 1,
       }}
-      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = T.borderAcc; }}
-      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = T.border; }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.borderColor = isTrashed ? "rgba(239,68,68,0.3)" : T.borderAcc; }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.borderColor = isTrashed ? "rgba(239,68,68,0.15)" : T.border; }}
     >
       {/* Header row */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
         <div style={{
           width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-          background: T.accentBg, display: "flex", alignItems: "center", justifyContent: "center"
+          background: isTrashed ? "rgba(239,68,68,0.10)" : T.accentBg,
+          display: "flex", alignItems: "center", justifyContent: "center"
         }}>
-          <Icon size={16} color={T.accent} />
+          {isTrashed ? <Trash2 size={16} color={T.error} /> : <Icon size={16} color={T.accent} />}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {file.name}
           </div>
           <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-            {file.description}
+            {isTrashed ? `Deleted ${timeAgo(file.trashedAt)}` : file.description}
           </div>
         </div>
-        <StatusBadge status={file.status} />
+        {isTrashed
+          ? <span style={{ background: "rgba(239,68,68,0.12)", color: T.error, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 4 }}>Trashed</span>
+          : <StatusBadge status={file.status} />
+        }
       </div>
 
-      {/* Metrics row */}
-      <div style={{ display: "flex", gap: 12 }}>
-        {metrics.map((m, i) => {
-          const MIcon = m.icon;
-          return (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, minWidth: 0 }}>
-              <MIcon size={10} color={T.mutedSoft} />
-              <span style={{ fontSize: 10, color: T.mutedSoft, whiteSpace: "nowrap" }}>{m.label}:</span>
-              <span style={{ fontSize: 10, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {m.value}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      {/* Metrics row (hidden for trashed) */}
+      {!isTrashed && (
+        <div style={{ display: "flex", gap: 12 }}>
+          {metrics.map((m, i) => {
+            const MIcon = m.icon;
+            return (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 4, flex: 1, minWidth: 0 }}>
+                <MIcon size={10} color={T.mutedSoft} />
+                <span style={{ fontSize: 10, color: T.mutedSoft, whiteSpace: "nowrap" }}>{m.label}:</span>
+                <span style={{ fontSize: 10, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {m.value}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Footer: tags + date */}
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -154,7 +161,7 @@ const FileCard = memo(function FileCard({ file, moduleKey, isSelected, onClick }
         ))}
         <div style={{ flex: 1 }} />
         <span style={{ fontSize: 10, color: T.mutedSoft, display: "flex", alignItems: "center", gap: 3 }}>
-          <Clock size={9} /> {timeAgo(file.updatedAt)}
+          <Clock size={9} /> {isTrashed ? timeAgo(file.trashedAt) : timeAgo(file.updatedAt)}
         </span>
       </div>
     </div>
@@ -446,10 +453,13 @@ function FileDetailContent({ moduleKey, file, onLoadReference }) {
 // FILE WORKSPACE — Main export
 // ══════════════════════════════════════════════════════════
 
-export default function FileWorkspace({ moduleKey, files, onCreateNew, onDuplicate, onDelete, onExport, onLoadReference }) {
+export default function FileWorkspace({ moduleKey, files, onCreateNew, onDuplicate, onDelete, onExport, onLoadReference, trashedFiles = [], onRestoreFile, onPermanentDelete, onEmptyTrash }) {
   const [selectedId, setSelectedId] = useState(null);
+  const [showTrash, setShowTrash] = useState(false);
+  const [confirmEmpty, setConfirmEmpty] = useState(false);
 
-  const selectedFile = files.find(f => f.id === selectedId);
+  const activeList = showTrash ? trashedFiles : files;
+  const selectedFile = activeList.find(f => f.id === selectedId);
 
   const handleSelect = useCallback((id) => {
     setSelectedId(prev => prev === id ? null : id);
@@ -477,39 +487,108 @@ export default function FileWorkspace({ moduleKey, files, onCreateNew, onDuplica
       {/* ── Toolbar ─────────────────────────────────────── */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <Icon size={14} color={T.accent} />
-          <span style={{ fontSize: 12, fontWeight: 600 }}>{files.length} file{files.length !== 1 ? "s" : ""}</span>
+          <Icon size={14} color={showTrash ? T.error : T.accent} />
+          <span style={{ fontSize: 12, fontWeight: 600 }}>
+            {showTrash ? `Trash (${trashedFiles.length})` : `${files.length} file${files.length !== 1 ? "s" : ""}`}
+          </span>
         </div>
         <div style={{ flex: 1 }} />
-        <button onClick={onCreateNew} style={{
-          display: "flex", alignItems: "center", gap: 5,
-          background: "var(--gp)", border: "none", borderRadius: 7,
-          padding: "6px 14px", color: "#fff", fontSize: 11, fontWeight: 600,
-          cursor: "pointer", boxShadow: "var(--s-glow)"
-        }}>
-          <Plus size={12} /> New
+
+        {/* Trash toggle */}
+        <button
+          onClick={() => { setShowTrash(v => !v); setSelectedId(null); setConfirmEmpty(false); }}
+          style={{
+            display: "flex", alignItems: "center", gap: 5,
+            background: showTrash ? "rgba(239,68,68,0.12)" : "none",
+            border: `1px solid ${showTrash ? "rgba(239,68,68,0.3)" : T.border}`,
+            borderRadius: 7, padding: "5px 12px",
+            color: showTrash ? T.error : T.muted,
+            fontSize: 11, fontWeight: 500, cursor: "pointer",
+            position: "relative",
+          }}
+        >
+          <Trash2 size={12} />
+          {!showTrash && trashedFiles.length > 0 && (
+            <span style={{
+              position: "absolute", top: -5, right: -5,
+              background: T.error, color: "#fff", fontSize: 9, fontWeight: 700,
+              width: 16, height: 16, borderRadius: "50%",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>{trashedFiles.length}</span>
+          )}
+          {showTrash ? "Back to Files" : "Trash"}
         </button>
+
+        {/* Empty trash button (only in trash view) */}
+        {showTrash && trashedFiles.length > 0 && (
+          confirmEmpty ? (
+            <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+              <span style={{ fontSize: 10, color: T.error, fontWeight: 600 }}>Delete all permanently?</span>
+              <button onClick={() => { onEmptyTrash && onEmptyTrash(); setConfirmEmpty(false); setSelectedId(null); }} style={{
+                background: T.error, border: "none", borderRadius: 5, padding: "4px 10px",
+                color: "#fff", fontSize: 10, fontWeight: 600, cursor: "pointer",
+              }}>Yes, empty</button>
+              <button onClick={() => setConfirmEmpty(false)} style={{
+                background: "none", border: `1px solid ${T.border}`, borderRadius: 5, padding: "4px 10px",
+                color: T.muted, fontSize: 10, cursor: "pointer",
+              }}>Cancel</button>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmEmpty(true)} style={{
+              display: "flex", alignItems: "center", gap: 5,
+              background: "none", border: `1px solid rgba(239,68,68,0.3)`,
+              borderRadius: 7, padding: "5px 12px",
+              color: T.error, fontSize: 11, fontWeight: 500, cursor: "pointer",
+            }}>
+              <AlertTriangle size={11} /> Empty Trash
+            </button>
+          )
+        )}
+
+        {/* New button (only in active view) */}
+        {!showTrash && (
+          <button onClick={onCreateNew} style={{
+            display: "flex", alignItems: "center", gap: 5,
+            background: "var(--gp)", border: "none", borderRadius: 7,
+            padding: "6px 14px", color: "#fff", fontSize: 11, fontWeight: 600,
+            cursor: "pointer", boxShadow: "var(--s-glow)"
+          }}>
+            <Plus size={12} /> New
+          </button>
+        )}
       </div>
 
       {/* ── Card Grid ───────────────────────────────────── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
-        gap: 12,
-        overflowY: "auto",
-        flex: selectedFile ? "none" : 1,
-        maxHeight: selectedFile ? 220 : undefined,
-      }}>
-        {files.map(file => (
-          <FileCard
-            key={file.id}
-            file={file}
-            moduleKey={moduleKey}
-            isSelected={selectedId === file.id}
-            onClick={() => handleSelect(file.id)}
-          />
-        ))}
-      </div>
+      {activeList.length === 0 ? (
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          padding: "40px 20px", color: T.muted, gap: 8, flex: 1,
+        }}>
+          <Trash2 size={28} color={T.border} />
+          <span style={{ fontSize: 13, fontWeight: 500 }}>{showTrash ? "Trash is empty" : "No files yet"}</span>
+          <span style={{ fontSize: 11 }}>{showTrash ? "Deleted files will appear here" : "Create a new file to get started"}</span>
+        </div>
+      ) : (
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+          gap: 12,
+          overflowY: "auto",
+          flex: selectedFile ? "none" : 1,
+          maxHeight: selectedFile ? 220 : undefined,
+        }}>
+          {activeList.map(file => (
+            <FileCard
+              key={file.id}
+              file={file}
+              moduleKey={moduleKey}
+              isSelected={selectedId === file.id}
+              onClick={() => handleSelect(file.id)}
+              isTrashed={showTrash}
+            />
+          ))}
+        </div>
+      )}
 
       {/* ── Expanded Detail Panel ───────────────────────── */}
       {selectedFile && (
@@ -528,24 +607,46 @@ export default function FileWorkspace({ moduleKey, files, onCreateNew, onDuplica
             <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{selectedFile.name}</span>
 
             {/* File actions */}
-            <StatusBadge status={selectedFile.status} />
+            {showTrash
+              ? <span style={{ background: "rgba(239,68,68,0.12)", color: T.error, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 4 }}>Trashed</span>
+              : <StatusBadge status={selectedFile.status} />
+            }
 
             <div style={{ display: "flex", gap: 2 }}>
-              <button onClick={() => handleDuplicate(selectedFile)} title="Duplicate" style={{
-                background: "none", border: "none", cursor: "pointer", padding: 5, borderRadius: 5, color: T.muted, display: "flex"
-              }}>
-                <Copy size={13} />
-              </button>
-              <button onClick={() => handleExport(selectedFile)} title="Export JSON" style={{
-                background: "none", border: "none", cursor: "pointer", padding: 5, borderRadius: 5, color: T.muted, display: "flex"
-              }}>
-                <Download size={13} />
-              </button>
-              <button onClick={() => onDelete && onDelete(selectedFile.id)} title="Delete" style={{
-                background: "none", border: "none", cursor: "pointer", padding: 5, borderRadius: 5, color: T.error, display: "flex"
-              }}>
-                <Trash2 size={13} />
-              </button>
+              {showTrash ? (
+                <>
+                  <button onClick={() => { onRestoreFile && onRestoreFile(selectedFile.id); setSelectedId(null); }} title="Restore" style={{
+                    background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)", cursor: "pointer",
+                    padding: "4px 10px", borderRadius: 6, color: T.success, display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600,
+                  }}>
+                    <RotateCcw size={12} /> Restore
+                  </button>
+                  <button onClick={() => { onPermanentDelete && onPermanentDelete(selectedFile.id); setSelectedId(null); }} title="Delete Forever" style={{
+                    background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)", cursor: "pointer",
+                    padding: "4px 10px", borderRadius: 6, color: T.error, display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600,
+                  }}>
+                    <Trash2 size={12} /> Delete Forever
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => handleDuplicate(selectedFile)} title="Duplicate" style={{
+                    background: "none", border: "none", cursor: "pointer", padding: 5, borderRadius: 5, color: T.muted, display: "flex"
+                  }}>
+                    <Copy size={13} />
+                  </button>
+                  <button onClick={() => handleExport(selectedFile)} title="Export JSON" style={{
+                    background: "none", border: "none", cursor: "pointer", padding: 5, borderRadius: 5, color: T.muted, display: "flex"
+                  }}>
+                    <Download size={13} />
+                  </button>
+                  <button onClick={() => onDelete && onDelete(selectedFile.id)} title="Move to Trash" style={{
+                    background: "none", border: "none", cursor: "pointer", padding: 5, borderRadius: 5, color: T.error, display: "flex"
+                  }}>
+                    <Trash2 size={13} />
+                  </button>
+                </>
+              )}
               <button onClick={() => setSelectedId(null)} title="Close" style={{
                 background: "none", border: "none", cursor: "pointer", padding: 5, borderRadius: 5, color: T.muted, display: "flex"
               }}>
@@ -557,8 +658,14 @@ export default function FileWorkspace({ moduleKey, files, onCreateNew, onDuplica
           {/* Detail metadata bar */}
           <div style={{
             display: "flex", alignItems: "center", gap: 12, padding: "8px 14px",
-            background: T.badgeBg, fontSize: 10, color: T.muted, flexWrap: "wrap",
+            background: showTrash ? "rgba(239,68,68,0.06)" : T.badgeBg,
+            fontSize: 10, color: T.muted, flexWrap: "wrap",
           }}>
+            {showTrash && selectedFile.trashedAt && (
+              <span style={{ display: "flex", alignItems: "center", gap: 4, color: T.error, fontWeight: 600 }}>
+                <Trash2 size={9} /> Deleted {formatDate(selectedFile.trashedAt)}
+              </span>
+            )}
             <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <Clock size={9} /> Created {formatDate(selectedFile.createdAt)}
             </span>
