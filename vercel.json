@@ -3,6 +3,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
+    "api/process.js": {
+      "maxDuration": 300
+    },
     "api/extract.js": {
       "maxDuration": 300
     },
