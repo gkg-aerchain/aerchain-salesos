@@ -167,6 +167,7 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
   const decoder = new TextDecoder();
   let buffer = "";
   let result = null;
+  const receivedEvents = []; // track events for debugging
 
   try {
     while (true) {
@@ -182,15 +183,40 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
         if (!msg.trim()) continue;
         const eventMatch = msg.match(/^event: (\w+)/m);
         const dataMatch = msg.match(/^data: (.+)$/m);
-        if (!eventMatch || !dataMatch) continue;
+        if (!eventMatch || !dataMatch) {
+          // Fallback: try matching data across multiple lines (proxy compatibility)
+          const eventMatch2 = msg.match(/^event:\s*(\w+)/m);
+          const dataLines = msg.split("\n").filter(l => l.startsWith("data: ")).map(l => l.slice(6));
+          if (eventMatch2 && dataLines.length > 0) {
+            const event = eventMatch2[1];
+            const raw = dataLines.join("").replace(/\r$/, "");
+            receivedEvents.push(event);
+            let data;
+            try { data = JSON.parse(raw); } catch (parseErr) {
+              if (event === "complete" || event === "error") {
+                throw new Error(`Failed to parse ${event} event: ${parseErr.message}\nRaw (first 500 chars): ${raw.slice(0, 500)}`);
+              }
+              continue;
+            }
+            if (event === "status" && onProgress) onProgress({ type: "status", ...data });
+            if (event === "progress" && onProgress) onProgress({ type: "progress", ...data });
+            if (event === "complete") result = data;
+            if (event === "error") {
+              const hint = data?.hint ? `\n${data.hint}` : "";
+              throw new Error((data?.error || "Extraction failed") + hint);
+            }
+          }
+          continue;
+        }
 
         const event = eventMatch[1];
         const raw = dataMatch[1].replace(/\r$/, ""); // strip trailing \r from CRLF transports
+        receivedEvents.push(event);
         let data;
         try { data = JSON.parse(raw); } catch (parseErr) {
           // Silently skip progress/status parse failures, but surface errors for critical events
           if (event === "complete" || event === "error") {
-            throw new Error(`Failed to parse ${event} event: ${parseErr.message}`);
+            throw new Error(`Failed to parse ${event} event: ${parseErr.message}\nRaw (first 500 chars): ${raw.slice(0, 500)}`);
           }
           continue;
         }
@@ -212,7 +238,10 @@ async function callExtractAPI(contentBlocks, customPrompt, onProgress, signal, m
     throw streamErr;
   }
 
-  if (!result) throw new Error("Stream ended without result — the API may have returned an empty response. Check that ANTHROPIC_API_KEY is set correctly in Vercel environment variables.");
+  if (!result) {
+    console.error("[SSE] Stream ended without 'complete' event. Events received:", receivedEvents, "Buffer leftover:", buffer.slice(0, 200));
+    throw new Error(`Stream ended without result. Events received: ${receivedEvents.join(", ") || "none"}. The server may have timed out — try a smaller file or switch to Claude Haiku for faster processing.`);
+  }
   return result;
 }
 
