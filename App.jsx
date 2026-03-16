@@ -227,6 +227,8 @@ export default function AerchainSalesOS({ moduleFilter = null, appName = "Aercha
       }
       return { ...prev, [moduleKey]: files.filter(f => f.id !== fileId) };
     });
+    // Also explicitly remove from Supabase saved_files to prevent ghost entries
+    sbDeleteFile(moduleKey, fileId);
     addLog(`🗑 File moved to trash in ${MOD[moduleKey]?.label || moduleKey}`, "info");
   }, [addLog]);
 
