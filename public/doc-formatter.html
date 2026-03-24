@@ -268,6 +268,36 @@ let outputTheme = 'purple-glass';
 let outputHTML = '';
 let fileContent = '';
 
+// Lazy-load PDF.js from CDN
+let _pdfjsLib = null;
+async function loadPdfJs() {
+  if (_pdfjsLib) return _pdfjsLib;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    script.onload = () => {
+      _pdfjsLib = window.pdfjsLib;
+      _pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      resolve(_pdfjsLib);
+    };
+    script.onerror = () => reject(new Error('Failed to load PDF.js'));
+    document.head.appendChild(script);
+  });
+}
+
+// Lazy-load mammoth.js from CDN
+let _mammoth = null;
+async function loadMammoth() {
+  if (_mammoth) return _mammoth;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+    script.onload = () => { _mammoth = window.mammoth; resolve(_mammoth); };
+    script.onerror = () => reject(new Error('Failed to load mammoth.js'));
+    document.head.appendChild(script);
+  });
+}
+
 // App theme (the UI itself)
 function setAppTheme(el) {
   document.body.setAttribute('data-theme', el.dataset.t);
@@ -318,25 +348,47 @@ async function handleFile(file) {
   fn.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
   fn.classList.add('visible');
 
-  if (file.name.match(/\.(html?|txt|md|csv|json|xml|rtf)$/i)) {
-    fileContent = await file.text();
-  } else if (file.name.match(/\.(pdf|docx?|pptx?|xlsx?)$/i)) {
-    // For binary files, we'll send them to the extract API first
-    const formData = new FormData();
-    formData.append('file', file);
-    setStatus('working', 'Extracting text from ' + file.name + '...');
+  if (file.name.match(/\.(pdf)$/i)) {
+    // PDF: use pdf.js to extract text client-side
+    setStatus('working', 'Extracting text from PDF...');
     try {
-      const resp = await fetch('/api/extract', { method: 'POST', body: formData });
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error);
-      fileContent = data.text || data.content || '';
-      setStatus('ready', 'Text extracted — ready to format');
+      const pdfjsLib = await loadPdfJs();
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(item => item.str).join(' ') + '\n\n';
+      }
+      fileContent = text.trim();
+      if (!fileContent) throw new Error('No text found in PDF');
+      setStatus('ready', `Extracted ${pdf.numPages} pages — ready to format`);
     } catch (err) {
-      setStatus('error', 'Extraction failed: ' + err.message);
+      setStatus('error', 'PDF extraction failed: ' + err.message + '. Try pasting the text instead.');
       fileContent = '';
     }
+  } else if (file.name.match(/\.(docx)$/i)) {
+    // DOCX: use mammoth.js to extract text client-side
+    setStatus('working', 'Extracting text from DOCX...');
+    try {
+      const mammoth = await loadMammoth();
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      fileContent = result.value.trim();
+      if (!fileContent) throw new Error('No text found in DOCX');
+      setStatus('ready', 'Text extracted — ready to format');
+    } catch (err) {
+      setStatus('error', 'DOCX extraction failed: ' + err.message + '. Try pasting the text instead.');
+      fileContent = '';
+    }
+  } else if (file.name.match(/\.(doc|pptx?|xlsx?)$/i)) {
+    setStatus('error', 'Binary format not yet supported. Please save as PDF, paste the text, or export as HTML.');
+    fileContent = '';
   } else {
+    // Text-based files: read directly
     fileContent = await file.text();
+    setStatus('ready', 'File loaded — ready to format');
   }
 }
 
