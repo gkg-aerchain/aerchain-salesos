@@ -9,6 +9,9 @@
     "api/extract.js": {
       "maxDuration": 300
     },
+    "api/doc-format.js": {
+      "maxDuration": 300
+    },
     "api/health.js": {
       "maxDuration": 15
     }
