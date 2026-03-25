@@ -12,6 +12,7 @@ const MODULE_VIEWS = {
   "pricing-calculator": lazy(() => import("../views/PricingCalcView.jsx")),
   "proposal-generator": lazy(() => import("../views/ProposalBuilderView.jsx")),
   "design-extractor": null, // handled specially (has FileWorkspace + extractor)
+  "doc-formatter": lazy(() => import("../views/DocFormatterView.jsx")),
 };
 
 export class ModuleErrorBoundary extends Component {
@@ -62,6 +63,11 @@ export class ModuleErrorBoundary extends Component {
 
 export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, processStatus, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, trashedFiles, onRestoreFile, onPermanentDelete, onEmptyTrash, allSavedFiles, allTrashedFiles, onEmptyAllTrash, onRestoreFileGlobal, onPermanentDeleteGlobal, onEmptyModuleTrash, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache, onProcessWithClaude }) {
   if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} savedFiles={allSavedFiles} trashedFiles={allTrashedFiles} onEmptyAllTrash={onEmptyAllTrash} onRestoreFile={onRestoreFileGlobal} onPermanentDelete={onPermanentDeleteGlobal} onEmptyModuleTrash={onEmptyModuleTrash} />;
+
+  if (moduleKey === "doc-formatter") {
+    const DocFormatterView = MODULE_VIEWS["doc-formatter"];
+    return <Suspense fallback={<Spinner />}><DocFormatterView /></Suspense>;
+  }
 
   if (moduleKey === "design-extractor") {
     const files = moduleFiles || [];
