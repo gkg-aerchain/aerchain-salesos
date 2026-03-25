@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { DollarSign, TrendingUp, Activity, Users, Layers, Settings, BarChart3, ChevronDown, ChevronRight, AlertTriangle, Building2, Zap, Shield, Clock } from "lucide-react";
+import { useState, useMemo, useRef, useCallback } from "react";
+import { DollarSign, TrendingUp, Activity, Users, Layers, Settings, BarChart3, ChevronDown, ChevronRight, AlertTriangle, Building2, Zap, Shield, Clock, Upload, FileText, Brain, Loader2, X, CheckCircle } from "lucide-react";
 import { T } from "../lib/theme.js";
 import { fmt$ } from "../lib/utils.js";
 import { Card } from "../components/Common.jsx";
@@ -11,6 +11,218 @@ import {
   calcImplSection,
 } from "../lib/pricingEngine.js";
 import pricingLogicMd from "../pricing-calculator/pricing-logic.md?raw";
+
+// ─── Context Extraction Prompt ───────────────────────────────────────────────
+const EXTRACT_PROMPT = `You are a pricing parameter extractor for Aerchain SalesOS. Given input context (RFP, email, proposal, meeting notes, etc.), extract any pricing-relevant parameters you can find.
+
+Return ONLY a JSON object with these fields. Use null for anything not found or unclear:
+
+{
+  "customerName": "string or null",
+  "annualSpendM": number_in_millions_or_null,
+  "products": ["intake-to-award", "procure-to-pay", "spend-insights"] or null,
+  "tierOverride": "mid-market" | "enterprise" | "large-enterprise" | null,
+  "powerUsers": number_or_null,
+  "lightUsers": number_or_null,
+  "entityCount": number_or_null,
+  "channelVolumes": { "catalog": num, "self-service-po": num, "auto-sourcing": num, ... } or null,
+  "integrations": ["sap", "oracle", "servicenow", "netsuite", "coupa", "docusign", "sso", "custom-api"] or null,
+  "discount": 0_to_30_or_null,
+  "termYears": 1_to_5_or_null,
+  "escalation": 0_to_15_or_null,
+  "implToggles": { "core": bool, "integrations": bool, "qa": bool, "customerSuccess": bool } or null,
+  "notes": "brief summary of what was extracted and what was missing"
+}
+
+Channel volume IDs: catalog, self-service-po, contract-fw, rc-invoice, non-po-spend, auto-sourcing, auto-negotiation, tactical, strategic
+Integration IDs: sap, oracle, servicenow, netsuite, coupa, docusign, sso, custom-api
+Product IDs: intake-to-award, procure-to-pay, spend-insights
+
+Rules:
+- Extract spend in USD millions. Convert from other currencies if needed (use approximate rates).
+- If spend is given as a range, use the midpoint.
+- If number of POs or transactions is given, map to channel volumes (monthly).
+- If specific ERP systems are mentioned, include them in integrations.
+- If contract length is mentioned, set termYears.
+- Be conservative — only set values you're confident about from the text.
+- The notes field should explain what you found and what you defaulted.`;
+
+// ─── Read file as text or base64 ─────────────────────────────────────────────
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    const isText = /\.(txt|md|csv|json|xml|html)$/i.test(file.name) || file.type.startsWith("text/");
+    if (isText) {
+      reader.onload = () => resolve({ type: "text", content: reader.result, name: file.name });
+      reader.onerror = reject;
+      reader.readAsText(file);
+    } else {
+      reader.onload = () => {
+        const base64 = reader.result.split(",")[1];
+        let mediaType = file.type || "application/octet-stream";
+        if (/\.pdf$/i.test(file.name)) mediaType = "application/pdf";
+        else if (/\.docx$/i.test(file.name)) mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        else if (/\.(png|jpg|jpeg|gif|webp)$/i.test(file.name)) mediaType = file.type || "image/png";
+        resolve({ type: "base64", content: base64, mediaType, name: file.name });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+// ─── Context Upload Section ──────────────────────────────────────────────────
+function ContextUpload({ onExtracted, onProcessWithClaude }) {
+  const [dragOver, setDragOver] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [files, setFiles] = useState([]);
+  const [extracting, setExtracting] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const inputRef = useRef(null);
+
+  const addFiles = useCallback((newFiles) => {
+    setFiles(prev => [...prev, ...Array.from(newFiles)]);
+    setResult(null);
+    setError(null);
+  }, []);
+
+  const removeFile = useCallback((idx) => {
+    setFiles(prev => prev.filter((_, i) => i !== idx));
+  }, []);
+
+  const handleExtract = useCallback(async () => {
+    if (extracting) return;
+    if (!pasteText.trim() && files.length === 0) return;
+
+    setExtracting(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      // Build content parts for Claude
+      const parts = [];
+      if (pasteText.trim()) {
+        parts.push(`--- PASTED TEXT ---\n${pasteText.trim()}`);
+      }
+      for (const file of files) {
+        const data = await readFile(file);
+        if (data.type === "text") {
+          parts.push(`--- FILE: ${data.name} ---\n${data.content}`);
+        } else {
+          // For binary files (PDF, DOCX, images), we need to send via the API
+          // that supports multimodal content. For now, note the file.
+          parts.push(`--- FILE: ${data.name} (${data.mediaType}) ---\n[Binary file uploaded - ${(file.size / 1024).toFixed(1)} KB]`);
+        }
+      }
+
+      const fullPrompt = `${EXTRACT_PROMPT}\n\n--- INPUT CONTEXT ---\n${parts.join("\n\n")}`;
+
+      const response = await onProcessWithClaude(fullPrompt, "pricing-extract");
+      if (!response) throw new Error("No response from Claude");
+
+      // Parse JSON from response
+      let parsed;
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error("Could not parse extraction result");
+      }
+
+      setResult(parsed);
+      onExtracted(parsed);
+    } catch (err) {
+      setError(err.message || "Failed to extract parameters");
+    } finally {
+      setExtracting(false);
+    }
+  }, [pasteText, files, extracting, onProcessWithClaude, onExtracted]);
+
+  return (
+    <Card>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+        <Brain size={12} color={T.accent} />
+        <span style={{ fontSize: 11, fontWeight: 600, color: T.text }}>Context Input</span>
+        <span style={{ fontSize: 9, color: T.muted, marginLeft: "auto" }}>Upload or paste context to auto-fill</span>
+      </div>
+
+      {/* Drop Zone */}
+      <div
+        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={e => { e.preventDefault(); setDragOver(false); addFiles(e.dataTransfer.files); }}
+        onClick={() => inputRef.current?.click()}
+        style={{
+          border: `1.5px dashed ${dragOver ? T.accent : T.border}`,
+          borderRadius: 8, padding: "12px 10px", textAlign: "center",
+          cursor: "pointer", background: dragOver ? T.accentBg : "transparent",
+          transition: "all 0.15s", marginBottom: 8,
+        }}
+      >
+        <Upload size={16} color={dragOver ? T.accent : T.muted} />
+        <div style={{ fontSize: 10, color: T.muted, marginTop: 4 }}>Drop files or click (PDF, DOCX, TXT, MD)</div>
+        <input ref={inputRef} type="file" multiple accept=".pdf,.docx,.doc,.txt,.md,.csv,.json,.xlsx" onChange={e => { if (e.target.files.length) addFiles(e.target.files); e.target.value = ""; }} style={{ display: "none" }} />
+      </div>
+
+      {/* File List */}
+      {files.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+          {files.map((f, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", background: T.bgCard, borderRadius: 6, border: `1px solid ${T.border}` }}>
+              <FileText size={10} color={T.accent} />
+              <span style={{ fontSize: 10, color: T.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+              <span style={{ fontSize: 9, color: T.muted }}>{(f.size / 1024).toFixed(0)}KB</span>
+              <X size={10} color={T.muted} style={{ cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); removeFile(i); }} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Paste Area */}
+      <textarea
+        value={pasteText}
+        onChange={e => { setPasteText(e.target.value); setResult(null); setError(null); }}
+        placeholder="Or paste context here (RFP excerpt, email, meeting notes, deal summary...)"
+        rows={3}
+        style={{
+          width: "100%", padding: "8px 10px", borderRadius: 7,
+          border: `1px solid ${T.border}`, background: T.bgCard,
+          color: T.text, fontSize: 11, outline: "none", resize: "vertical",
+          fontFamily: "inherit", lineHeight: 1.5, boxSizing: "border-box",
+        }}
+      />
+
+      {/* Extract Button */}
+      <button
+        onClick={handleExtract}
+        disabled={extracting || (!pasteText.trim() && files.length === 0)}
+        style={{
+          marginTop: 8, width: "100%", padding: "8px 12px", borderRadius: 7,
+          border: "none", cursor: extracting ? "default" : "pointer",
+          background: extracting || (!pasteText.trim() && files.length === 0) ? T.bgCard : `linear-gradient(135deg, ${T.accent}, #6d28d9)`,
+          color: extracting || (!pasteText.trim() && files.length === 0) ? T.muted : "#fff",
+          fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+          transition: "all 0.15s",
+        }}
+      >
+        {extracting ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Brain size={12} />}
+        {extracting ? "Extracting parameters..." : "Extract & Auto-Fill"}
+      </button>
+
+      {/* Result / Error */}
+      {error && (
+        <div style={{ marginTop: 6, padding: "6px 10px", borderRadius: 6, background: `${T.error}15`, border: `1px solid ${T.error}30`, fontSize: 10, color: T.error }}>{error}</div>
+      )}
+      {result?.notes && (
+        <div style={{ marginTop: 6, padding: "6px 10px", borderRadius: 6, background: `${T.success}15`, border: `1px solid ${T.success}30`, fontSize: 10, color: T.success, display: "flex", alignItems: "flex-start", gap: 6 }}>
+          <CheckCircle size={12} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>{result.notes}</span>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 // ─── Shared Styles ───────────────────────────────────────────────────────────
 const labelStyle = { fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 };
@@ -306,6 +518,26 @@ export default function PricingCalcView({ data, onFilesSelected, uploadedFiles, 
   const [escalation, setEscalation] = useState(10);
   const [activeTab, setActiveTab] = useState("summary");
 
+  // ─── Context Extraction Handler ────────────────────────────────────────────
+  const handleContextExtracted = useCallback((parsed) => {
+    if (parsed.customerName) setCustomerName(parsed.customerName);
+    if (parsed.annualSpendM != null) setSpendInput(String(parsed.annualSpendM));
+    if (parsed.products && parsed.products.length > 0) setSelectedProducts(parsed.products.filter(p => PRODUCTS[p]));
+    if (parsed.tierOverride) setTierOverride(parsed.tierOverride);
+    if (parsed.powerUsers != null) setPowerUsers(String(parsed.powerUsers));
+    if (parsed.lightUsers != null) setLightUsers(String(parsed.lightUsers));
+    if (parsed.entityCount != null) {
+      const idx = ENTITY_TIERS.findIndex(et => parsed.entityCount >= et.min && parsed.entityCount <= et.max);
+      if (idx >= 0) setEntityIdx(idx);
+    }
+    if (parsed.channelVolumes) setChannelVolumes(parsed.channelVolumes);
+    if (parsed.integrations && parsed.integrations.length > 0) setSelectedIntegrations(parsed.integrations.filter(id => INTEGRATIONS.find(i => i.id === id)));
+    if (parsed.discount != null) setDiscount(Math.min(30, Math.max(0, parsed.discount)));
+    if (parsed.termYears != null) setTermYears(Math.min(5, Math.max(1, parsed.termYears)));
+    if (parsed.escalation != null) setEscalation(Math.min(15, Math.max(0, parsed.escalation)));
+    if (parsed.implToggles) setImplToggles(parsed.implToggles);
+  }, []);
+
   const annualSpendM = parseFloat(spendInput) || 0;
   const hasSpend = annualSpendM > 0;
 
@@ -363,6 +595,9 @@ export default function PricingCalcView({ data, onFilesSelected, uploadedFiles, 
 
         {/* ─── LEFT PANEL ─────────────────────────────────────────────────── */}
         <div style={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+
+          {/* Context Upload */}
+          <ContextUpload onExtracted={handleContextExtracted} onProcessWithClaude={onProcessWithClaude} />
 
           {/* Customer Profile */}
           <Card>
