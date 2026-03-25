@@ -61,7 +61,7 @@ export class ModuleErrorBoundary extends Component {
   }
 }
 
-export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, processStatus, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, trashedFiles, onRestoreFile, onPermanentDelete, onEmptyTrash, allSavedFiles, allTrashedFiles, onEmptyAllTrash, onRestoreFileGlobal, onPermanentDeleteGlobal, onEmptyModuleTrash, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache }) {
+export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, processStatus, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, trashedFiles, onRestoreFile, onPermanentDelete, onEmptyTrash, allSavedFiles, allTrashedFiles, onEmptyAllTrash, onRestoreFileGlobal, onPermanentDeleteGlobal, onEmptyModuleTrash, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache, onProcessWithClaude }) {
   if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} savedFiles={allSavedFiles} trashedFiles={allTrashedFiles} onEmptyAllTrash={onEmptyAllTrash} onRestoreFile={onRestoreFileGlobal} onPermanentDelete={onPermanentDeleteGlobal} onEmptyModuleTrash={onEmptyModuleTrash} />;
 
   if (moduleKey === "doc-formatter") {
@@ -102,6 +102,16 @@ export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSy
           cachedState={extractorCache}
           onStateChange={setExtractorCache}
         />
+      </Suspense>
+    );
+  }
+
+  // Pricing Calculator has its own full UI — skip FileWorkspace wrapper
+  const ViewComponent = MODULE_VIEWS[moduleKey];
+  if (ViewComponent && moduleKey === "pricing-calculator") {
+    return (
+      <Suspense fallback={<Spinner />}>
+        <ViewComponent data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} processStatus={processStatus} onProcessWithClaude={onProcessWithClaude} />
       </Suspense>
     );
   }
@@ -150,11 +160,10 @@ export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSy
   }
   if (isEmpty) return <EmptyState moduleKey={moduleKey} onSync={onSync} loading={syncing} />;
 
-  const ViewComponent = MODULE_VIEWS[moduleKey];
   if (ViewComponent) {
     return (
       <Suspense fallback={<Spinner />}>
-        <ViewComponent data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} processStatus={processStatus} />
+        <ViewComponent data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} processStatus={processStatus} onProcessWithClaude={onProcessWithClaude} />
       </Suspense>
     );
   }
