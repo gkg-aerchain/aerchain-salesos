@@ -233,7 +233,7 @@ export default function DocFormatterView() {
   const statusColor = status.type === "ready" ? T.success : status.type === "working" ? T.warn : status.type === "error" ? T.error : T.muted;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 140px)", gap: 0 }}>
 
       {/* ── COLLAPSIBLE INPUT BAR ── */}
       <div className="glass-surface" style={{ borderRadius: 14, marginBottom: 10, boxShadow: "var(--s-glass)", overflow: "hidden" }}>
