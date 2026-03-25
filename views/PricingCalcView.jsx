@@ -10,6 +10,7 @@ import {
   CHANNELS, INTEGRATIONS, IMPL_SECTIONS, ADD_ONS, DEAL_DEFAULTS,
   calcImplSection,
 } from "../lib/pricingEngine.js";
+import pricingLogicMd from "../pricing-calculator/pricing-logic.md?raw";
 
 // ─── Shared Styles ───────────────────────────────────────────────────────────
 const labelStyle = { fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 };
@@ -535,7 +536,7 @@ export default function PricingCalcView({ data, onFilesSelected, uploadedFiles, 
       </div>
 
       {/* ─── PRICING LOGIC EDITOR (Bottom) ──────────────────────────────────── */}
-      <PricingLogicEditor onProcessWithClaude={onProcessWithClaude} />
+      <PricingLogicEditor defaultLogic={pricingLogicMd} onProcessWithClaude={onProcessWithClaude} />
     </div>
   );
 }
