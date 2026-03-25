@@ -324,50 +324,10 @@ function BreakdownTab({ p }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <Card>
-        <div style={labelStyle}>Channel Breakdown</div>
-        <div style={{ overflowX: "auto" }}>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Channel</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Txn/Mo</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>$/Txn</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Annual</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>% of Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {p.channelBreakdown.map((ch, i) => (
-                <tr key={i} className="table-row">
-                  <td style={{ ...tdStyle, fontWeight: 500 }}>
-                    {ch.label}
-                    {ch.assumed && <span style={{ fontSize: 9, color: T.warn, marginLeft: 4 }}>est.</span>}
-                  </td>
-                  <td style={{ ...tdStyle, textAlign: "right" }}>{ch.volume.toLocaleString()}</td>
-                  <td style={{ ...tdStyle, textAlign: "right" }}>${ch.perTxn.toFixed(0)}</td>
-                  <td style={{ ...tdStyle, textAlign: "right", color: T.success }}>{fmt$(ch.annualCost)}</td>
-                  <td style={{ ...tdStyle, textAlign: "right", color: T.muted }}>
-                    {p.workflowFeesAnnual > 0 ? `${Math.round(ch.annualCost / p.workflowFeesAnnual * 100)}%` : "—"}
-                  </td>
-                </tr>
-              ))}
-              <tr>
-                <td style={{ ...tdStyle, fontWeight: 700, borderBottom: "none" }}>Total Workflow Fees</td>
-                <td style={{ ...tdStyle, textAlign: "right", fontWeight: 700, borderBottom: "none" }}>{p.totalTxnMonth.toLocaleString()}</td>
-                <td style={{ ...tdStyle, borderBottom: "none" }} />
-                <td style={{ ...tdStyle, textAlign: "right", fontWeight: 700, color: T.success, borderBottom: "none" }}>{fmt$(p.workflowFeesAnnual)}</td>
-                <td style={{ ...tdStyle, borderBottom: "none" }} />
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </Card>
-      <Card>
         <div style={labelStyle}>Fee Composition</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {[
-            { label: "Platform Fee (from spend tiers)", value: p.platformBase, bold: true },
-            { label: "Workflow Cost Basis (justification)", value: p.workflowFeesAnnual, color: T.muted, note: true },
+            { label: "Platform Fee (from spend tiers)", value: p.platformBase },
             { label: "Integration Add-Ons", value: p.integrationFees },
             { label: "Gross Subscription", value: p.y1Subscription, bold: true },
             ...(p.dealParams.discount > 0 ? [{ label: `Discount (${p.dealParams.discount}%)`, value: -(p.y1Subscription - p.y1SubDiscounted), color: T.success }] : []),
@@ -378,6 +338,37 @@ function BreakdownTab({ p }) {
               <span style={{ fontSize: 12, fontWeight: row.bold ? 700 : 500, color: row.color || T.text }}>{fmt$(row.value)}</span>
             </div>
           ))}
+        </div>
+      </Card>
+      <Card>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div style={labelStyle}>Transaction Volume Estimate</div>
+          <span style={{ fontSize: 10, color: T.muted }}>~{p.totalTxnMonth.toLocaleString()}/mo &middot; ~{p.totalTxnYear.toLocaleString()}/yr</span>
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Channel</th>
+                <th style={{ ...thStyle, textAlign: "right" }}>Txn/Mo</th>
+                <th style={{ ...thStyle, textAlign: "right" }}>% Mix</th>
+              </tr>
+            </thead>
+            <tbody>
+              {p.channelBreakdown.map((ch, i) => (
+                <tr key={i} className="table-row">
+                  <td style={{ ...tdStyle, fontWeight: 500 }}>
+                    {ch.label}
+                    {ch.assumed && <span style={{ fontSize: 9, color: T.warn, marginLeft: 4 }}>est.</span>}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: "right" }}>{ch.volume.toLocaleString()}</td>
+                  <td style={{ ...tdStyle, textAlign: "right", color: T.muted }}>
+                    {p.totalTxnMonth > 0 ? `${Math.round(ch.volume / p.totalTxnMonth * 100)}%` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Card>
     </div>
