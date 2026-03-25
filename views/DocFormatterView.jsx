@@ -73,7 +73,6 @@ export default function DocFormatterView() {
   const [status, setStatus] = useState({ type: "idle", text: "Ready" });
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
-  const iframeRef = useRef(null);
 
   // Handle file selection
   const handleFile = useCallback(async (file) => {
@@ -169,6 +168,8 @@ export default function DocFormatterView() {
       const decoder = new TextDecoder();
       let fullHTML = "";
       let buffer = "";
+      let lastPreviewUpdate = 0;
+      const PREVIEW_INTERVAL = 1500; // update preview every 1.5s
 
       while (true) {
         const { done, value } = await reader.read();
@@ -189,15 +190,20 @@ export default function DocFormatterView() {
             }
           }
         }
+
+        // Live progress: update status + periodic preview
+        const kbSoFar = (fullHTML.length / 1024).toFixed(1);
+        setStatus({ type: "working", text: `Streaming from Claude... ${kbSoFar} KB received` });
+
+        const now = Date.now();
+        if (now - lastPreviewUpdate > PREVIEW_INTERVAL && fullHTML.length > 100) {
+          lastPreviewUpdate = now;
+          setOutputHTML(fullHTML);
+        }
       }
 
       setOutputHTML(fullHTML);
       setStatus({ type: "ready", text: `Formatted — ${(fullHTML.length / 1024).toFixed(1)} KB output` });
-
-      // Update iframe
-      if (iframeRef.current) {
-        iframeRef.current.srcdoc = fullHTML;
-      }
     } catch (err) {
       setStatus({ type: "error", text: err.message });
     } finally {
@@ -366,7 +372,6 @@ export default function DocFormatterView() {
         {/* Preview iframe or empty state */}
         {outputHTML ? (
           <iframe
-            ref={iframeRef}
             srcDoc={outputHTML}
             style={{ flex: 1, border: "none", width: "100%", background: "#0a0a0f", borderRadius: "0 0 14px 14px" }}
             title="Formatted document preview"
