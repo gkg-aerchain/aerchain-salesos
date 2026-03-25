@@ -250,8 +250,7 @@ function Section({ title, icon: Ic, defaultOpen = false, children }) {
 function CompositionBar({ comp }) {
   if (!comp || comp.total <= 0) return null;
   const segments = [
-    { label: "Platform", value: comp.platform, color: T.accent },
-    { label: "AI Workflows", value: comp.aiWorkflows, color: T.success },
+    { label: "Platform Fee", value: comp.platform, color: T.accent },
     { label: "Integrations", value: comp.integrations, color: T.warn },
   ].filter(s => s.value > 0);
   return (
@@ -367,9 +366,9 @@ function BreakdownTab({ p }) {
         <div style={labelStyle}>Fee Composition</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {[
-            { label: "Platform Base Fee", value: p.platformBase },
-            { label: "Workflow Fees", value: p.workflowFeesAnnual },
-            { label: "Integration Fees", value: p.integrationFees },
+            { label: "Platform Fee (from spend tiers)", value: p.platformBase, bold: true },
+            { label: "Workflow Cost Basis (justification)", value: p.workflowFeesAnnual, color: T.muted, note: true },
+            { label: "Integration Add-Ons", value: p.integrationFees },
             { label: "Gross Subscription", value: p.y1Subscription, bold: true },
             ...(p.dealParams.discount > 0 ? [{ label: `Discount (${p.dealParams.discount}%)`, value: -(p.y1Subscription - p.y1SubDiscounted), color: T.success }] : []),
             { label: "Net Subscription (Y1)", value: p.y1SubDiscounted, bold: true, color: T.accent },
