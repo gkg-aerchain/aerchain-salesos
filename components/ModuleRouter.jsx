@@ -100,6 +100,16 @@ export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSy
     );
   }
 
+  // Pricing Calculator has its own full UI — skip FileWorkspace wrapper
+  const ViewComponent = MODULE_VIEWS[moduleKey];
+  if (ViewComponent && moduleKey === "pricing-calculator") {
+    return (
+      <Suspense fallback={<Spinner />}>
+        <ViewComponent data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} processStatus={processStatus} onProcessWithClaude={onProcessWithClaude} />
+      </Suspense>
+    );
+  }
+
   const files = moduleFiles || [];
   const trash = trashedFiles || [];
   if (files.length > 0 || trash.length > 0) {
@@ -144,7 +154,6 @@ export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSy
   }
   if (isEmpty) return <EmptyState moduleKey={moduleKey} onSync={onSync} loading={syncing} />;
 
-  const ViewComponent = MODULE_VIEWS[moduleKey];
   if (ViewComponent) {
     return (
       <Suspense fallback={<Spinner />}>
