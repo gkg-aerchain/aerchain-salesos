@@ -1,13 +1,14 @@
 // ═══════════════════════════════════════════════════════════
-// DOCUMENT FORMATTER MODULE
-// Accepts any input (text, PDF, DOCX, images), sends to Claude
-// via /api/doc-format, streams back formatted HTML document
-// in the Aerchain Dark Theme with 8 color variants.
+// DOCUMENT FORMATTER MODULE — v2
+// 1. Client-side: extract text from input (HTML → stripped text)
+// 2. Claude: return structured JSON (~3-5KB, 10-30 seconds)
+// 3. Client-side: render JSON into static Aerchain template (instant)
 // ═══════════════════════════════════════════════════════════
 
 import { useState, useRef, useCallback } from "react";
 import { Upload, Download, Copy, ExternalLink, Loader2, FileText as FileTextIcon, Type, Sparkles } from "lucide-react";
 import { T } from "../lib/theme.js";
+import { buildThemedDocument } from "../lib/docTemplate.js";
 
 // 8 output theme options
 const THEMES = [
@@ -21,7 +22,81 @@ const THEMES = [
   { id: "slate", color: "#6366f1", label: "Slate" },
 ];
 
-// File → base64
+// ── Client-side text extraction ─────────────────────────────
+
+/**
+ * Extract structured text from HTML, preserving headings, lists, tables.
+ * Reduces a 45KB HTML file to ~5KB of clean structured text.
+ */
+function extractTextFromHTML(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  // Remove non-content elements
+  doc.querySelectorAll("script, style, nav, footer, header, noscript, svg, [aria-hidden]").forEach(el => el.remove());
+
+  const parts = [];
+
+  function walk(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const t = node.textContent.trim();
+      if (t) parts.push(t);
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const tag = node.tagName.toLowerCase();
+
+    // Headings
+    if (/^h[1-6]$/.test(tag)) {
+      parts.push(`\n${"#".repeat(parseInt(tag[1]))} ${node.textContent.trim()}\n`);
+      return;
+    }
+    // Table rows
+    if (tag === "tr") {
+      const cells = Array.from(node.querySelectorAll("td, th")).map(c => c.textContent.trim());
+      if (cells.length) parts.push(`| ${cells.join(" | ")} |`);
+      return;
+    }
+    // List items
+    if (tag === "li") {
+      parts.push(`- ${node.textContent.trim()}`);
+      return;
+    }
+    // Blockquotes
+    if (tag === "blockquote") {
+      parts.push(`> ${node.textContent.trim()}`);
+      return;
+    }
+    // Paragraphs
+    if (tag === "p" || tag === "div") {
+      const text = node.textContent.trim();
+      if (text && text.length > 2) {
+        // Only push if this div/p has direct text (not just child elements)
+        const hasDirectText = Array.from(node.childNodes).some(
+          n => n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 2
+        );
+        if (tag === "p" || hasDirectText) {
+          parts.push(`\n${text}\n`);
+          return;
+        }
+      }
+    }
+    // Recurse for other elements
+    for (const child of node.childNodes) walk(child);
+  }
+
+  walk(doc.body);
+  return parts.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/** Check if a string looks like HTML */
+function isHTML(str) {
+  return /<[a-z][\s\S]*>/i.test(str) && (str.includes("</") || str.includes("/>"));
+}
+
+// ── File helpers ────────────────────────────────────────────
+
 async function toBase64(file) {
   const buf = await file.arrayBuffer();
   const bytes = new Uint8Array(buf);
@@ -30,7 +105,6 @@ async function toBase64(file) {
   return btoa(binary);
 }
 
-// PDF.js lazy loader
 let _pdfjsLib = null;
 async function loadPdfJs() {
   if (_pdfjsLib) return _pdfjsLib;
@@ -47,7 +121,6 @@ async function loadPdfJs() {
   });
 }
 
-// Mammoth.js lazy loader
 let _mammoth = null;
 async function loadMammoth() {
   if (_mammoth) return _mammoth;
@@ -60,17 +133,30 @@ async function loadMammoth() {
   });
 }
 
+// ── Progress steps ──────────────────────────────────────────
+
+const STEPS = [
+  { key: "extract", label: "Extracting content" },
+  { key: "analyze", label: "Claude analyzing structure" },
+  { key: "render", label: "Rendering document" },
+];
+
+// ═════════════════════════════════════════════════════════════
+// COMPONENT
+// ═════════════════════════════════════════════════════════════
+
 export default function DocFormatterView() {
-  const [inputMode, setInputMode] = useState("paste"); // "paste" | "upload"
+  const [inputMode, setInputMode] = useState("paste");
   const [textContent, setTextContent] = useState("");
-  const [fileInfo, setFileInfo] = useState(null); // { name, size }
-  const [fileContent, setFileContent] = useState(""); // extracted text
+  const [fileInfo, setFileInfo] = useState(null);
+  const [fileContent, setFileContent] = useState("");
   const [fileBase64, setFileBase64] = useState("");
   const [fileType, setFileType] = useState("");
   const [outputTheme, setOutputTheme] = useState("purple-glass");
   const [outputHTML, setOutputHTML] = useState("");
   const [processing, setProcessing] = useState(false);
   const [status, setStatus] = useState({ type: "idle", text: "Ready" });
+  const [currentStep, setCurrentStep] = useState(-1); // -1 = not started
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -103,7 +189,7 @@ export default function DocFormatterView() {
         const b64 = await toBase64(file);
         setFileBase64(b64);
         setFileType("application/pdf");
-        setStatus({ type: "ready", text: "PDF loaded (will send directly to Claude) — ready to format" });
+        setStatus({ type: "ready", text: "PDF loaded (will send to Claude for OCR) — ready" });
       }
     } else if (/^(png|jpe?g|gif|webp)$/.test(ext)) {
       const b64 = await toBase64(file);
@@ -117,40 +203,54 @@ export default function DocFormatterView() {
         const arrayBuffer = await file.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
         const trimmed = result.value.trim();
-        if (!trimmed) throw new Error("No text found in DOCX");
+        if (!trimmed) throw new Error("No text found");
         setFileContent(trimmed);
         setStatus({ type: "ready", text: "Text extracted — ready to format" });
       } catch (err) {
         setStatus({ type: "error", text: "DOCX extraction failed: " + err.message });
       }
-    } else if (/^(doc|pptx?|xlsx?)$/.test(ext)) {
-      setStatus({ type: "error", text: "Binary format not supported. Save as PDF or paste text." });
-    } else {
+    } else if (/^(html?|txt|md|csv|json|xml|rtf)$/.test(ext)) {
       const text = await file.text();
       setFileContent(text);
       setStatus({ type: "ready", text: "File loaded — ready to format" });
+    } else {
+      setStatus({ type: "error", text: "Unsupported format. Use PDF, DOCX, HTML, TXT, or images." });
     }
   }, []);
 
-  // Format document via streaming API
+  // ── MAIN FORMAT FLOW ──────────────────────────────────────
   const formatDocument = useCallback(async () => {
-    const content = inputMode === "paste" ? textContent.trim() : fileContent.trim();
-    if (!content && !fileBase64) {
+    let rawContent = inputMode === "paste" ? textContent.trim() : fileContent.trim();
+    const hasFile = !!fileBase64;
+
+    if (!rawContent && !hasFile) {
       setStatus({ type: "error", text: "No content provided" });
       return;
     }
 
     setProcessing(true);
     setOutputHTML("");
-    setStatus({ type: "working", text: "Formatting with Claude AI..." });
+    setCurrentStep(0);
 
     try {
+      // ── STEP 1: Extract text (client-side) ──
+      setStatus({ type: "working", text: "Step 1/3 — Extracting content..." });
+      let contentToSend = rawContent;
+
+      if (rawContent && isHTML(rawContent)) {
+        contentToSend = extractTextFromHTML(rawContent);
+        const reduction = ((1 - contentToSend.length / rawContent.length) * 100).toFixed(0);
+        setStatus({ type: "working", text: `Step 1/3 — Extracted text (${reduction}% smaller)` });
+      }
+
+      // ── STEP 2: Send to Claude for structuring ──
+      setCurrentStep(1);
+      setStatus({ type: "working", text: "Step 2/3 — Claude analyzing structure..." });
+
       const body = {
-        content: content || undefined,
-        defaultTheme: outputTheme,
-        stream: true,
-        fileBase64: fileBase64 || undefined,
-        fileType: fileType || undefined,
+        content: contentToSend || undefined,
+        fileBase64: hasFile ? fileBase64 : undefined,
+        fileType: hasFile ? fileType : undefined,
       };
 
       const response = await fetch("/api/doc-format", {
@@ -164,12 +264,12 @@ export default function DocFormatterView() {
         throw new Error(err.error || "API request failed");
       }
 
+      // Stream and collect JSON
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let fullHTML = "";
+      let jsonStr = "";
       let buffer = "";
-      let lastPreviewUpdate = 0;
-      const PREVIEW_INTERVAL = 1500; // update preview every 1.5s
+      const startTime = Date.now();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -183,7 +283,7 @@ export default function DocFormatterView() {
             if (data === "[DONE]") continue;
             try {
               const parsed = JSON.parse(data);
-              if (parsed.text) fullHTML += parsed.text;
+              if (parsed.text) jsonStr += parsed.text;
               if (parsed.error) throw new Error(parsed.error);
             } catch (e) {
               if (e.message && e.message !== "Unexpected end of JSON input") throw e;
@@ -191,19 +291,30 @@ export default function DocFormatterView() {
           }
         }
 
-        // Live progress: update status + periodic preview
-        const kbSoFar = (fullHTML.length / 1024).toFixed(1);
-        setStatus({ type: "working", text: `Streaming from Claude... ${kbSoFar} KB received` });
-
-        const now = Date.now();
-        if (now - lastPreviewUpdate > PREVIEW_INTERVAL && fullHTML.length > 100) {
-          lastPreviewUpdate = now;
-          setOutputHTML(fullHTML);
-        }
+        // Live progress
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
+        const kbReceived = (jsonStr.length / 1024).toFixed(1);
+        setStatus({ type: "working", text: `Step 2/3 — Structuring content... ${kbReceived} KB (${elapsed}s)` });
       }
 
-      setOutputHTML(fullHTML);
-      setStatus({ type: "ready", text: `Formatted — ${(fullHTML.length / 1024).toFixed(1)} KB output` });
+      // ── STEP 3: Parse JSON + render template (client-side, instant) ──
+      setCurrentStep(2);
+      setStatus({ type: "working", text: "Step 3/3 — Rendering document..." });
+
+      // Clean JSON (remove markdown fences if present)
+      let cleanJSON = jsonStr.trim();
+      if (cleanJSON.startsWith("```")) {
+        cleanJSON = cleanJSON.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+      }
+
+      const structured = JSON.parse(cleanJSON);
+      const html = buildThemedDocument(structured, outputTheme);
+
+      setOutputHTML(html);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      setCurrentStep(3); // all done
+      setStatus({ type: "ready", text: `Done in ${elapsed}s — ${(html.length / 1024).toFixed(1)} KB document` });
+
     } catch (err) {
       setStatus({ type: "error", text: err.message });
     } finally {
@@ -211,12 +322,17 @@ export default function DocFormatterView() {
     }
   }, [inputMode, textContent, fileContent, fileBase64, fileType, outputTheme]);
 
-  // Copy HTML
-  const copyHTML = useCallback(() => {
-    navigator.clipboard.writeText(outputHTML);
+  // Re-render with new theme (instant, no API call)
+  const switchTheme = useCallback((themeId) => {
+    setOutputTheme(themeId);
+    if (outputHTML) {
+      // Re-render the existing outputHTML with new theme by swapping data-theme attribute
+      setOutputHTML(prev => prev.replace(/data-theme="[^"]*"/, `data-theme="${themeId}"`));
+    }
   }, [outputHTML]);
 
-  // Download HTML
+  // Actions
+  const copyHTML = useCallback(() => navigator.clipboard.writeText(outputHTML), [outputHTML]);
   const downloadHTML = useCallback(() => {
     const blob = new Blob([outputHTML], { type: "text/html" });
     const a = document.createElement("a");
@@ -225,15 +341,12 @@ export default function DocFormatterView() {
     a.click();
     URL.revokeObjectURL(a.href);
   }, [outputHTML]);
-
-  // Open in new tab
   const openNewTab = useCallback(() => {
     const w = window.open();
     w.document.write(outputHTML);
     w.document.close();
   }, [outputHTML]);
 
-  // Drop handlers
   const onDrop = useCallback((e) => {
     e.preventDefault();
     setDragOver(false);
@@ -243,7 +356,6 @@ export default function DocFormatterView() {
     }
   }, [handleFile]);
 
-  // Status dot color
   const statusColor = status.type === "ready" ? T.success
     : status.type === "working" ? T.warn
     : status.type === "error" ? T.error
@@ -253,7 +365,6 @@ export default function DocFormatterView() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 0 }}>
       {/* ── INPUT SECTION ── */}
       <div className="glass-surface" style={{ borderRadius: 14, padding: "14px 16px", marginBottom: 12, boxShadow: "var(--s-glass)" }}>
-        {/* Mode toggle + theme selector */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Sparkles size={13} color={T.accent} />
@@ -263,13 +374,12 @@ export default function DocFormatterView() {
               <ModeBtn active={inputMode === "upload"} onClick={() => setInputMode("upload")} icon={<Upload size={11} />} label="Upload" />
             </div>
           </div>
-          {/* Output theme dots */}
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <span style={{ fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: ".08em", marginRight: 4 }}>Theme</span>
             {THEMES.map(t => (
               <div
                 key={t.id}
-                onClick={() => setOutputTheme(t.id)}
+                onClick={() => switchTheme(t.id)}
                 title={t.label}
                 style={{
                   width: 14, height: 14, borderRadius: "50%", background: t.color, cursor: "pointer",
@@ -281,7 +391,6 @@ export default function DocFormatterView() {
           </div>
         </div>
 
-        {/* Paste mode */}
         {inputMode === "paste" && (
           <textarea
             value={textContent}
@@ -295,7 +404,6 @@ export default function DocFormatterView() {
           />
         )}
 
-        {/* Upload mode */}
         {inputMode === "upload" && (
           <div
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -309,12 +417,8 @@ export default function DocFormatterView() {
             }}
           >
             <Upload size={22} color={dragOver ? T.accent : T.muted} style={{ marginBottom: 6 }} />
-            <div style={{ color: T.text, fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
-              Drop a file here or click to browse
-            </div>
-            <div style={{ color: T.muted, fontSize: 11 }}>
-              PDF, DOCX, HTML, TXT, MD, CSV, JSON, PNG, JPG
-            </div>
+            <div style={{ color: T.text, fontSize: 13, fontWeight: 500, marginBottom: 4 }}>Drop a file here or click to browse</div>
+            <div style={{ color: T.muted, fontSize: 11 }}>PDF, DOCX, HTML, TXT, MD, CSV, JSON, PNG, JPG</div>
             <input
               ref={fileInputRef}
               type="file"
@@ -325,14 +429,12 @@ export default function DocFormatterView() {
           </div>
         )}
 
-        {/* File info badge */}
         {inputMode === "upload" && fileInfo && (
           <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: T.bgCard, borderRadius: 8, fontSize: 11, color: T.muted }}>
             <FileTextIcon size={12} /> {fileInfo.name} ({(fileInfo.size / 1024).toFixed(1)} KB)
           </div>
         )}
 
-        {/* Format button */}
         <button
           onClick={formatDocument}
           disabled={processing}
@@ -348,6 +450,25 @@ export default function DocFormatterView() {
           {processing ? "Formatting..." : "Format with Claude"}
         </button>
 
+        {/* Progress steps */}
+        {processing && (
+          <div style={{ marginTop: 10, display: "flex", gap: 6 }}>
+            {STEPS.map((step, i) => (
+              <div key={step.key} style={{
+                flex: 1, padding: "6px 8px", borderRadius: 8, fontSize: 10, fontWeight: 600,
+                background: i <= currentStep ? T.accentBg : T.bgCard,
+                color: i === currentStep ? T.accent : i < currentStep ? T.success : T.muted,
+                border: `1px solid ${i === currentStep ? T.borderAcc : T.border}`,
+                display: "flex", alignItems: "center", gap: 4, justifyContent: "center",
+                transition: "all .3s",
+              }}>
+                {i < currentStep ? "\u2713" : i === currentStep ? <Loader2 size={10} style={{ animation: "spin 1s linear infinite" }} /> : (i + 1)}
+                {" "}{step.label}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Status bar */}
         <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: T.muted }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: statusColor, flexShrink: 0, animation: status.type === "working" ? "pulse 1.5s infinite" : "none" }} />
@@ -357,7 +478,6 @@ export default function DocFormatterView() {
 
       {/* ── OUTPUT SECTION ── */}
       <div className="glass-surface" style={{ flex: 1, borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "var(--s-glass)", minHeight: 200 }}>
-        {/* Action bar */}
         {outputHTML && (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px", borderBottom: `1px solid ${T.border}` }}>
             <span style={{ fontSize: 11, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: ".06em" }}>Preview</span>
@@ -369,7 +489,6 @@ export default function DocFormatterView() {
           </div>
         )}
 
-        {/* Preview iframe or empty state */}
         {outputHTML ? (
           <iframe
             srcDoc={outputHTML}
@@ -390,21 +509,17 @@ export default function DocFormatterView() {
   );
 }
 
-// ── Small sub-components ──
+// ── Sub-components ──
 
 function ModeBtn({ active, onClick, icon, label }) {
   return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex", alignItems: "center", gap: 4,
-        padding: "4px 10px", borderRadius: 16, fontSize: 11, fontWeight: 600,
-        border: `1px solid ${active ? T.borderAcc : T.border}`,
-        background: active ? T.accentBg : "transparent",
-        color: active ? T.accent : T.muted,
-        cursor: "pointer", transition: "all .2s",
-      }}
-    >
+    <button onClick={onClick} style={{
+      display: "flex", alignItems: "center", gap: 4,
+      padding: "4px 10px", borderRadius: 16, fontSize: 11, fontWeight: 600,
+      border: `1px solid ${active ? T.borderAcc : T.border}`,
+      background: active ? T.accentBg : "transparent",
+      color: active ? T.accent : T.muted, cursor: "pointer", transition: "all .2s",
+    }}>
       {icon} {label}
     </button>
   );
@@ -412,16 +527,13 @@ function ModeBtn({ active, onClick, icon, label }) {
 
 function ActionBtn({ icon, label, onClick }) {
   return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex", alignItems: "center", gap: 4,
-        padding: "4px 10px", borderRadius: 6, fontSize: 10, fontWeight: 600,
-        border: `1px solid ${T.border}`, background: "transparent",
-        color: T.muted, cursor: "pointer", transition: "all .2s",
-        textTransform: "uppercase", letterSpacing: ".04em",
-      }}
-    >
+    <button onClick={onClick} style={{
+      display: "flex", alignItems: "center", gap: 4,
+      padding: "4px 10px", borderRadius: 6, fontSize: 10, fontWeight: 600,
+      border: `1px solid ${T.border}`, background: "transparent",
+      color: T.muted, cursor: "pointer", transition: "all .2s",
+      textTransform: "uppercase", letterSpacing: ".04em",
+    }}>
       {icon} {label}
     </button>
   );
