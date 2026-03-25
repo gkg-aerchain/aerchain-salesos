@@ -212,8 +212,8 @@ nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-con
         <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
           <div class="drop-zone-icon">+</div>
           <div class="drop-zone-text">Drop a file here or click to browse</div>
-          <div class="drop-zone-sub">HTML, TXT, MD, CSV, JSON, PDF, DOCX</div>
-          <input type="file" class="file-input" id="fileInput" accept=".html,.htm,.txt,.md,.csv,.json,.pdf,.docx,.pptx,.doc,.ppt,.rtf,.xml">
+          <div class="drop-zone-sub">HTML, TXT, MD, CSV, JSON, PDF, DOCX, PNG, JPG</div>
+          <input type="file" class="file-input" id="fileInput" accept=".html,.htm,.txt,.md,.csv,.json,.pdf,.docx,.pptx,.doc,.ppt,.rtf,.xml,.png,.jpg,.jpeg,.gif,.webp">
         </div>
 
         <div class="file-name" id="fileName"></div>
@@ -267,6 +267,8 @@ let currentMode = 'paste';
 let outputTheme = 'purple-glass';
 let outputHTML = '';
 let fileContent = '';
+let fileBase64 = '';
+let fileType = '';
 
 // Lazy-load PDF.js from CDN
 let _pdfjsLib = null;
@@ -348,9 +350,20 @@ async function handleFile(file) {
   fn.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
   fn.classList.add('visible');
 
+  // Helper: convert file to base64
+  async function toBase64(f) {
+    const buf = await f.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+
   if (file.name.match(/\.(pdf)$/i)) {
-    // PDF: use pdf.js to extract text client-side
+    // PDF: try text extraction first, fall back to sending raw PDF to Claude
     setStatus('working', 'Extracting text from PDF...');
+    fileBase64 = '';
+    fileType = '';
     try {
       const pdfjsLib = await loadPdfJs();
       const arrayBuffer = await file.arrayBuffer();
@@ -362,12 +375,21 @@ async function handleFile(file) {
         text += content.items.map(item => item.str).join(' ') + '\n\n';
       }
       fileContent = text.trim();
-      if (!fileContent) throw new Error('No text found in PDF');
+      if (!fileContent) throw new Error('no-text');
       setStatus('ready', `Extracted ${pdf.numPages} pages — ready to format`);
     } catch (err) {
-      setStatus('error', 'PDF extraction failed: ' + err.message + '. Try pasting the text instead.');
+      // Text extraction failed (scanned/image PDF) — send raw PDF to Claude
       fileContent = '';
+      fileBase64 = await toBase64(file);
+      fileType = 'application/pdf';
+      setStatus('ready', 'PDF loaded (will send directly to Claude) — ready to format');
     }
+  } else if (file.name.match(/\.(png|jpe?g|gif|webp)$/i)) {
+    // Images: send directly to Claude
+    fileContent = '';
+    fileBase64 = await toBase64(file);
+    fileType = file.type || 'image/png';
+    setStatus('ready', 'Image loaded — ready to format');
   } else if (file.name.match(/\.(docx)$/i)) {
     // DOCX: use mammoth.js to extract text client-side
     setStatus('working', 'Extracting text from DOCX...');
@@ -404,7 +426,7 @@ function setStatus(state, text) {
 async function formatDocument() {
   const content = currentMode === 'paste' ? document.getElementById('textInput').value.trim() : fileContent.trim();
 
-  if (!content) {
+  if (!content && !fileBase64) {
     setStatus('error', 'No content provided');
     return;
   }
@@ -423,7 +445,7 @@ async function formatDocument() {
     const response = await fetch('/api/doc-format', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, defaultTheme: outputTheme, stream: true }),
+      body: JSON.stringify({ content: content || undefined, defaultTheme: outputTheme, stream: true, fileBase64: fileBase64 || undefined, fileType: fileType || undefined }),
     });
 
     if (!response.ok) {
