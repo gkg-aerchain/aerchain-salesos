@@ -60,7 +60,7 @@ export class ModuleErrorBoundary extends Component {
   }
 }
 
-export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, processStatus, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, trashedFiles, onRestoreFile, onPermanentDelete, onEmptyTrash, allSavedFiles, allTrashedFiles, onEmptyAllTrash, onRestoreFileGlobal, onPermanentDeleteGlobal, onEmptyModuleTrash, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache }) {
+export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSync, syncing, claudeMemory, onClearMemory, onFilesSelected, uploadedFiles, processing, onProcess, processStatus, theme, setTheme, moduleFiles, onCreateFile, onDuplicateFile, onDeleteFile, trashedFiles, onRestoreFile, onPermanentDelete, onEmptyTrash, allSavedFiles, allTrashedFiles, onEmptyAllTrash, onRestoreFileGlobal, onPermanentDeleteGlobal, onEmptyModuleTrash, referenceTokens, onSaveToLibrary, onLoadReference, extractorCache, setExtractorCache, onProcessWithClaude }) {
   if (moduleKey === "settings") return <SettingsView claudeMemory={claudeMemory} onClearMemory={onClearMemory} theme={theme} setTheme={setTheme} savedFiles={allSavedFiles} trashedFiles={allTrashedFiles} onEmptyAllTrash={onEmptyAllTrash} onRestoreFile={onRestoreFileGlobal} onPermanentDelete={onPermanentDeleteGlobal} onEmptyModuleTrash={onEmptyModuleTrash} />;
 
   if (moduleKey === "design-extractor") {
@@ -148,7 +148,7 @@ export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSy
   if (ViewComponent) {
     return (
       <Suspense fallback={<Spinner />}>
-        <ViewComponent data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} processStatus={processStatus} />
+        <ViewComponent data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} processStatus={processStatus} onProcessWithClaude={onProcessWithClaude} />
       </Suspense>
     );
   }

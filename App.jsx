@@ -787,6 +787,10 @@ body { margin: 0; padding: 0; }
                   onLoadReference={(file) => setReferenceTokens(file.tokens)}
                   extractorCache={extractorCache}
                   setExtractorCache={setExtractorCache}
+                  onProcessWithClaude={async (prompt, context) => {
+                    const { callClaude } = await import("./lib/api.js");
+                    return callClaude(prompt, { system: "You are a pricing logic editor for Aerchain SalesOS. Follow instructions precisely.", maxTokens: 16000 });
+                  }}
                 />
               </ModuleErrorBoundary>
             </div>
