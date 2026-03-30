@@ -154,6 +154,58 @@ const CURRICULUM = [
       { t: "ZSN", d: "Zycus free supplier network vs. Ariba's $1,495/yr + fees." },
     ],
   },
+  {
+    id: "m10", title: "Procurement Functional Processes", subtitle: "10 Disciplines — The Complete Reference", time: 45, icon: "📚",
+    weight: { sales: 4, consulting: 5, engineering: 3 },
+    files: ["01-procurement-foundations/procurement-functional-processes.md"],
+    quiz: [
+      { q: "How many procurement disciplines are covered in the reference?", opts: ["5", "8", "10", "12"], a: 2 },
+      { q: "What is a Punchout Catalog?", opts: ["Internal catalog", "Supplier-hosted catalog accessed via standard protocols", "PDF price list", "Email-based quote"], a: 1 },
+      { q: "What does FSM track?", opts: ["Supplier performance", "Forecasted → realized savings stages", "Invoice matching", "Contract renewals"], a: 1 },
+      { q: "Rockwell Automation's sourcing cycle reduction?", opts: ["25%", "45%", "65%", "80%"], a: 2 },
+      { q: "What is Guided Buying?", opts: ["Manual vendor selection", "AI auto-classifies requests & steers to approved vendors", "Catalog browsing", "Auction-based purchasing"], a: 1 },
+    ],
+    cards: [
+      { t: "Flexi Price Builder", d: "Import Excel complex pricing tables with formulae for BOM-based sourcing. Critical for manufacturing." },
+      { t: "Guided Buying", d: "AI auto-classifies off-catalog requests to correct category, steers to approved vendors. 500+ pre-built forms." },
+      { t: "FSM (Financial Savings Mgmt)", d: "Bridges procurement-finance disconnect. Stages: Forecasted → Negotiated → Realized → Budget-Down." },
+      { t: "Supplier Development", d: "Final SRM lifecycle stage — improve underperforming suppliers rather than replacing them." },
+      { t: "360° Supplier View", d: "Unified dossier: spend, contracts, events, performance, POs, invoices, risk — one dashboard." },
+      { t: "Dynamic Discounting", d: "Early payment in exchange for discount. Improves working capital for both buyer and supplier." },
+    ],
+  },
+  {
+    id: "m11", title: "SalesOS & Go-to-Market", subtitle: "AI-Powered Sales Operating System", time: 20, icon: "📡",
+    weight: { sales: 5, consulting: 3, engineering: 2 },
+    files: ["04-sales-gtm/index.md"],
+    quiz: [
+      { q: "How many AI modules does SalesOS have?", opts: ["5", "7", "9", "12"], a: 2 },
+      { q: "Proposal turnaround with SalesOS?", opts: ["2 days", "1 day", "2 hours", "30 minutes"], a: 2 },
+      { q: "How many connected data sources power SalesOS?", opts: ["3", "4", "6", "8"], a: 2 },
+    ],
+    cards: [
+      { t: "SalesOS", d: "9 AI modules across 3 pillars, 6 connected sources. Zero manual data entry." },
+      { t: "Proposal Forge", d: "AI-generated proposals from CRM + Gmail context. 2 hours vs 2 weeks (98% reduction)." },
+      { t: "Demo Builder", d: "Custom demo environments from a prompt with live AI transactions. Days → 2–4 hours." },
+      { t: "Pipeline Sentinel", d: "Continuous deal health monitoring with automated risk alerts. 3x faster detection." },
+    ],
+  },
+  {
+    id: "m12", title: "Reference: Categories & Glossary", subtitle: "Category Management + Procurement A–Z", time: 15, icon: "📖",
+    weight: { sales: 3, consulting: 4, engineering: 2 },
+    files: ["01-procurement-foundations/category-management.md", "01-procurement-foundations/spend-analysis.md", "07-glossary/index.md"],
+    quiz: [
+      { q: "Kraljic Matrix quadrants are based on?", opts: ["Price × Quality", "Profit impact × Supply risk", "Volume × Geography", "Speed × Complexity"], a: 1 },
+      { q: "What is MRO?", opts: ["Master Record Object", "Maintenance, Repair, Operations", "Market Rate Optimization", "Managed Resource Ordering"], a: 1 },
+    ],
+    cards: [
+      { t: "Direct Spend", d: "Materials that become part of the finished product. Managed by supply chain/operations." },
+      { t: "Indirect Spend", d: "Everything else — IT, facilities, services, MRO. High transaction volume, lower per-unit value." },
+      { t: "CBAM", d: "Carbon Border Adjustment Mechanism — EU regulation imposing carbon costs on imports." },
+      { t: "CSDDD", d: "Corporate Sustainability Due Diligence Directive — EU mandate on supply chain human rights/environmental impacts." },
+      { t: "Scope 3 Emissions", d: "Indirect GHG emissions in the value chain, including upstream supply." },
+    ],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════
