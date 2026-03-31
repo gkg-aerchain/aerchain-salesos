@@ -224,45 +224,111 @@ async function fetchKBFile(path, token) {
 // Markdown → sections parser
 // ═══════════════════════════════════════════════════════════════
 function mdToSections(md) {
-  const stripped = md.replace(/^---[\s\S]*?---\s*/, "");
-  const parts = stripped.split(/^## /m).filter(Boolean);
+  // Strip YAML frontmatter (handles \r\n line endings too)
+  const stripped = md.replace(/^---[\s\S]*?---\s*\n?/, "").trim();
+  
+  // Extract the main title
+  const titleMatch = stripped.match(/^# (.+)/m);
+  const mainTitle = titleMatch ? titleMatch[1].trim() : "";
+  
+  // Get content after the # title
+  const afterTitle = titleMatch ? stripped.slice(stripped.indexOf("\n", stripped.indexOf(titleMatch[0])) + 1).trim() : stripped;
+  
+  // Split by ## headers
+  const parts = afterTitle.split(/^## /m);
   const sections = [];
-  for (const p of parts) {
-    const lines = p.split("\n");
+  
+  // First part (before first ##) is intro content
+  const intro = parts[0]?.trim();
+  if (intro && intro.length > 20) {
+    sections.push({ title: mainTitle || "Overview", body: intro });
+  }
+  
+  // Remaining parts are ## sections
+  for (let i = 1; i < parts.length; i++) {
+    const lines = parts[i].split("\n");
     const title = lines[0].replace(/^#+\s*/, "").trim();
     const body = lines.slice(1).join("\n").trim();
     if (title && body) sections.push({ title, body });
   }
+  
+  // Fallback: if no sections found at all
   if (!sections.length) {
-    const title = (stripped.match(/^# (.+)/m) || ["", "Content"])[1].trim();
-    const body = stripped.replace(/^# .+\n/, "").trim();
-    if (body) sections.push({ title, body });
+    sections.push({ title: mainTitle || "Content", body: afterTitle || stripped });
   }
+  
   return sections;
 }
 
 function renderMd(text) {
   if (!text) return "";
-  return text
+  
+  // Track which table row is first (for header styling)
+  let tableRowIndex = 0;
+  
+  let html = text
+    // HTML escape (must come first)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    // Headers
     .replace(/^#### (.+)$/gm, `<div style="font-size:13px;font-weight:700;color:${T.text};margin:16px 0 6px">$1</div>`)
     .replace(/^### (.+)$/gm, `<div style="font-size:14px;font-weight:700;color:${T.text};margin:20px 0 8px">$1</div>`)
-    .replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${T.text};font-weight:700">$1</strong>`)
-    .replace(/\*([^*]+)\*/g, "<em>$1</em>")
-    .replace(/^\|(.+)\|$/gm, (m) => {
-      const cells = m.split("|").filter(Boolean).map(c => c.trim());
-      if (cells.every(c => /^[-:]+$/.test(c))) return "<!--sep-->";
-      return "<tr>" + cells.map(c => `<td style="padding:6px 10px;border-bottom:1px solid ${T.border};font-size:12px">${c}</td>`).join("") + "</tr>";
+    // Inline code (before bold, so `**code**` works)
+    .replace(/`([^`]+)`/g, `<code style="background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;font-size:12px;font-family:monospace;color:${T.accent}">$1</code>`)
+    // Bold (use lazy match for better handling)
+    .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${T.text};font-weight:700">$1</strong>`)
+    // Italic
+    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>")
+    // Images: ![alt](url)
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, `<div style="margin:12px 0;text-align:center"><img src="$2" alt="$1" style="max-width:100%;border-radius:8px;border:1px solid ${T.border}" /><div style="font-size:11px;color:${T.mutedSoft};margin-top:4px">$1</div></div>`)
+    // Links: [text](url)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, `<a href="$2" target="_blank" style="color:${T.accent};text-decoration:none;border-bottom:1px solid ${T.accent}40">$1</a>`)
+    // Wiki-links: [[path/name|display]] or [[path/name]] → readable name
+    .replace(/\[\[([^\]|]*)\|([^\]]*)\]\]/g, `<span style="color:${T.accent};font-weight:500">$2</span>`)
+    .replace(/\[\[([^\]]*)\]\]/g, (_, path) => {
+      const name = path.split("/").pop().replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      return `<span style="color:${T.accent};font-weight:500">${name}</span>`;
     })
-    .replace(/^&gt; (.+)$/gm, `<div style="border-left:3px solid ${T.accent};padding:6px 12px;margin:10px 0;color:${T.muted};font-style:italic;font-size:12px">$1</div>`)
-    .replace(/^- (.+)$/gm, '<div style="padding-left:14px;margin:3px 0;font-size:13px">• $1</div>')
-    .replace(/^(\d+)\. (.+)$/gm, `<div style="padding-left:14px;margin:3px 0;font-size:13px"><strong style="color:${T.accent}">$1.</strong> $2</div>`)
-    .replace(/^---$/gm, `<hr style="border:none;border-top:1px solid ${T.border};margin:16px 0">`)
-    .replace(/\[\[([^\]|]*\|)?([^\]]*)\]\]/g, "$2")
-    .replace(/\n\n/g, '<div style="margin:10px 0"></div>')
-    .replace(/\n/g, "<br>")
-    .replace(/((?:<tr>.*?<\/tr>\s*(?:<!--sep-->\s*)?)+)/g, '<div style="overflow-x:auto;margin:10px 0"><table style="width:100%;border-collapse:collapse">$1</table></div>')
-    .replace(/<!--sep-->/g, "");
+    // Blockquotes (handle escaped >)
+    .replace(/^&gt; (.+)$/gm, `<div style="border-left:3px solid ${T.accent};padding:8px 14px;margin:10px 0;color:${T.muted};font-style:italic;font-size:13px;background:rgba(99,102,241,0.04);border-radius:0 6px 6px 0">$1</div>`)
+    // Bullet lists
+    .replace(/^- (.+)$/gm, `<div style="padding-left:16px;margin:3px 0;font-size:13px;position:relative"><span style="position:absolute;left:0;color:${T.accent}">•</span> $1</div>`)
+    // Numbered lists
+    .replace(/^(\d+)\. (.+)$/gm, `<div style="padding-left:16px;margin:3px 0;font-size:13px"><strong style="color:${T.accent};font-weight:700;margin-right:4px">$1.</strong>$2</div>`)
+    // Horizontal rules
+    .replace(/^---$/gm, `<hr style="border:none;border-top:1px solid ${T.border};margin:16px 0">`);
+
+  // Tables — two-pass: first convert rows, then wrap
+  html = html.replace(/^\|(.+)\|$/gm, (m) => {
+    const cells = m.split("|").filter(Boolean).map(c => c.trim());
+    // Separator row
+    if (cells.every(c => /^[-:]+$/.test(c))) return "<!--tablesep-->";
+    tableRowIndex++;
+    return "<tr>" + cells.map(c => `<td style="padding:7px 10px;border-bottom:1px solid ${T.border};font-size:12px;line-height:1.5">${c}</td>`).join("") + "</tr>";
+  });
+  
+  // Style first row of each table as header
+  html = html.replace(/((?:<tr>.*?<\/tr>\s*(?:<!--tablesep-->\s*)?)+)/g, (block) => {
+    // Replace first <tr>...</tr> with header styling
+    let first = true;
+    const styled = block.replace(/<tr>(.*?)<\/tr>/g, (row, inner) => {
+      if (first) {
+        first = false;
+        const headerCells = inner.replace(/<td /g, `<td style="padding:8px 10px;border-bottom:2px solid ${T.accent}40;font-size:11px;font-weight:700;color:${T.text};text-transform:uppercase;letter-spacing:0.5px;line-height:1.5" `
+          .replace(/style="[^"]*"/g, ''));
+        // Simpler: just restyle the td tags for headers
+        return `<tr style="background:rgba(99,102,241,0.06)">${inner.replace(/style="[^"]*"/g, `style="padding:8px 10px;border-bottom:2px solid ${T.accent};font-size:11px;font-weight:700;color:${T.text};letter-spacing:0.3px"`)}</tr>`;
+      }
+      return `<tr>${inner}</tr>`;
+    });
+    return `<div style="overflow-x:auto;margin:12px 0;border-radius:8px;border:1px solid ${T.border}"><table style="width:100%;border-collapse:collapse">${styled}</table></div>`;
+  });
+  html = html.replace(/<!--tablesep-->/g, "");
+
+  // Paragraph spacing
+  html = html.replace(/\n\n/g, '<div style="margin:10px 0"></div>');
+  html = html.replace(/\n/g, "<br>");
+
+  return html;
 }
 
 // ═══════════════════════════════════════════════════════════════
