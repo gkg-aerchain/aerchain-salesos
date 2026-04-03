@@ -1,0 +1,116 @@
+{
+  "version": 2,
+  "label": "Aerchain Standard Pricing v2",
+
+  "feeStructure": {
+    "platformPct": 0.45,
+    "workflowPct": 0.55
+  },
+
+  "spendTiers": [
+    { "spend": 100,  "fee": 100  },
+    { "spend": 250,  "fee": 225  },
+    { "spend": 500,  "fee": 400  },
+    { "spend": 750,  "fee": 575  },
+    { "spend": 1000, "fee": 750  }
+  ],
+  "bpsBelow100M": 10.0,
+  "bpsAbove1B": 7.0,
+
+  "products": {
+    "intake-to-award":  { "label": "Intake to Award",  "sub": "Autonomous & Strategic Sourcing", "multiplier": 1.00, "base": true },
+    "procure-to-pay":   { "label": "Procure to Pay",   "sub": "PO, Invoice, Payments",           "multiplier": 0.75 },
+    "spend-insights":   { "label": "Spend Insights",   "sub": "Analytics & Intelligence",        "multiplier": 0.40 }
+  },
+
+  "entityTiers": [
+    { "label": "1",    "min": 1,  "max": 1,   "multiplier": 1.00 },
+    { "label": "2-3",  "min": 2,  "max": 3,   "multiplier": 1.15 },
+    { "label": "4-10", "min": 4,  "max": 10,  "multiplier": 1.30 },
+    { "label": "10+",  "min": 11, "max": 999, "multiplier": 1.50 }
+  ],
+
+  "clientTiers": {
+    "mid-market":       { "label": "Mid-Market",       "minSpend": 0,   "maxSpend": 250,  "powerUsers": 10,  "lightUsers": 50,   "entities": 1,  "implMultiplier": 0.60, "implDuration": "3-4 months" },
+    "enterprise":       { "label": "Enterprise",       "minSpend": 250, "maxSpend": 750,  "powerUsers": 25,  "lightUsers": 150,  "entities": 2,  "implMultiplier": 0.85, "implDuration": "4-6 months" },
+    "large-enterprise": { "label": "Large Enterprise", "minSpend": 750, "maxSpend": 99999,"powerUsers": 40,  "lightUsers": 350,  "entities": 11, "implMultiplier": 1.00, "implDuration": "6-8 months" }
+  },
+
+  "channels": [
+    { "id": "catalog",           "label": "Catalog",               "weight": 0.06, "defaultTxnPct": 0.30, "complexity": 2  },
+    { "id": "self-service-po",   "label": "Self-Service PO",       "weight": 0.02, "defaultTxnPct": 0.10, "complexity": 3  },
+    { "id": "contract-fw",       "label": "Contract Framework",    "weight": 0.03, "defaultTxnPct": 0.05, "complexity": 8  },
+    { "id": "rc-invoice",        "label": "RC Invoice",            "weight": 0.04, "defaultTxnPct": 0.05, "complexity": 4  },
+    { "id": "non-po-spend",      "label": "Non-PO Spend",          "weight": 0.01, "defaultTxnPct": 0.05, "complexity": 4  },
+    { "id": "auto-sourcing",     "label": "Autonomous Sourcing",   "weight": 0.15, "defaultTxnPct": 0.20, "complexity": 21 },
+    { "id": "auto-negotiation",  "label": "Autonomous Negotiation","weight": 0.09, "defaultTxnPct": 0.05, "complexity": 15 },
+    { "id": "tactical",          "label": "Tactical Sourcing",     "weight": 0.23, "defaultTxnPct": 0.15, "complexity": 28 },
+    { "id": "strategic",         "label": "Strategic Sourcing",    "weight": 0.37, "defaultTxnPct": 0.05, "complexity": 33 }
+  ],
+
+  "txnVolumeTiers": [
+    { "spend": 100,  "txnPerMonth": 1000  },
+    { "spend": 250,  "txnPerMonth": 2500  },
+    { "spend": 500,  "txnPerMonth": 5500  },
+    { "spend": 750,  "txnPerMonth": 7000  },
+    { "spend": 1000, "txnPerMonth": 10000 }
+  ],
+
+  "integrations": [
+    { "id": "sap",        "label": "SAP S/4HANA",    "standard": true,  "annualFee": 0 },
+    { "id": "oracle",     "label": "Oracle Fusion",   "standard": true,  "annualFee": 0 },
+    { "id": "servicenow", "label": "ServiceNow",      "standard": true,  "annualFee": 0 },
+    { "id": "netsuite",   "label": "NetSuite",        "standard": false, "annualFee": 18000 },
+    { "id": "coupa",      "label": "Coupa",           "standard": false, "annualFee": 18000 },
+    { "id": "docusign",   "label": "DocuSign / CLM",  "standard": false, "annualFee": 18000 },
+    { "id": "sso",        "label": "SSO / SCIM",      "standard": true,  "annualFee": 0 },
+    { "id": "custom-api", "label": "Custom API",      "standard": false, "annualFee": 18000 }
+  ],
+
+  "implSections": {
+    "core":            { "label": "Core Implementation",  "alwaysOn": true,  "roles": [
+      { "title": "Solution Architect",        "hc": 1, "rate": 24000, "months": 1   },
+      { "title": "PC Team Lead",              "hc": 1, "rate": 9000,  "months": 3   },
+      { "title": "Project Manager",           "hc": 1, "rate": 9000,  "months": 6   },
+      { "title": "Product Consultant",        "hc": 1, "rate": 9000,  "months": 5   },
+      { "title": "Assoc. Product Consultant", "hc": 2, "rate": 8000,  "months": 6   }
+    ]},
+    "integrations":    { "label": "Integrations",         "alwaysOn": false, "roles": [
+      { "title": "Integration Lead",    "hc": 1, "rate": 9000, "months": 2 },
+      { "title": "Integration Engineer","hc": 1, "rate": 9000, "months": 2 }
+    ]},
+    "qa":              { "label": "QA & Validation",      "alwaysOn": false, "roles": [
+      { "title": "QA Lead",     "hc": 1, "rate": 9000, "months": 1.5 },
+      { "title": "QA Engineer", "hc": 2, "rate": 7000, "months": 1.5 }
+    ]},
+    "customerSuccess": { "label": "Customer Success",     "alwaysOn": false, "roles": [
+      { "title": "Customer Success Manager", "hc": 1, "rate": 8000, "months": 3 },
+      { "title": "Support Specialist",       "hc": 2, "rate": 4000, "months": 3 },
+      { "title": "Support Engineer",         "hc": 2, "rate": 7000, "months": 3 }
+    ]}
+  },
+
+  "addOns": [
+    { "id": "onsite",        "label": "On-Site Deployment",       "price": 12000, "unit": "per person/month" },
+    { "id": "custom-fields", "label": "Additional Custom Fields", "price": 5000,  "unit": "per field" },
+    { "id": "extra-integ",   "label": "Additional Integration",   "price": 18000, "unit": "per integration" },
+    { "id": "ext-hypercare", "label": "Extended Hypercare",       "price": 28000, "unit": "per month" },
+    { "id": "training",      "label": "Training Sessions",        "price": 5000,  "unit": "per session" },
+    { "id": "data-migration","label": "Data Migration",           "price": 15000, "unit": "per source" },
+    { "id": "change-request","label": "Change Request",           "price": 10000, "unit": "per CR" }
+  ],
+
+  "dealDefaults": {
+    "discount": 0,
+    "termYears": 3,
+    "escalation": 10
+  },
+
+  "gainShare": {
+    "enabled": false,
+    "defaultPct": 5,
+    "cap": 2.0,
+    "floor": 0,
+    "reconciliation": "quarterly"
+  }
+}
