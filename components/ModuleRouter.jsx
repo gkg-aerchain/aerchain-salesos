@@ -10,6 +10,7 @@ const FileWorkspace = lazy(() => import("./FileWorkspace.jsx"));
 
 const MODULE_VIEWS = {
   "pricing-calculator": lazy(() => import("../views/PricingCalcView.jsx")),
+  "pricing-calculator-v2": lazy(() => import("../views/PricingCalcV2View.jsx")),
   "proposal-generator": lazy(() => import("../views/ProposalBuilderView.jsx")),
   "design-extractor": null, // handled specially (has FileWorkspace + extractor)
   "doc-formatter": lazy(() => import("../views/DocFormatterView.jsx")),
@@ -114,7 +115,7 @@ export const ModuleContent = memo(function ModuleContent({ moduleKey, data, onSy
 
   // Pricing Calculator has its own full UI — skip FileWorkspace wrapper
   const ViewComponent = MODULE_VIEWS[moduleKey];
-  if (ViewComponent && moduleKey === "pricing-calculator") {
+  if (ViewComponent && (moduleKey === "pricing-calculator" || moduleKey === "pricing-calculator-v2")) {
     return (
       <Suspense fallback={<Spinner />}>
         <ViewComponent data={data} onFilesSelected={onFilesSelected} uploadedFiles={uploadedFiles} processing={processing} onProcess={onProcess} processStatus={processStatus} onProcessWithClaude={onProcessWithClaude} />
