@@ -1,0 +1,323 @@
+# Aerchain Pricing Logic v2.0
+
+> **This file is the single source of truth for Pricing Calculator V2.**
+> V2 replaces V1's additive model with a **unified subscription model** where
+> Platform Access and Workflow Fees are two components of ONE total, split by
+> a configurable ratio (default 45/55). Per-transaction prices are DERIVED
+> from the workflow budget, not independently set.
+> V2 also introduces **Gain Share** — an outcome-based pricing layer.
+
+---
+
+## 0. Key Difference from V1
+
+| Aspect | V1 | V2 |
+|--------|----|----|
+| Subscription model | Additive: Platform Fee + Workflow Fees + Integrations (each computed independently) | **Unified**: spend-tier total is THE number, split into Platform + Workflow by ratio |
+| Per-txn prices | Fixed price table by volume tier | **Back-derived** from workflow budget × channel weight / volume |
+| Fee split | Not enforced | **45% Platform / 55% Workflow** (configurable) |
+| Gain share | Not included | **Yes** — outcome-based layer on top of subscription |
+| Config location | Hard-coded in engine + markdown | **JSON config** (`default-config.json`) — edit without code changes |
+
+**Why this matters:** In V1, platform fee and workflow fees can drift apart — you can't guarantee they sum to the spend-tier target. In V2, the total is derived first from spend tiers, then mathematically split — the two components are always internally consistent.
+
+---
+
+## 1. Spend-to-Total-Subscription (North Star)
+
+The **total subscription** is determined by spend under management — the total annual spend entering the Aerchain platform.
+
+### Spend Tiers
+
+| Spend (USD) | Total Subscription (USD) | BPS |
+|-------------|-------------------------|-----|
+| $100M | $100,000 | 10.0 |
+| $250M | $225,000 | 9.0 |
+| $500M | $400,000 | 8.0 |
+| $750M | $575,000 | 7.7 |
+| $1,000M | $750,000 | 7.5 |
+
+### Interpolation Rule
+
+- **Between tiers**: Linear interpolation
+- **Below $100M**: 10 BPS floor
+- **Above $1B**: 7.0 BPS marginal rate
+
+---
+
+## 2. Unified Platform + Workflow Split
+
+Once the total subscription target is computed, it is split into two components by a fixed ratio.
+
+### Fee Structure (Configurable)
+
+```
+Total Subscription = interpolate(spend) × productMult × entityMult
+
+  Platform Access = Total × 45%    (platformPct)
+  Workflow Fees   = Total × 55%    (workflowPct)
+```
+
+The ratio is controlled by `feeStructure.platformPct` and `feeStructure.workflowPct` in `default-config.json`. Default is 45/55.
+
+### Per-Transaction Price Back-Derivation
+
+Each workflow channel gets a fixed **weight** — its share of the workflow budget. Per-transaction price is then reverse-engineered:
+
+```
+channel_budget = workflow_fees × channel_weight
+per_txn_price  = channel_budget / (annual_volume_for_that_channel)
+```
+
+This guarantees that the sum of (channel_volume × per_txn_price) always equals the workflow fee target.
+
+---
+
+## 3. Channel Weights & Default Transaction Split
+
+| Channel | Workflow Budget Weight | Default Txn % | Complexity |
+|---------|----------------------|---------------|-----------|
+| Catalog | 6% | 30% | 2 (Low) |
+| Self-Service PO | 2% | 10% | 3 (Low) |
+| Contract Framework | 3% | 5% | 8 (Medium) |
+| RC Invoice | 4% | 5% | 4 (Low) |
+| Non-PO Spend | 1% | 5% | 4 (Low) |
+| Autonomous Sourcing | 15% | 20% | 21 (High) |
+| Autonomous Negotiation | 9% | 5% | 15 (High) |
+| Tactical Sourcing | 23% | 15% | 28 (High) |
+| Strategic Sourcing | 37% | 5% | 33 (Very High) |
+
+**Weights sum to 100%** of the workflow budget. Default Txn % sums to 100% of the estimated total transaction volume (for auto-derivation when user doesn't specify per-channel volumes).
+
+### Transaction Volume Estimation (Same as V1)
+
+| Spend | Txn/Month | Txn/Year |
+|-------|-----------|----------|
+| $100M | 1,000 | 12,000 |
+| $250M | 2,500 | 30,000 |
+| $500M | 5,500 | 66,000 |
+| $750M | 7,000 | 84,000 |
+| $1,000M | 10,000 | 120,000 |
+
+---
+
+## 4. Product Multipliers (Same as V1)
+
+| Product | Multiplier |
+|---------|-----------|
+| Intake to Award | 1.00x (base) |
+| Procure to Pay | +0.75x |
+| Spend Insights | +0.40x |
+
+Combined multiplier applies to the total subscription target before the platform/workflow split.
+
+---
+
+## 5. Entity Multiplier (Updated from V1)
+
+| Entities / BUs | Multiplier |
+|---------------|-----------|
+| 1 | 1.00x |
+| 2–3 | 1.15x |
+| 4–10 | 1.30x |
+| 11+ | 1.50x |
+
+*Note: V1 defined the top tier as "10+" with min=10. V2 defines it as "11+" with min=11 for cleaner boundary math.*
+
+---
+
+## 6. Client Tier Classification (Same as V1)
+
+| Tier | Spend Range | Power/Light Users | Entities | Impl Multiplier | Duration |
+|------|------------|-------------------|---------|----------------|----------|
+| Mid-Market | < $250M | 10 / 50 | 1 | 0.60x | 3–4 months |
+| Enterprise | $250M – $750M | 25 / 150 | 2 | 0.85x | 4–6 months |
+| Large Enterprise | > $750M | 40 / 350 | 11 | 1.00x | 6–8 months |
+
+---
+
+## 7. Integrations
+
+| Integration | Standard? | Annual Fee |
+|------------|----------|-----------|
+| SAP S/4HANA | Yes | $0 |
+| Oracle Fusion | Yes | $0 |
+| ServiceNow | Yes | $0 |
+| SSO / SCIM | Yes | $0 |
+| NetSuite | No | $18,000 |
+| Coupa | No | $18,000 |
+| DocuSign / CLM | No | $18,000 |
+| Custom API | No | $18,000 |
+
+Standard integrations are included in the base platform fee. Additional integrations incur the annual fee.
+
+---
+
+## 8. Implementation Rate Card (Same as V1)
+
+Large Enterprise baseline = **$393,000** total.
+
+| Section | Toggleable | Cost |
+|---------|-----------|------|
+| Core Implementation | Always ON | $242,000 |
+| Integrations | ON by default | $36,000 |
+| QA & Validation | ON by default | $32,000 |
+| Customer Success | ON by default | $83,000 |
+| **Total** | | **$393,000** |
+
+### Tier Scaling
+
+| Tier | Multiplier | Approx Total |
+|------|-----------|-------------|
+| Mid-Market | 0.60x | ~$236,000 |
+| Enterprise | 0.85x | ~$334,000 |
+| Large Enterprise | 1.00x | $393,000 |
+
+### Role Detail
+
+**Core ($242K):**
+- Solution Architect × 1, $24K/mo, 1 mo = $24K
+- PC Team Lead × 1, $9K/mo, 3 mo = $28K
+- Project Manager × 1, $9K/mo, 6 mo = $52K
+- Product Consultant × 1, $9K/mo, 5 mo = $43K
+- Assoc. Product Consultant × 2, $8K/mo, 6 mo = $95K
+
+**Integrations ($36K):** Integration Lead + Engineer × 2 months
+**QA ($32K):** QA Lead + 2 QA Engineers × 1.5 months
+**Customer Success ($83K):** CSM + 2 Support Specialists + 2 Support Engineers × 3 months
+
+---
+
+## 9. Add-On Services (Same as V1)
+
+| Add-On | Price | Unit |
+|--------|-------|------|
+| On-Site Deployment | $12,000 | per person/month |
+| Additional Custom Fields | $5,000 | per field |
+| Additional Integration | $18,000 | per integration |
+| Extended Hypercare | $28,000 | per month |
+| Training Sessions | $5,000 | per session |
+| Data Migration | $15,000 | per source |
+| Change Request | $10,000 | per CR |
+
+---
+
+## 10. Deal Parameters (Same as V1)
+
+| Parameter | Default | Range |
+|-----------|---------|-------|
+| Discount | 0% | 0–30% |
+| Term | 3 years | 1–5 |
+| YoY Escalation | 10% | 0–15% |
+
+---
+
+## 11. Gain Share (NEW in V2)
+
+Outcome-based pricing layer on top of the subscription. Aerchain earns a percentage of measurable savings generated through the platform.
+
+### What Counts as "Savings"
+
+**Negotiation Savings**
+- Difference between supplier's initial quote and final negotiated price via Aerchain's autonomous negotiation.
+- Baseline: first formal quote or last-known contract price (whichever is higher).
+- `Savings = (Baseline Price − Final Price) × Volume`
+
+**Cycle Time Value**
+- Monetary value of reduced procurement cycle time.
+- Baseline: client's average cycle time over prior 12 months.
+- Valuation: $500–$2,000/day depending on deal size.
+- `Savings = (Baseline Days − Aerchain Days) × Daily Value × Events`
+
+**Maverick Spend Elimination**
+- Spend redirected from off-contract channels to approved suppliers.
+- Baseline: maverick spend % before Aerchain (typically 15–30% of addressable spend).
+- `Savings = (Baseline % − Current %) × Addressable Spend × Savings Factor (8–12%)`
+
+### Gain Share Parameters
+
+| Parameter | Default | Range |
+|-----------|---------|-------|
+| Gain Share % | 5% | 2–15% |
+| Cap | 2× platform fee | 1–5× |
+| Floor | $0 | — |
+| Reconciliation | Quarterly | Q/Annual |
+| Ramp Period | 2 quarters | 1–4 Q |
+
+### Exclusions
+- Market price decreases unrelated to negotiation
+- One-time project savings (only recurring operational savings qualify)
+- Savings below $10K per event (materiality threshold)
+
+### Audit Rights
+Client has annual audit rights. Aerchain provides detailed savings reports with each reconciliation.
+
+---
+
+## 12. TCO Calculation
+
+### Year 1
+```
+Y1 Subscription   = Total Target × (1 − discount%)
+Y1 Implementation = Impl Rate Card × tier multiplier + Add-Ons (one-time)
+Y1 Gain Share     = estimated_savings × gain_share_% (capped)
+Y1 Total          = Y1 Subscription + Y1 Implementation + Y1 Gain Share
+```
+
+### Multi-Year
+```
+Yn Subscription = Y(n-1) Subscription × (1 + escalation%)
+Yn Gain Share   = Y(n-1) Gain Share × (1 + escalation%)
+Implementation  = Year 1 only
+```
+
+### TCO
+```
+3-Year TCO = Y1 + Y2 + Y3
+5-Year TCO = Y1 + Y2 + Y3 + Y4 + Y5
+```
+
+---
+
+## 13. Auto-Derivation Rules (Same as V1)
+
+### Minimum Required Input
+1. Customer Name
+2. Annual Spend (USD)
+3. At least one product selected
+
+### Derivation Chain
+```
+spend → client tier → default users, entities
+spend → total subscription target → platform/workflow split
+spend → estimated txn volume → default channel split → back-derived per-txn prices
+tier → implementation rate card (× tier multiplier)
+defaults → standard integrations + SSO
+defaults → deal parameters (0% discount, 3yr, 10% escalation)
+gain share → OFF by default
+```
+
+### Assumption Flags
+- `[ASSUMED]` — auto-derived
+- `[CONFIRMED]` — explicitly entered by user
+- `[CALCULATED]` — computed from other inputs
+
+---
+
+## 14. Pricing Validation Rules
+
+### Sanity Checks
+1. Total subscription should be 5–15 BPS of spend under management
+2. Platform + Workflow components must sum to total subscription target (enforced by construction)
+3. Implementation should not exceed 100% of Y1 subscription
+4. Per-txn prices should never go below V1 floor prices (sanity check only)
+5. Discount ≤ 30% without executive override
+6. Gain share ≤ cap (2× platform fee by default)
+
+---
+
+*Last updated: 2026-04-13*
+*Version: 2.0*
+*Config source: `pricing-calculator-v2/default-config.json`*
+*Engine: `lib/pricingEngineV2.js`*
+*Owner: Gaurav Guha, Head of Sales*
