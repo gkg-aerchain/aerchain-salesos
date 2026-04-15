@@ -452,15 +452,55 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
           </div>
         ) : pricing && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div className="glass-surface" style={{ borderRadius: 14, padding: "12px 16px", boxShadow: T.glass }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div className="glass-surface" style={{ borderRadius: 14, padding: "14px 18px", boxShadow: T.glass }}>
+              {/* Top row: client name + Y1 total */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: T.text }}>{pricing.customerName}</div>
-                  <div style={{ fontSize: 10, color: T.muted }}>${annualSpendM}M &middot; {pricing.tierLabel} &middot; {pricing.implDuration} &middot; {Math.round(pricing.feeStructure.platformPct*100)}/{Math.round(pricing.feeStructure.workflowPct*100)} split</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{pricing.customerName}</div>
+                  <div style={{ fontSize: 10, color: T.muted, marginTop: 2 }}>${annualSpendM}M &middot; {pricing.tierLabel} &middot; {pricing.implDuration} &middot; {Math.round(pricing.feeStructure.platformPct*100)}/{Math.round(pricing.feeStructure.workflowPct*100)} split</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: T.accent }}>{fmt$(pricing.y1Total)}</div>
-                  <div style={{ fontSize: 9, color: T.muted }}>Y1 Total</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: T.accent, lineHeight: 1 }}>{fmt$(pricing.y1Total)}</div>
+                  <div style={{ fontSize: 9, color: T.muted, marginTop: 3, letterSpacing: 0.5 }}>Y1 TOTAL COMMITMENT</div>
+                </div>
+              </div>
+
+              {/* Breakdown row: Subscription + Services (+ Gain Share) = Y1 Total */}
+              <div style={{ display: "flex", alignItems: "stretch", gap: 10, paddingTop: 12, borderTop: `1px solid ${T.border}` }}>
+                {/* Subscription */}
+                <div style={{ flex: 1, padding: "8px 10px", borderRadius: 8, background: T.accentBg, border: `1px solid ${T.borderAcc}` }}>
+                  <div style={{ fontSize: 9, color: T.accent, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>Subscription</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: T.text, lineHeight: 1 }}>{fmt$(pricing.y1SubDiscounted)}</div>
+                  <div style={{ fontSize: 9, color: T.muted, marginTop: 3 }}>per year &middot; recurring</div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", color: T.muted, fontSize: 14, fontWeight: 300 }}>+</div>
+
+                {/* Services / Implementation */}
+                <div style={{ flex: 1, padding: "8px 10px", borderRadius: 8, background: "rgba(245,158,11,0.08)", border: `1px solid rgba(245,158,11,0.25)` }}>
+                  <div style={{ fontSize: 9, color: T.warn, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>Services</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: T.text, lineHeight: 1 }}>{fmt$(pricing.totalImpl)}</div>
+                  <div style={{ fontSize: 9, color: T.muted, marginTop: 3 }}>one-time &middot; implementation</div>
+                </div>
+
+                {pricing.gainShare.enabled && pricing.gainShareFee > 0 && (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", color: T.muted, fontSize: 14, fontWeight: 300 }}>+</div>
+                    <div style={{ flex: 1, padding: "8px 10px", borderRadius: 8, background: "rgba(16,185,129,0.08)", border: `1px solid rgba(16,185,129,0.25)` }}>
+                      <div style={{ fontSize: 9, color: T.success, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>Gain Share</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: T.text, lineHeight: 1 }}>{fmt$(pricing.gainShareFee)}</div>
+                      <div style={{ fontSize: 9, color: T.muted, marginTop: 3 }}>variable &middot; outcome-based</div>
+                    </div>
+                  </>
+                )}
+
+                <div style={{ display: "flex", alignItems: "center", color: T.muted, fontSize: 14, fontWeight: 300 }}>=</div>
+
+                {/* Y1 Total */}
+                <div style={{ flex: 1, padding: "8px 10px", borderRadius: 8, background: T.bgCard, border: `1px solid ${T.border}` }}>
+                  <div style={{ fontSize: 9, color: T.muted, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>Y1 Total</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: T.accent, lineHeight: 1 }}>{fmt$(pricing.y1Total)}</div>
+                  <div style={{ fontSize: 9, color: T.muted, marginTop: 3 }}>year one commitment</div>
                 </div>
               </div>
             </div>
