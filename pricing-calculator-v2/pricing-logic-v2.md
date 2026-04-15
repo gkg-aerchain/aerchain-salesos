@@ -425,11 +425,13 @@ platformAccess   = (baselineTotal × platformPct) × userMultiplier
 | Integration | Standard? | Annual Fee |
 |------------|----------|-----------|
 | **ERP** (generic — SAP, Oracle, NetSuite, etc.) | Yes | $0 |
-| ServiceNow | Yes | $0 |
 | SSO / SCIM | Yes | $0 |
+| ServiceNow (secondary intake/source system) | No | $18,000 |
 | **Legacy S2P** (e.g., Coupa, Ariba, Jaggaer) | No | $18,000 |
 | DocuSign / CLM | No | $18,000 |
 | Custom API | No | $18,000 |
+
+**Standard integrations** (primary ERP + SSO) are included in the base platform fee. ServiceNow is treated as a non-standard add-on because it's typically a secondary intake/request system layered on top of the primary ERP, not a foundational system — integrating it requires separate orchestration.
 
 Standard integrations are included in the base platform fee. Additional integrations incur the annual fee.
 

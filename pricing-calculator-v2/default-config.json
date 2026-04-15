@@ -81,10 +81,10 @@
 
   "integrations": [
     { "id": "erp",        "label": "ERP",             "standard": true,  "annualFee": 0 },
-    { "id": "servicenow", "label": "ServiceNow",      "standard": true,  "annualFee": 0 },
+    { "id": "sso",        "label": "SSO / SCIM",      "standard": true,  "annualFee": 0 },
+    { "id": "servicenow", "label": "ServiceNow",      "standard": false, "annualFee": 18000 },
     { "id": "legacy-s2p", "label": "Legacy S2P",      "standard": false, "annualFee": 18000 },
     { "id": "docusign",   "label": "DocuSign / CLM",  "standard": false, "annualFee": 18000 },
-    { "id": "sso",        "label": "SSO / SCIM",      "standard": true,  "annualFee": 0 },
     { "id": "custom-api", "label": "Custom API",      "standard": false, "annualFee": 18000 }
   ],
 
