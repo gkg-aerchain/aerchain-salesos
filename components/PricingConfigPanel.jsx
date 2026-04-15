@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, ChevronDown, ChevronRight, RotateCcw, Save, AlertTriangle, Percent, Layers, Building2, Zap, Wrench, Gift } from "lucide-react";
+import { Settings, ChevronDown, ChevronRight, RotateCcw, Save, AlertTriangle, Percent, Layers, Building2, Zap, Wrench, Gift, EyeOff } from "lucide-react";
 import { T } from "../lib/theme.js";
 import { Card } from "./Common.jsx";
 import { fmt$ } from "../lib/utils.js";
@@ -24,7 +24,7 @@ function Section({ title, icon: Ic, defaultOpen = false, children }) {
   );
 }
 
-export default function PricingConfigPanel({ config, onChange }) {
+export default function PricingConfigPanel({ config, onChange, onHide }) {
   const [showGainShareEditor, setShowGainShareEditor] = useState(false);
   const [gainShareLogic, setGainShareLogic] = useState(gainShareMd);
 
@@ -84,14 +84,21 @@ export default function PricingConfigPanel({ config, onChange }) {
 
   return (
     <Card style={{ maxHeight: "calc(100vh - 180px)", overflowY: "auto" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flex: 1 }}>
           <Settings size={12} color={T.accent} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: T.text }}>Pricing Rules</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: T.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Pricing Rules</span>
         </div>
-        <button onClick={resetToDefaults} style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: 6, padding: "4px 8px", color: T.muted, fontSize: 9, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-          <RotateCcw size={10} /> Reset
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+          <button onClick={resetToDefaults} title="Reset to defaults" style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: 6, padding: "4px 8px", color: T.muted, fontSize: 9, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+            <RotateCcw size={10} /> Reset
+          </button>
+          {onHide && (
+            <button onClick={onHide} title="Hide (presentation mode)" style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: 6, padding: "4px 8px", color: T.muted, fontSize: 9, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+              <EyeOff size={10} /> Hide
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ─── Fee Structure ─────────────────────────────────────────────── */}

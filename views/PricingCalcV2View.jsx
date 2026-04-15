@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { DollarSign, TrendingUp, Activity, Settings, BarChart3, AlertTriangle, Building2, Zap, Shield, Clock, Upload, FileText, Brain, Loader2, X, CheckCircle, Gift, Layers, ChevronDown, ChevronRight, EyeOff, Eye, SlidersHorizontal } from "lucide-react";
+import { DollarSign, TrendingUp, Activity, Settings, BarChart3, AlertTriangle, Building2, Zap, Shield, Clock, Upload, FileText, Brain, Loader2, X, CheckCircle, Gift, Layers, ChevronDown, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { T } from "../lib/theme.js";
 import { fmt$ } from "../lib/utils.js";
 import { Card } from "../components/Common.jsx";
@@ -391,22 +391,8 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
     <div style={{ display: "flex", gap: 14, alignItems: "flex-start", position: "relative" }}>
       {/* LEFT: Config Panel (collapsible) */}
       {showConfig ? (
-        <div style={{ width: 280, flexShrink: 0, position: "relative" }}>
-          <button
-            onClick={() => setShowConfig(false)}
-            title="Hide Pricing Rules (presentation mode)"
-            style={{
-              position: "absolute", top: 10, right: 10, zIndex: 2,
-              background: T.bgCard, border: `1px solid ${T.border}`,
-              borderRadius: 6, padding: "4px 8px", cursor: "pointer",
-              color: T.muted, fontSize: 9, fontWeight: 600,
-              display: "flex", alignItems: "center", gap: 4,
-              letterSpacing: 0.3,
-            }}
-          >
-            <EyeOff size={10} /> HIDE
-          </button>
-          <PricingConfigPanel config={config} onChange={setConfig} />
+        <div style={{ width: 280, flexShrink: 0 }}>
+          <PricingConfigPanel config={config} onChange={setConfig} onHide={() => setShowConfig(false)} />
         </div>
       ) : (
         <button
