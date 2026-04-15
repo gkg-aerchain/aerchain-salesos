@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aerchain Pricing — One-Page Briefing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas-a: hsl(262 55% 18%);
+    --canvas-b: hsl(270 45% 12%);
+    --canvas-c: hsl(255 40% 10%);
+    --canvas-d: hsl(245 35% 8%);
+    --primary: hsl(262 80% 62%);
+    --primary-soft: hsl(262 80% 62% / .15);
+    --primary-border: hsl(262 80% 62% / .35);
+    --success: hsl(152 68% 45%);
+    --success-soft: hsl(152 68% 45% / .12);
+    --success-border: hsl(152 68% 45% / .30);
+    --amber: hsl(38 92% 55%);
+    --amber-soft: hsl(38 92% 55% / .12);
+    --amber-border: hsl(38 92% 55% / .30);
+    --orange: hsl(14 70% 56%);
+    --fg: rgba(255, 255, 255, 0.94);
+    --fg2: rgba(255, 255, 255, 0.64);
+    --fg3: rgba(255, 255, 255, 0.42);
+    --glass-1: rgba(255, 255, 255, 0.03);
+    --glass-2: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 0%, var(--canvas-a), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, var(--canvas-b), transparent 60%),
+      linear-gradient(180deg, var(--canvas-c), var(--canvas-d));
+    background-attachment: fixed;
+    color: var(--fg);
+    line-height: 1.5;
+    font-size: 12px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 32px;
+  }
+  .brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .brand-lockup { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 30px; height: 30px; flex-shrink: 0; filter: drop-shadow(0 0 12px rgba(220, 95, 64, 0.3)); }
+  .brand-wordmark { font-weight: 800; font-size: 15px; letter-spacing: 0.1em; color: var(--fg); line-height: 1; }
+  .brand-wordmark .ai-accent { color: var(--orange); }
+  .brand-tagline { font-size: 8px; color: var(--fg3); letter-spacing: 1.2px; text-transform: uppercase; margin-top: 2px; }
+  .partner-badge {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 8px; color: var(--fg3); font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+    padding: 6px 10px; border: 1px solid var(--glass-border); border-radius: 6px; background: var(--glass-1);
+  }
+  .partner-badge strong { color: var(--fg2); font-weight: 700; font-size: 10px; text-transform: none; letter-spacing: 0.3px; }
+  h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 3px;
+    background: linear-gradient(135deg, #fff 0%, hsl(262 80% 78%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle { font-size: 11px; color: var(--fg2); margin-bottom: 14px; }
+  h2 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin: 14px 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h2::before {
+    content: "";
+    width: 14px;
+    height: 1px;
+    background: var(--primary);
+  }
+  p { margin-bottom: 6px; color: var(--fg); }
+  p.lead { font-size: 11.5px; line-height: 1.6; color: var(--fg); }
+  p.muted { color: var(--fg2); font-size: 10.5px; }
+  strong { color: var(--fg); font-weight: 600; }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 1px 5px;
+    background: var(--glass-2);
+    border: 1px solid var(--glass-border);
+    border-radius: 3px;
+    color: hsl(262 80% 78%);
+  }
+  .chain {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    line-height: 1.7;
+    background: var(--glass-1);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin: 6px 0 10px;
+    color: var(--fg);
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .chain .arrow { color: var(--primary); font-weight: 700; }
+  .chain .c { color: var(--fg3); }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 6px 0;
+    background: var(--glass-1);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 10.5px;
+  }
+  th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--glass-border); }
+  th { background: var(--glass-2); color: var(--fg2); font-size: 9px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+  tr:last-child td { border-bottom: none; }
+  td { color: var(--fg); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
+  tr.highlight { background: var(--primary-soft); }
+  tr.highlight td { font-weight: 700; }
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 6px 0;
+  }
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin: 6px 0;
+  }
+  .card {
+    background: var(--glass-1);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .card.primary { border-color: var(--primary-border); background: var(--primary-soft); }
+  .card.success { border-color: var(--success-border); background: var(--success-soft); }
+  .card.amber { border-color: var(--amber-border); background: var(--amber-soft); }
+  .card-label {
+    font-size: 8.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--fg2); margin-bottom: 4px;
+  }
+  .card.primary .card-label { color: var(--primary); }
+  .card.success .card-label { color: var(--success); }
+  .card.amber .card-label { color: var(--amber); }
+  .card p { font-size: 10.5px; margin-bottom: 4px; line-height: 1.5; }
+  .card p:last-child { margin-bottom: 0; }
+  .formula {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: hsl(262 80% 78%);
+    background: var(--glass-2);
+    padding: 6px 10px;
+    border-radius: 5px;
+    margin: 4px 0;
+  }
+  .page-break { page-break-before: always; margin-top: 28px; padding-top: 20px; border-top: 2px dashed var(--glass-border); }
+  footer {
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--glass-border);
+    font-size: 9px;
+    color: var(--fg3);
+    text-align: center;
+  }
+  footer .fm { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  footer .fm svg { width: 14px; height: 14px; color: var(--orange); }
+  footer .fm .wm { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; color: var(--fg2); }
+  footer .fm .wm .ai-accent { color: var(--orange); }
+  @media print {
+    body { background: #fff; color: #111; }
+    .chain, table, .card { border-color: #ccc; background: #fafafa; }
+    h1 { -webkit-text-fill-color: #111; background: none; }
+    h2 { color: #6b21a8; }
+  }
+</style>
+<svg width="0" height="0" style="position: absolute;">
+  <defs>
+    <symbol id="aerchain-mark" viewBox="0 0 32 32">
+      <path d="M29.0091 11.08C30.1065 10.9602 30.9008 9.9732 30.7809 8.87342C30.6611 7.776 29.6741 6.98171 28.5743 7.10156C27.4769 7.22141 26.6826 8.20839 26.8025 9.30816C26.9223 10.4056 27.9093 11.1999 29.0091 11.08Z" fill="currentColor"/>
+      <path d="M31.2794 20.6254C31.3663 16.1699 29.4934 10.7674 24.5961 13.8364C24.1849 13.9962 23.9499 13.9398 23.7337 13.6343C23.1157 12.5158 22.641 11.3713 22.0535 10.1964C17.6332 -1.17501 12.5856 5.32729 7.25353 12.0575C-4.65365 27.4497 0.955675 34.2669 19.7247 20.75C20.3803 20.2847 21.6939 19.3118 22.1663 19.2719C22.6645 19.192 22.8713 19.5962 23.2473 20.4421C23.6115 21.3093 24.2178 22.5383 24.7724 23.4148C27.9754 29.6304 31.5238 28.1899 31.2817 20.6513V20.6254H31.2794ZM17.1656 18.3084C14.8039 19.7842 12.5621 21.5913 9.96771 22.6699C8.83739 23.1422 7.19008 22.6205 6.78354 21.7064C6.32295 20.2894 7.97026 18.2003 8.77864 16.7292C9.71627 15.0537 10.9594 13.5638 12.1508 12.0458C13.307 10.5489 14.8767 8.32817 17.0528 9.2987C18.7988 10.2904 19.5155 13.0328 20.5143 14.6871C20.9655 15.4039 20.9514 15.9114 20.1618 16.3438C19.2054 16.9525 18.169 17.6457 17.1844 18.299L17.1656 18.3107V18.3084ZM29.9634 21.2435C29.9117 22.0965 29.7496 25.323 28.6615 23.7861C27.6511 21.8874 26.5419 19.521 25.5526 17.4977C25.1672 16.4637 27.5712 16.0454 28.1962 16.2216C29.9423 16.8655 30.0033 19.6197 29.9634 21.2294V21.2458V21.2435Z" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+</head>
+<body>
+<div class="page">
+
+<div class="brand-row">
+  <div class="brand-lockup">
+    <svg class="brand-mark" style="color: var(--orange);"><use href="#aerchain-mark"/></svg>
+    <div>
+      <div class="brand-wordmark">AERCH<span class="ai-accent">AI</span>N</div>
+      <div class="brand-tagline">Autonomous Procurement Platform</div>
+    </div>
+  </div>
+  <div class="partner-badge">
+    <span>Partner</span><strong>Infosys</strong>
+  </div>
+</div>
+
+<h1>Pricing Model — At a Glance</h1>
+<p class="subtitle">A unified, deterministic, spend-anchored framework for enterprise deals from $100M to $10B+ SUM.</p>
+
+<div class="card primary">
+  <p class="lead"><strong>TL;DR.</strong> Aerchain pricing is a three-layer framework: a <strong>spend-tier anchored subscription</strong> (45% Platform + 55% Workflow), a <strong>soft multiplier layer</strong> for user and transaction volume, and a <strong>smooth volume-discount power curve</strong> (up to 70% off at $3B). Implementation services scale with deal size via a square-root curve. Every component is pure deterministic code — no AI, no hidden logic — and fully configurable via JSON without code changes. A 10% manual discount applies proportionally across subscription, services, and gain share.</p>
+</div>
+
+<h2>Calculation Chain</h2>
+<div class="chain"><span class="c">spend × product × entity</span>          <span class="arrow">→</span>   Baseline Total
+  <span class="c">× (1 − volumeDiscount)</span>           <span class="arrow">→</span>   Net Baseline
+    <span class="c">× 45% platform × userMult</span>      <span class="arrow">→</span>   Platform Access
+    <span class="c">× 55% workflow × volumeMult</span>    <span class="arrow">→</span>   Workflow Fees
+  <span class="c">+ integrations + impl × spendScale</span>  <span class="arrow">→</span>   Gross Y1
+  <span class="c">× (1 − manualDiscount)</span>           <span class="arrow">→</span>   <strong>Y1 Total Commitment</strong></div>
+
+<h2>Spend-Tier Baseline (US$ list price)</h2>
+<div class="two-col">
+  <table>
+    <thead><tr><th>Spend</th><th class="num">Baseline</th><th class="num">BPS</th></tr></thead>
+    <tbody>
+      <tr><td>$100M</td><td class="num">$100K</td><td class="num">10.0</td></tr>
+      <tr><td>$250M</td><td class="num">$225K</td><td class="num">9.0</td></tr>
+      <tr><td>$500M</td><td class="num">$400K</td><td class="num">8.0</td></tr>
+      <tr><td>$750M</td><td class="num">$575K</td><td class="num">7.7</td></tr>
+      <tr><td>$1B</td><td class="num">$750K</td><td class="num">7.5</td></tr>
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th>Volume Discount</th><th class="num">% Off</th><th class="num">Eff BPS</th></tr></thead>
+    <tbody>
+      <tr><td>$250M</td><td class="num">8.4%</td><td class="num">8.2</td></tr>
+      <tr><td>$500M</td><td class="num">16.7%</td><td class="num">6.7</td></tr>
+      <tr><td>$1B</td><td class="num">30.8%</td><td class="num">5.2</td></tr>
+      <tr><td>$2B</td><td class="num">51.9%</td><td class="num">3.5</td></tr>
+      <tr class="highlight"><td>$3B+</td><td class="num">70% (capped)</td><td class="num">~2.9</td></tr>
+    </tbody>
+  </table>
+</div>
+<p class="muted">Baseline interpolates linearly between anchors. Volume discount curve: <code>70% × ((spend − $100M) / $2.9B)^0.70</code>, auto-applied to the baseline before the platform/workflow split.</p>
+
+<h2>The Three Multiplier Layers</h2>
+<div class="three-col">
+  <div class="card primary">
+    <div class="card-label">1 · User Multiplier</div>
+    <p><strong>Applies to:</strong> Platform Access (45%)</p>
+    <p><strong>Range:</strong> [0.85x, 1.15x] clamped</p>
+    <div class="formula">clamp(0.85, 1.15, (users/default)^0.3)</div>
+    <p class="muted">Soft ±15% scaling based on power/light user count vs. tier benchmark. Power users count 5× more.</p>
+  </div>
+  <div class="card success">
+    <div class="card-label">2 · Volume Multiplier</div>
+    <p><strong>Applies to:</strong> Workflow Fees (55%)</p>
+    <p><strong>Range:</strong> [0.85x, 2.00x] clamped</p>
+    <div class="formula">clamp(0.85, 2.00, (actual/expected)^0.3)</div>
+    <p class="muted">Asymmetric scaling based on actual monthly transactions vs. preset expectation. Heavy users pay up to 2×.</p>
+  </div>
+  <div class="card amber">
+    <div class="card-label">3 · Impl Spend Scale</div>
+    <p><strong>Applies to:</strong> Services (above $750M)</p>
+    <p><strong>Range:</strong> [1.0x, 3.0x] clamped</p>
+    <div class="formula">clamp(1.0, 3.0, (spend/$750M)^0.5)</div>
+    <p class="muted">Square-root curve reflects diminishing-returns reality — a $3B rollout is ~2x the effort of a $750M one.</p>
+  </div>
+</div>
+
+<h2>Scope Presets & Complexity-Weighted Channels</h2>
+<p class="muted">Deals only activate the channels the client is buying. The workflow budget is distributed across active channels using <strong>complexity-weighted normalization</strong>: <code>weight[ch] = complexity[ch] / Σ complexity[active]</code>. No dilution across channels the client isn't using; per-transaction prices are back-derived to always sum to the workflow budget target.</p>
+<table>
+  <thead><tr><th>Channel</th><th class="num">Complexity</th><th>Channel</th><th class="num">Complexity</th></tr></thead>
+  <tbody>
+    <tr><td>Catalog</td><td class="num">2</td><td>Auto Negotiation</td><td class="num">15</td></tr>
+    <tr><td>Self-Service PO</td><td class="num">3</td><td>Auto Sourcing</td><td class="num">21</td></tr>
+    <tr><td>RC Invoice / Non-PO</td><td class="num">4</td><td>Tactical Sourcing</td><td class="num">28</td></tr>
+    <tr><td>Contract Framework</td><td class="num">8</td><td>Strategic Sourcing</td><td class="num">33</td></tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<h2>Sample Deal Walkthrough — $1B Large Enterprise</h2>
+<p class="muted">Fortune 500 manufacturer, 4 BUs, 50 power / 400 light users, I2A + P2P scope, 10% negotiated manual discount.</p>
+<table>
+  <thead><tr><th>Step</th><th class="num">Value</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Interpolate $1B baseline</td><td class="num">$750K</td><td>Spend tier anchor</td></tr>
+    <tr><td>× Product mult (I2A 1.0 + P2P 0.75)</td><td class="num">$1,313K</td><td>1.75x combined</td></tr>
+    <tr><td>× Entity mult (1.3x, 4 BUs)</td><td class="num">$1,706K</td><td>Gross baseline</td></tr>
+    <tr><td>− Volume discount (30.8% at $1B)</td><td class="num">−$526K</td><td>Auto power curve</td></tr>
+    <tr><td>Net baseline subscription</td><td class="num">$1,180K</td><td></td></tr>
+    <tr><td>  Platform Access (45%, user mult 1.0x)</td><td class="num">$531K</td><td>Recurring</td></tr>
+    <tr><td>  Workflow Fees (55%, vol mult 1.0x)</td><td class="num">$649K</td><td>Recurring</td></tr>
+    <tr><td>+ Integration add-ons (ERP/SSO standard)</td><td class="num">$0</td><td>Included</td></tr>
+    <tr><td>+ Implementation (LE 1.0x × spend 1.15x)</td><td class="num">$470K</td><td>One-time</td></tr>
+    <tr><td>Gross Y1 Total</td><td class="num">$1,650K</td><td></td></tr>
+    <tr><td>− Manual discount (10% on Y1 total)</td><td class="num">−$165K</td><td>Proportional across all</td></tr>
+    <tr class="highlight"><td><strong>Net Y1 Total Commitment</strong></td><td class="num"><strong>$1,485K</strong></td><td><strong>~10.6 BPS</strong></td></tr>
+  </tbody>
+</table>
+
+<h2>Competitive Positioning (Approximate BPS Rates)</h2>
+<div class="two-col">
+  <table>
+    <thead><tr><th>Client Size</th><th class="num">Aerchain BPS</th><th class="num">Coupa / S2P Legacy BPS</th></tr></thead>
+    <tbody>
+      <tr><td>$250M Mid-Market</td><td class="num">~8.2</td><td class="num">10–12</td></tr>
+      <tr><td>$500M Enterprise</td><td class="num">~6.7</td><td class="num">9–11</td></tr>
+      <tr><td>$1B Large Enterprise</td><td class="num">~5.2</td><td class="num">8–10</td></tr>
+      <tr><td>$3B Global Enterprise</td><td class="num">~2.9</td><td class="num">6–8</td></tr>
+    </tbody>
+  </table>
+  <div class="card success">
+    <div class="card-label">Pricing Advantage</div>
+    <p>Aerchain runs <strong>30–55% below legacy S2P rates</strong> at equivalent scope while delivering agentic sourcing, autonomous negotiation, and AI-driven strategic sourcing. The volume discount curve is built into the framework — no one-off exceptions. Large deals get aggressive pricing by design.</p>
+  </div>
+</div>
+
+<h2>Key Defensibility Points</h2>
+<div class="three-col">
+  <div class="card">
+    <div class="card-label">Deterministic</div>
+    <p>All calculations are pure code. Same inputs always produce same outputs. AI is used for context parsing and narrative only — never for the math itself.</p>
+  </div>
+  <div class="card">
+    <div class="card-label">Configurable</div>
+    <p>Every parameter — spend tiers, multipliers, discount curves, channel weights, rate cards — lives in JSON. Sales leadership tunes directly, no developer involvement.</p>
+  </div>
+  <div class="card">
+    <div class="card-label">Auditable</div>
+    <p>Every dollar traces back to a specific component. Clients can reproduce any calculation in Excel given the same inputs. Zero hidden logic.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="fm">
+    <svg><use href="#aerchain-mark"/></svg>
+    <span class="wm">AERCH<span class="ai-accent">AI</span>N</span>
+  </div>
+  <div>SalesOS · Pricing Calculator V2 · <strong style="color: var(--fg2);">One-Page Briefing</strong> · For the complete framework, request the full briefing document</div>
+</footer>
+
+</div>
+</body>
+</html>
