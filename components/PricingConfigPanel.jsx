@@ -235,7 +235,7 @@ export default function PricingConfigPanel({ config, onChange, onHide }) {
       </Section>
 
       {/* ─── Channel Weights ───────────────────────────────────────────── */}
-      <Section title="Channel Complexity Weights" icon={Zap}>
+      <Section title="Channel Weights (Full Suite)" icon={Zap}>
         {!weightsBalanced && (
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 8px", borderRadius: 6, background: `${T.warn}15`, marginBottom: 6 }}>
             <AlertTriangle size={10} color={T.warn} />
@@ -252,8 +252,8 @@ export default function PricingConfigPanel({ config, onChange, onHide }) {
             </div>
           );
         })}
-        <div style={{ fontSize: 9, color: T.muted, marginTop: 4 }}>
-          Weights determine how the workflow fee budget is distributed. Higher weight = more revenue attributed to that channel = higher effective $/txn.
+        <div style={{ fontSize: 9, color: T.muted, marginTop: 4, lineHeight: 1.5 }}>
+          These weights apply when no scope preset is active (the "Full Suite" default). When a preset is selected in Customer Profile, channels outside the preset are excluded entirely and the workflow budget is re-distributed across the active channels using <strong>complexity-weighted normalization</strong> (each channel's <code>complexity</code> value ÷ total complexity of active channels).
         </div>
       </Section>
 

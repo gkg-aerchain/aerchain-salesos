@@ -108,6 +108,9 @@ function SummaryTab({ p }) {
 }
 
 function BreakdownTab({ p }) {
+  const [showInactive, setShowInactive] = useState(false);
+  const hasInactive = p.channelBreakdown.some(c => c.inactive);
+  const visibleChannels = showInactive ? p.channelBreakdown : p.channelBreakdown.filter(c => !c.inactive);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <Card>
@@ -147,9 +150,17 @@ function BreakdownTab({ p }) {
         </div>
       </Card>
       <Card>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, gap: 8, flexWrap: "wrap" }}>
           <div style={labelStyle}>Channel Breakdown (Derived from Workflow Budget)</div>
-          <span style={{ fontSize: 10, color: T.muted }}>{fmt$(p.workflowFeesAnnual)} total</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {hasInactive && (
+              <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 9, color: T.muted, cursor: "pointer", userSelect: "none" }}>
+                <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} style={{ accentColor: T.accent, cursor: "pointer" }} />
+                Show inactive channels
+              </label>
+            )}
+            <span style={{ fontSize: 10, color: T.muted }}>{fmt$(p.workflowFeesAnnual)} total</span>
+          </div>
         </div>
         <div style={{ overflowX: "auto" }}>
           <table style={tableStyle}>
@@ -161,15 +172,24 @@ function BreakdownTab({ p }) {
               <th style={{ ...thStyle, textAlign: "right" }}>Weight</th>
             </tr></thead>
             <tbody>
-              {p.channelBreakdown.map((ch, i) => (
-                <tr key={i} className="table-row">
-                  <td style={{ ...tdStyle, fontWeight: 500 }}>{ch.label}{ch.assumed && <span style={{ fontSize: 9, color: T.warn, marginLeft: 4 }}>est.</span>}</td>
-                  <td style={{ ...tdStyle, textAlign: "right" }}>{ch.volume.toLocaleString()}</td>
-                  <td style={{ ...tdStyle, textAlign: "right" }}>${ch.perTxn.toFixed(2)}</td>
-                  <td style={{ ...tdStyle, textAlign: "right", color: T.success }}>{fmt$(ch.annualCost)}</td>
-                  <td style={{ ...tdStyle, textAlign: "right", color: T.muted }}>{Math.round(ch.weight * 100)}%</td>
-                </tr>
-              ))}
+              {visibleChannels.map((ch, i) => {
+                const isInactive = ch.inactive;
+                const rowStyle = isInactive ? { opacity: 0.4 } : {};
+                const weightPct = isInactive ? 0 : Math.round((ch.annualCost / Math.max(p.workflowFeesAnnual, 1)) * 100);
+                return (
+                  <tr key={i} className="table-row" style={rowStyle}>
+                    <td style={{ ...tdStyle, fontWeight: 500 }}>
+                      {ch.label}
+                      {ch.assumed && !isInactive && <span style={{ fontSize: 9, color: T.warn, marginLeft: 4 }}>est.</span>}
+                      {isInactive && <span style={{ fontSize: 9, color: T.muted, marginLeft: 4, fontStyle: "italic" }}>not in scope</span>}
+                    </td>
+                    <td style={{ ...tdStyle, textAlign: "right" }}>{isInactive ? "—" : ch.volume.toLocaleString()}</td>
+                    <td style={{ ...tdStyle, textAlign: "right" }}>{isInactive ? "—" : `$${ch.perTxn.toFixed(2)}`}</td>
+                    <td style={{ ...tdStyle, textAlign: "right", color: isInactive ? T.muted : T.success }}>{isInactive ? "—" : fmt$(ch.annualCost)}</td>
+                    <td style={{ ...tdStyle, textAlign: "right", color: T.muted }}>{isInactive ? "—" : `${weightPct}%`}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -348,6 +368,7 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
   const [termYears, setTermYears] = useState(3);
   const [escalation, setEscalation] = useState(10);
   const [activeTab, setActiveTab] = useState("summary");
+  const [scopePreset, setScopePreset] = useState(""); // "" = Full Suite, else preset id
   const [showConfig, setShowConfig] = useState(() => {
     try { return localStorage.getItem("v2-show-config") !== "false"; }
     catch { return true; }
@@ -377,6 +398,14 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
     if (parsed.escalation != null) setEscalation(Math.min(15, Math.max(0, parsed.escalation)));
   }, [config]);
 
+  // Resolve scope preset → active channel IDs
+  const activeChannelIds = useMemo(() => {
+    if (!scopePreset || !config.channelPresets) return null;
+    const preset = config.channelPresets.find(p => p.id === scopePreset);
+    if (!preset || preset.channels == null) return null; // null = Full Suite
+    return preset.channels;
+  }, [scopePreset, config.channelPresets]);
+
   const pricing = useMemo(() => {
     if (!hasSpend) return null;
     const entityCount = entityIdx >= 0 ? config.entityTiers[entityIdx].min : undefined;
@@ -390,12 +419,13 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
       lightUsers: lightUsers !== "" ? parseInt(lightUsers) : undefined,
       entityCount,
       channelVolumes: hasChannelOverrides ? channelVolumes : undefined,
+      activeChannelIds,
       selectedIntegrations: selectedIntegrations || undefined,
       implToggles,
       addOns: [],
       dealParams: { discount, termYears, escalation },
     }, config);
-  }, [customerName, annualSpendM, selectedProducts, tierOverride, powerUsers, lightUsers, entityIdx, channelVolumes, selectedIntegrations, implToggles, discount, termYears, escalation, hasSpend, config]);
+  }, [customerName, annualSpendM, selectedProducts, tierOverride, powerUsers, lightUsers, entityIdx, channelVolumes, activeChannelIds, selectedIntegrations, implToggles, discount, termYears, escalation, hasSpend, config]);
 
   const toggleProduct = (pid) => setSelectedProducts(prev => { if (prev.includes(pid)) { const n = prev.filter(p => p !== pid); return n.length > 0 ? n : prev; } return [...prev, pid]; });
   const toggleInteg = (id) => setSelectedIntegrations(prev => { const cur = prev || config.integrations.filter(i => i.standard).map(i => i.id); return cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]; });
@@ -451,6 +481,42 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
                 </div>
               ))}
             </div>
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <div style={labelStyle}>Deal Scope / Channel Preset</div>
+            <select value={scopePreset} onChange={e => setScopePreset(e.target.value)} style={{ ...inputStyle, cursor: "pointer" }}>
+              <option value="">Full Suite (all channels)</option>
+              {config.channelPresets && (
+                <>
+                  {config.channelPresets.filter(p => p.group === "combined" && p.id !== "full-suite").length > 0 && (
+                    <optgroup label="Combined">
+                      {config.channelPresets.filter(p => p.group === "combined" && p.id !== "full-suite").map(p => (
+                        <option key={p.id} value={p.id}>{p.label}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {config.channelPresets.filter(p => p.group === "i2a").length > 0 && (
+                    <optgroup label="Intake to Award">
+                      {config.channelPresets.filter(p => p.group === "i2a").map(p => (
+                        <option key={p.id} value={p.id}>{p.label}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {config.channelPresets.filter(p => p.group === "p2p").length > 0 && (
+                    <optgroup label="Procure to Pay">
+                      {config.channelPresets.filter(p => p.group === "p2p").map(p => (
+                        <option key={p.id} value={p.id}>{p.label}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </>
+              )}
+            </select>
+            {scopePreset && activeChannelIds && (
+              <div style={{ fontSize: 9, color: T.muted, marginTop: 3 }}>
+                {activeChannelIds.length} channel{activeChannelIds.length === 1 ? "" : "s"} active &middot; complexity-weighted
+              </div>
+            )}
           </div>
           <div style={{ marginBottom: 8 }}>
             <div style={labelStyle}>Client Tier</div>

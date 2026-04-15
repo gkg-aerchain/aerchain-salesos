@@ -57,6 +57,21 @@
     { "id": "strategic",         "label": "Strategic Sourcing",    "weight": 0.37, "defaultTxnPct": 0.05, "complexity": 33 }
   ],
 
+  "channelPresets": [
+    { "id": "full-suite",                "label": "Full Suite (all channels)",               "channels": null,                                                                        "weightStrategy": "manual",     "group": "combined" },
+    { "id": "sourcing-led",              "label": "Sourcing-Led (I2A only)",                 "channels": ["auto-sourcing", "auto-negotiation", "tactical", "strategic"],              "weightStrategy": "complexity", "group": "combined" },
+    { "id": "p2p-led",                   "label": "P2P-Led (P2P only)",                      "channels": ["catalog", "self-service-po", "contract-fw", "rc-invoice", "non-po-spend"], "weightStrategy": "complexity", "group": "combined" },
+    { "id": "i2a-auto-only",             "label": "I2A — Autonomous Only",                   "channels": ["auto-sourcing"],                                                           "weightStrategy": "complexity", "group": "i2a" },
+    { "id": "i2a-auto-negotiation",      "label": "I2A — Autonomous + Negotiation",          "channels": ["auto-sourcing", "auto-negotiation"],                                       "weightStrategy": "complexity", "group": "i2a" },
+    { "id": "i2a-auto-tactical",         "label": "I2A — Autonomous + Tactical",             "channels": ["auto-sourcing", "tactical"],                                               "weightStrategy": "complexity", "group": "i2a" },
+    { "id": "i2a-auto-tactical-strategic","label": "I2A — Autonomous + Tactical + Strategic","channels": ["auto-sourcing", "tactical", "strategic"],                                  "weightStrategy": "complexity", "group": "i2a" },
+    { "id": "i2a-full",                  "label": "I2A — Full (all 4 sourcing)",             "channels": ["auto-sourcing", "auto-negotiation", "tactical", "strategic"],              "weightStrategy": "complexity", "group": "i2a" },
+    { "id": "p2p-catalog",               "label": "P2P — Catalog Only",                      "channels": ["catalog"],                                                                 "weightStrategy": "complexity", "group": "p2p" },
+    { "id": "p2p-catalog-sspo",          "label": "P2P — Catalog + Self-Service PO",         "channels": ["catalog", "self-service-po"],                                              "weightStrategy": "complexity", "group": "p2p" },
+    { "id": "p2p-transactional",         "label": "P2P — Transactional (Catalog+SSPO+RC+Non-PO)","channels": ["catalog", "self-service-po", "rc-invoice", "non-po-spend"],             "weightStrategy": "complexity", "group": "p2p" },
+    { "id": "p2p-full",                  "label": "P2P — Full (all 5 P2P)",                  "channels": ["catalog", "self-service-po", "contract-fw", "rc-invoice", "non-po-spend"], "weightStrategy": "complexity", "group": "p2p" }
+  ],
+
   "txnVolumeTiers": [
     { "spend": 100,  "txnPerMonth": 1000  },
     { "spend": 250,  "txnPerMonth": 2500  },

@@ -157,7 +157,82 @@ This guarantees that the sum of (channel_volume × per_txn_price) always equals 
 
 ---
 
-## 3. Channel Weights & Default Transaction Split
+## 2b. Scope Presets & Active Channels (NEW)
+
+**The problem**: Without scoping, the calculator attributes workflow fees across all 9 channels regardless of what the client actually bought. A client buying "Autonomous Sourcing only" still sees Catalog, Tactical, Strategic, etc. in their breakdown with diluted per-transaction prices — which is factually wrong and produces meaningless numbers.
+
+**The fix**: A **Scope Preset** selector in Customer Profile activates a subset of channels. When a preset is active:
+1. Only the channels in the preset receive workflow budget allocation
+2. Within the active set, weights are re-derived using **complexity-weighted normalization**:
+   ```
+   weight[channel] = channel.complexity / Σ complexity[active channels]
+   ```
+3. Transaction volume shares are normalized across active channels (preserving total monthly volume)
+4. Inactive channels appear as "not in scope" (hidden by default in Breakdown tab, toggleable)
+
+### Why Complexity-Weighted?
+
+Each channel has a `complexity` value reflecting how much AI compute, analyst effort, integration work, and ongoing orchestration it requires:
+
+| Channel | Complexity | Rationale |
+|---------|-----------|-----------|
+| Catalog | 2 | Simple lookup + approval |
+| Self-Service PO | 3 | Basic form → workflow |
+| RC Invoice | 4 | OCR + matching |
+| Non-PO Spend | 4 | Classification + routing |
+| Contract Framework | 8 | Terms extraction + CLM |
+| Auto Negotiation | 15 | Agentic negotiation loop |
+| Auto Sourcing | 21 | Market analysis + supplier scoring |
+| Tactical Sourcing | 28 | Multi-round RFx + evaluation |
+| Strategic Sourcing | 33 | Full lifecycle + stakeholder facilitation |
+
+Complexity is a defensible, objective principle (vs. arbitrary weight percentages picked by a sales leader).
+
+### Default Presets (Editable in `default-config.json`)
+
+**Combined:**
+- **Full Suite** — all 9 channels active, manual weights (fallback when no preset selected)
+- **Sourcing-Led** — all 4 I2A channels, complexity-weighted
+- **P2P-Led** — all 5 P2P channels, complexity-weighted
+
+**Intake to Award:**
+- I2A — Autonomous Only *(1 channel)*
+- I2A — Autonomous + Negotiation *(2 channels)*
+- I2A — Autonomous + Tactical *(2 channels)*
+- I2A — Autonomous + Tactical + Strategic *(3 channels)*
+- I2A — Full *(all 4 sourcing channels)*
+
+**Procure to Pay:**
+- P2P — Catalog Only *(1 channel)*
+- P2P — Catalog + Self-Service PO *(2 channels)*
+- P2P — Transactional *(Catalog + SSPO + RC Invoice + Non-PO, 4 channels)*
+- P2P — Full *(all 5 P2P channels including Contract Framework)*
+
+### Sample: $400M Enterprise, Workflow Budget $209K
+
+**Preset: Autonomous Sourcing Only**
+| Channel | Weight | Volume/mo | $/Txn | Annual |
+|---------|--------|-----------|-------|--------|
+| Autonomous Sourcing | 100% | 4,300 | $4.05 | $209K |
+
+One channel absorbs the entire workflow budget. Per-txn price is meaningful and defensible.
+
+**Preset: Autonomous + Tactical + Strategic**
+| Channel | Weight | Volume/mo | $/Txn | Annual |
+|---------|--------|-----------|-------|--------|
+| Autonomous Sourcing | 25.6% | 2,150 | $2.07 | $54K |
+| Tactical Sourcing | 34.1% | 1,613 | $3.69 | $71K |
+| Strategic Sourcing | 40.2% | 538 | $13.03 | $84K |
+
+Weights derived from complexity: 21 / (21+28+33) = 25.6%, 28/82 = 34.1%, 33/82 = 40.2%. Strategic sourcing gets the highest per-txn price because of its complexity, even though it's the lowest volume.
+
+### Client-Facing Explanation
+
+> *"We scope the deal to the specific channels you're buying. If you're purchasing autonomous sourcing only, 100% of the workflow budget flows through that channel — we're not diluting the math with channels you're not using. When you add tactical or strategic sourcing, the budget redistributes across the active channels using our published complexity model (lower-complexity channels absorb less cost because they use fewer AI and analyst resources per transaction)."*
+
+---
+
+## 3. Channel Weights & Default Transaction Split (Full Suite Only)
 
 | Channel | Workflow Budget Weight | Default Txn % | Complexity |
 |---------|----------------------|---------------|-----------|
