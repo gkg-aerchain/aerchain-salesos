@@ -424,12 +424,10 @@ platformAccess   = (baselineTotal × platformPct) × userMultiplier
 
 | Integration | Standard? | Annual Fee |
 |------------|----------|-----------|
-| SAP S/4HANA | Yes | $0 |
-| Oracle Fusion | Yes | $0 |
+| **ERP** (generic — SAP, Oracle, NetSuite, etc.) | Yes | $0 |
 | ServiceNow | Yes | $0 |
 | SSO / SCIM | Yes | $0 |
-| NetSuite | No | $18,000 |
-| Coupa | No | $18,000 |
+| **Legacy S2P** (e.g., Coupa, Ariba, Jaggaer) | No | $18,000 |
 | DocuSign / CLM | No | $18,000 |
 | Custom API | No | $18,000 |
 
