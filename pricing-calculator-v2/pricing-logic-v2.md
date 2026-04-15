@@ -248,15 +248,76 @@ Weights derived from complexity: 21 / (21+28+33) = 25.6%, 28/82 = 34.1%, 33/82 =
 
 **Weights sum to 100%** of the workflow budget. Default Txn % sums to 100% of the estimated total transaction volume (for auto-derivation when user doesn't specify per-channel volumes).
 
-### Transaction Volume Estimation (Same as V1)
+### Transaction Volume Estimation (Preset-Aware Power Curve)
 
-| Spend | Txn/Month | Txn/Year |
-|-------|-----------|----------|
-| $100M | 1,000 | 12,000 |
-| $250M | 2,500 | 30,000 |
-| $500M | 5,500 | 66,000 |
-| $750M | 7,000 | 84,000 |
-| $1,000M | 10,000 | 120,000 |
+Each preset has its own `volumeBasis` defining a **power-curve** for estimating monthly transaction count at any spend level:
+
+```
+volume(spend) = refVolume × (spend / refSpend)^exponent
+```
+
+**Why sublinear**: Procurement transaction counts scale sublinearly with spend. A $3B company doesn't run 6x more strategic sourcing events than a $500M company — they run BIGGER ones, not more of them. Typical exponents:
+- **0.60** for sourcing-heavy presets (Auto, Tactical, Strategic) — events cap out at organizational bandwidth
+- **0.70–0.75** for P2P-heavy presets (Catalog, PO, Invoice) — more linear with spend volume
+
+### Default Volume Bases (Editable in `default-config.json`)
+
+| Preset | Ref Spend | Ref Volume | Exponent | $100M | $750M | $2B |
+|--------|-----------|-----------|----------|-------|-------|-----|
+| **Full Suite** | $750M | 7,000/mo | 0.70 | 1,708 | 7,000 | 13,908 |
+| Sourcing-Led | $750M | 1,250/mo | 0.60 | 373 | 1,250 | 2,252 |
+| P2P-Led | $750M | 6,000/mo | 0.75 | 1,324 | 6,000 | 12,521 |
+| I2A — Autonomous Only | $750M | 400/mo | 0.60 | 119 | 400 | 721 |
+| I2A — Auto + Negotiation | $750M | 500/mo | 0.60 | 149 | 500 | 901 |
+| **I2A — Auto + Tactical** ⭐ | $750M | 1,000/mo | 0.60 | 299 | 1,000 | 1,801 |
+| I2A — Auto + Tactical + Strategic | $750M | 1,150/mo | 0.60 | 343 | 1,150 | 2,071 |
+| I2A — Full | $750M | 1,250/mo | 0.60 | 373 | 1,250 | 2,252 |
+| P2P — Catalog Only | $750M | 3,500/mo | 0.75 | 772 | 3,500 | 7,304 |
+| P2P — Catalog + SSPO | $750M | 4,000/mo | 0.75 | 883 | 4,000 | 8,348 |
+| P2P — Transactional | $750M | 5,000/mo | 0.75 | 1,103 | 5,000 | 10,434 |
+| P2P — Full | $750M | 6,000/mo | 0.75 | 1,324 | 6,000 | 12,521 |
+
+⭐ **Anchor point**: Sales leadership calibration — $750M Auto+Tactical scope = 1,000 txn/month. All other preset volume bases are extrapolated from this anchor and should be validated/adjusted based on real deal data.
+
+---
+
+## 3b. Volume Multiplier (Workflow Fees only)
+
+User can override the estimate by entering actual monthly transactions in the Customer Profile. When provided, a **soft multiplier** scales the workflow fee component (mirroring the user multiplier pattern on Platform Access).
+
+### Formula
+
+```
+actualVol     = user input (optional)
+expectedVol   = preset volume basis × (spend / refSpend)^exponent
+volumeRatio   = actualVol / expectedVol
+volumeMult    = clamp(0.85, 1.15, volumeRatio ^ 0.3)
+
+workflowFees  = (baselineTotal × workflowPct) × volumeMult
+```
+
+**Key properties:**
+- **Dampened (`^0.3`)**: A team running 2x the expected volume only triggers a ~1.23x raw multiplier — then clamped to 1.15x
+- **Clamped (±15%)**: Volume can move the workflow fees meaningfully but never dominate
+- **Only applies to workflow component**: Platform Access is unaffected (that's the user multiplier's domain)
+- **Only active when user provides override**: If blank, the multiplier stays at 1.00 and the estimate is shown for reference
+
+### Impact Examples ($750M, Auto+Tactical preset, $317K workflow budget baseline)
+
+| Actual Volume | Ratio | Multiplier | Workflow Fees | Δ |
+|---------------|-------|-----------|---------------|---|
+| 250/mo (0.25x) | 0.25 | 0.85x (clamped) | $270K | -$47K |
+| 500/mo (0.50x) | 0.50 | 0.85x (clamped) | $270K | -$47K |
+| 750/mo (0.75x) | 0.75 | 0.92x | $291K | -$26K |
+| **1,000/mo** (expected) | 1.00 | 1.00x | **$317K** | — |
+| 1,250/mo (1.25x) | 1.25 | 1.07x | $339K | +$22K |
+| 1,500/mo (1.50x) | 1.50 | 1.13x | $358K | +$41K |
+| 2,000/mo (2.00x) | 2.00 | 1.15x (clamped) | $365K | +$48K |
+| 5,000/mo (5.00x) | 5.00 | 1.15x (clamped) | $365K | +$48K |
+
+### Client-Facing Explanation
+
+> *"Workflow fees scale with actual transaction volume relative to the typical deployment profile for your scope. If your procurement team runs significantly more transactions than the benchmark, there's a small premium on the workflow component (up to +15%). Running fewer gets you a discount (down to -15%). Power users of the platform pay more; lighter users pay less. This is separate from the Platform Access fee, which scales with user count rather than transaction volume."*
 
 ---
 

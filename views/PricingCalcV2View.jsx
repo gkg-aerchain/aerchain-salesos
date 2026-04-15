@@ -57,13 +57,18 @@ function SummaryTab({ p }) {
   const platformSub = userMultActive
     ? `${Math.round(p.feeStructure.platformPct*100)}% + ${userMultPct > 0 ? "+" : ""}${userMultPct}% user mult`
     : `${Math.round(p.feeStructure.platformPct*100)}% of subscription`;
+  const volMultPct = Math.round((p.volumeMultiplier - 1) * 100);
+  const volMultActive = Math.abs(p.volumeMultiplier - 1) > 0.005;
+  const workflowSub = volMultActive
+    ? `${Math.round(p.feeStructure.workflowPct*100)}% + ${volMultPct > 0 ? "+" : ""}${volMultPct}% volume mult`
+    : `${Math.round(p.feeStructure.workflowPct*100)}% of subscription`;
   const hasVolumeDiscount = p.volumeDiscountAmount > 0;
   const volPct = Math.round(p.volumeDiscountPct * 1000) / 10;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <StatCard label="Platform Access" value={fmt$(p.platformAccess)} sub={platformSub} icon={DollarSign} />
-        <StatCard label="Workflow Fees" value={fmt$(p.workflowFeesAnnual)} sub={`${Math.round(p.feeStructure.workflowPct*100)}% of subscription`} icon={Zap} color={T.success} />
+        <StatCard label="Workflow Fees" value={fmt$(p.workflowFeesAnnual)} sub={workflowSub} icon={Zap} color={T.success} />
         {hasVolumeDiscount && (
           <StatCard label="Volume Discount" value={`-${fmt$(p.volumeDiscountAmount)}`} sub={`${volPct}% auto-applied at $${p.annualSpendM}M`} icon={TrendingUp} color={T.success} />
         )}
@@ -119,6 +124,8 @@ function BreakdownTab({ p }) {
           {(() => {
             const userAdj = p.platformAccess - p.platformAccessBase;
             const userMultActive = Math.abs(userAdj) >= 500;
+            const volumeAdj = p.workflowBudget - p.workflowBudgetBase;
+            const volumeMultActive = Math.abs(volumeAdj) >= 500;
             const hasVolumeDiscount = p.volumeDiscountAmount > 0;
             const volumePct = Math.round(p.volumeDiscountPct * 1000) / 10;
             return [
@@ -128,8 +135,13 @@ function BreakdownTab({ p }) {
                 value: userAdj,
                 color: userAdj > 0 ? T.warn : T.success,
               }] : []),
-              { label: "Workflow Fees", value: p.workflowFeesAnnual },
-              { label: "Subscription (pre-volume)", value: p.subscriptionBeforeVolume, bold: true, subtle: true },
+              { label: "Workflow Fees (baseline)", value: p.workflowBudgetBase },
+              ...(volumeMultActive ? [{
+                label: `Volume multiplier (${p.volumeMultiplier.toFixed(2)}x, ${p.totalTxnMonth.toLocaleString()}/mo vs ~${p.expectedTxnMonth.toLocaleString()} expected)`,
+                value: volumeAdj,
+                color: volumeAdj > 0 ? T.warn : T.success,
+              }] : []),
+              { label: "Subscription (pre-volume-discount)", value: p.subscriptionBeforeVolume, bold: true, subtle: true },
               ...(hasVolumeDiscount ? [{
                 label: `Volume Discount (${volumePct}% auto)`,
                 value: -p.volumeDiscountAmount,
@@ -369,6 +381,7 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
   const [escalation, setEscalation] = useState(10);
   const [activeTab, setActiveTab] = useState("summary");
   const [scopePreset, setScopePreset] = useState(""); // "" = Full Suite, else preset id
+  const [actualTxnVolumeInput, setActualTxnVolumeInput] = useState(""); // blank = use estimate
   const [showConfig, setShowConfig] = useState(() => {
     try { return localStorage.getItem("v2-show-config") !== "false"; }
     catch { return true; }
@@ -420,12 +433,14 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
       entityCount,
       channelVolumes: hasChannelOverrides ? channelVolumes : undefined,
       activeChannelIds,
+      scopePresetId: scopePreset || "full-suite",
+      actualTxnVolume: actualTxnVolumeInput !== "" ? parseInt(actualTxnVolumeInput) : undefined,
       selectedIntegrations: selectedIntegrations || undefined,
       implToggles,
       addOns: [],
       dealParams: { discount, termYears, escalation },
     }, config);
-  }, [customerName, annualSpendM, selectedProducts, tierOverride, powerUsers, lightUsers, entityIdx, channelVolumes, activeChannelIds, selectedIntegrations, implToggles, discount, termYears, escalation, hasSpend, config]);
+  }, [customerName, annualSpendM, selectedProducts, tierOverride, powerUsers, lightUsers, entityIdx, channelVolumes, activeChannelIds, scopePreset, actualTxnVolumeInput, selectedIntegrations, implToggles, discount, termYears, escalation, hasSpend, config]);
 
   const toggleProduct = (pid) => setSelectedProducts(prev => { if (prev.includes(pid)) { const n = prev.filter(p => p !== pid); return n.length > 0 ? n : prev; } return [...prev, pid]; });
   const toggleInteg = (id) => setSelectedIntegrations(prev => { const cur = prev || config.integrations.filter(i => i.standard).map(i => i.id); return cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]; });
@@ -515,6 +530,22 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
             {scopePreset && activeChannelIds && (
               <div style={{ fontSize: 9, color: T.muted, marginTop: 3 }}>
                 {activeChannelIds.length} channel{activeChannelIds.length === 1 ? "" : "s"} active &middot; complexity-weighted
+              </div>
+            )}
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <div style={labelStyle}>Actual Monthly Transactions {actualTxnVolumeInput === "" && hasSpend && pricing && <span style={{ color: T.warn, fontWeight: 400 }}>(auto)</span>}</div>
+            <input
+              type="number"
+              value={actualTxnVolumeInput}
+              onChange={e => setActualTxnVolumeInput(e.target.value)}
+              placeholder={hasSpend && pricing ? String(pricing.expectedTxnMonth) : "—"}
+              min="0"
+              style={inputStyle}
+            />
+            {pricing && pricing.actualTxnProvided && Math.abs(pricing.volumeMultiplier - 1) > 0.005 && (
+              <div style={{ fontSize: 9, color: pricing.volumeMultiplier > 1 ? T.warn : T.success, marginTop: 3 }}>
+                {pricing.volumeMultiplier.toFixed(2)}x workflow fee multiplier ({Math.round((pricing.volumeMultiplier - 1) * 100) > 0 ? "+" : ""}{Math.round((pricing.volumeMultiplier - 1) * 100)}%)
               </div>
             )}
           </div>
