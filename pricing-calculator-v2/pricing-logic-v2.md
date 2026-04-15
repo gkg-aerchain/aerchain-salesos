@@ -343,7 +343,6 @@ At **0.30**, a 2x volume swing gives +23%, a 5x swing gives +62%, and 10x+ hits 
 |---------|-----------|
 | Intake to Award | 1.00x (base) |
 | Procure to Pay | +0.75x |
-| Spend Insights | +0.40x |
 
 Combined multiplier applies to the total subscription target before the platform/workflow split.
 

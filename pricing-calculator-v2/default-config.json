@@ -28,8 +28,7 @@
 
   "products": {
     "intake-to-award":  { "label": "Intake to Award",  "sub": "Autonomous & Strategic Sourcing", "multiplier": 1.00, "base": true },
-    "procure-to-pay":   { "label": "Procure to Pay",   "sub": "PO, Invoice, Payments",           "multiplier": 0.75 },
-    "spend-insights":   { "label": "Spend Insights",   "sub": "Analytics & Intelligence",        "multiplier": 0.40 }
+    "procure-to-pay":   { "label": "Procure to Pay",   "sub": "PO, Invoice, Payments",           "multiplier": 0.75 }
   },
 
   "entityTiers": [
