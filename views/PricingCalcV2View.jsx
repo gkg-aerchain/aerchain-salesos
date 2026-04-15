@@ -129,24 +129,26 @@ function BreakdownTab({ p }) {
             const hasVolumeDiscount = p.volumeDiscountAmount > 0;
             const volumePct = Math.round(p.volumeDiscountPct * 1000) / 10;
             return [
-              { label: "Platform Access (baseline)", value: p.platformAccessBase },
+              // Stage 1: baseline (pre-discount) and the volume discount
+              ...(hasVolumeDiscount ? [
+                { label: "Baseline Subscription (list price)", value: p.baselineTotal, color: T.muted },
+                { label: `Volume Discount (${volumePct}% auto-applied)`, value: -p.volumeDiscountAmount, color: T.success },
+                { label: "Net Baseline", value: p.netBaseline, bold: true, subtle: true },
+              ] : []),
+              // Stage 2: split into platform + workflow (both already net)
+              { label: hasVolumeDiscount ? "Platform Access (net)" : "Platform Access", value: p.platformAccessBase },
               ...(userMultActive ? [{
                 label: `User multiplier (${p.userMultiplier.toFixed(2)}x, ${p.powerUsers}P / ${p.lightUsers}L)`,
                 value: userAdj,
                 color: userAdj > 0 ? T.warn : T.success,
               }] : []),
-              { label: "Workflow Fees (baseline)", value: p.workflowBudgetBase },
+              { label: hasVolumeDiscount ? "Workflow Fees (net)" : "Workflow Fees", value: p.workflowBudgetBase },
               ...(volumeMultActive ? [{
                 label: `Volume multiplier (${p.volumeMultiplier.toFixed(2)}x, ${p.totalTxnMonth.toLocaleString()}/mo vs ~${p.expectedTxnMonth.toLocaleString()} expected)`,
                 value: volumeAdj,
                 color: volumeAdj > 0 ? T.warn : T.success,
               }] : []),
-              { label: "Subscription (pre-volume-discount)", value: p.subscriptionBeforeVolume, bold: true, subtle: true },
-              ...(hasVolumeDiscount ? [{
-                label: `Volume Discount (${volumePct}% auto)`,
-                value: -p.volumeDiscountAmount,
-                color: T.success,
-              }] : []),
+              // Stage 3: integrations + gross + manual discount + net
               { label: "Integration Add-Ons", value: p.integrationFees },
               { label: "Gross Subscription", value: p.y1Subscription, bold: true },
               ...(p.dealParams.discount > 0 ? [{ label: `Manual Discount (${p.dealParams.discount}%)`, value: -(p.y1Subscription - p.y1SubDiscounted), color: T.success }] : []),

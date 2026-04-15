@@ -95,12 +95,16 @@ discount = maxDiscount × t ^ exponent
 
 ### Where It Sits in the Calculation Chain
 
+**The volume discount is applied to the baseline BEFORE the platform/workflow split**, so that Platform Access + Workflow Fees always directly sum to the post-discount subscription. This keeps the UI breakdown internally consistent.
+
 ```
-interpolate(spend) × productMult × entityMult         = Baseline Total
+interpolate(spend) × productMult × entityMult         = Baseline Total (list price)
                      ↓
-× userMultiplier (on platform access portion)         = Subscription Target
-                     ↓
-× (1 − volumeDiscount(spend))  ← AUTO, spend-driven  = Post-Volume Subscription
+× (1 − volumeDiscount(spend))  ← AUTO, spend-driven  = Net Baseline
+                     ↓ split 45/55
+Platform Access (× userMultiplier)                   = Platform net
+Workflow Fees (× volumeMultiplier)                   = Workflow net
+Platform + Workflow                                   = Subscription Target (net)
                      ↓
 + integrationFees (not subject to volume discount)    = Gross Subscription
                      ↓
@@ -108,6 +112,8 @@ interpolate(spend) × productMult × entityMult         = Baseline Total
                      ↓
 + implementation + addOns (flat, no discount)         = Y1 Total
 ```
+
+**Why apply the discount before the split**: Mathematically equivalent to applying after (both produce `B × (1-d) × (pu + wv)`), but gives a cleaner client-facing breakdown where Platform Access + Workflow Fees directly add up to the net subscription. No confusion between "list price" components and "what you're actually paying."
 
 ### Sample Full-Pipeline Results (Intake to Award, 1 entity, default multipliers)
 
