@@ -113,6 +113,43 @@ Combined multiplier applies to the total subscription target before the platform
 
 ---
 
+## 4b. User Multiplier (NEW in V2)
+
+User counts now meaningfully affect pricing via a **soft multiplier on Platform Access only**. This keeps the spend-based foundation intact while acknowledging that teams significantly larger or smaller than tier defaults drive different load on the platform (training, provisioning, support, change management).
+
+### Formula
+
+```
+weightedUsers    = powerUsers × 1.0 + lightUsers × 0.2
+weightedDefault  = tier.powerUsers × 1.0 + tier.lightUsers × 0.2
+userRatio        = weightedUsers / weightedDefault
+userMultiplier   = clamp(0.85, 1.15, userRatio ^ 0.3)
+
+platformAccess   = (baselineTotal × platformPct) × userMultiplier
+```
+
+### Why these specific parameters
+
+- **Light users weighted at 0.2x**: Power users do the actual procurement work (sourcing, negotiation, contract management) — they drive ~80% of platform load. Light users (approvers, requisitioners, stakeholders) are occasional touchpoints that still require provisioning and licensing but generate minimal transaction activity.
+- **`^0.3` dampening**: Prevents linear scaling. A team 2x larger than default = 1.23x raw multiplier, not 2.0x. A team 4x larger = 1.52x raw. Without dampening, a Fortune 500 with 10x the default users would pay 10x the platform fee, which is wrong — the platform cost doesn't scale linearly with seat count.
+- **±15% clamp**: Hard cap ensures users can move the price meaningfully but never dominate it. Spend remains the primary pricing driver.
+
+### Impact Examples ($400M Enterprise, $171K baseline platform access)
+
+| Scenario | Power / Light | Weighted | Ratio | Multiplier | Platform Access | Δ |
+|----------|--------------|----------|-------|-----------|-----------------|---|
+| Skeleton team | 11 / 67 | 24.4 | 0.50 | 0.85x (clamped) | $145K | -$26K |
+| Default | 22 / 135 | 49.0 | 1.00 | 1.00x | $171K | — |
+| Moderate growth | 35 / 200 | 75.0 | 1.53 | 1.14x | $195K | +$24K |
+| Oversized team | 50 / 300 | 110.0 | 2.24 | 1.15x (clamped) | $197K | +$26K |
+| J&J-scale override | 150 / 1,000 | 350.0 | 7.14 | 1.15x (clamped) | $197K | +$26K |
+
+### Client-Facing Explanation
+
+> *"Platform Access scales slightly with your user count relative to the tier benchmark. A procurement team significantly larger than the typical Enterprise deployment (22 power + 135 light users) drives additional provisioning, training, and support load — we reflect that with a multiplier of up to +15%. Conversely, leaner teams get up to -15%. Power users (full-cycle procurement operators) count 5x more than light users (occasional stakeholders), reflecting their much higher platform engagement."*
+
+---
+
 ## 5. Entity Multiplier (Updated from V1)
 
 | Entities / BUs | Multiplier |
@@ -130,9 +167,15 @@ Combined multiplier applies to the total subscription target before the platform
 
 | Tier | Spend Range | Power/Light Users | Entities | Impl Multiplier | Duration |
 |------|------------|-------------------|---------|----------------|----------|
-| Mid-Market | < $250M | 10 / 50 | 1 | 0.60x | 3–4 months |
-| Enterprise | $250M – $750M | 25 / 150 | 2 | 0.85x | 4–6 months |
-| Large Enterprise | > $750M | 40 / 350 | 11 | 1.00x | 6–8 months |
+| Mid-Market | < $250M | 8 / 45 | 1 | 0.60x | 3–4 months |
+| Enterprise | $250M – $750M | 22 / 135 | 2 | 0.85x | 4–6 months |
+| Large Enterprise | > $750M | 50 / 400 | 11 | 1.00x | 6–8 months |
+
+**Default user counts are based on Hackett Group / APQC procurement team sizing benchmarks:**
+- Mid-Market companies typically run 10–15 procurement FTEs per $1B spend
+- Enterprise averages 8–12 FTE/$1B with higher centralization
+- Large Enterprise achieves economies of scale at 5–10 FTE/$1B but with broader stakeholder populations
+- Fortune 500 / Global 2000 prospects should override defaults — the "Large Enterprise" tier is sized for the $750M–$2B range; above that, user overrides are expected
 
 ---
 
