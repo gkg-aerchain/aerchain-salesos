@@ -270,18 +270,120 @@
     gap: 20px;
     margin: 16px 0;
   }
+  .brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 16px rgba(220, 95, 64, 0.3));
+  }
+  .brand-wordmark {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 0.12em;
+    color: var(--fg);
+    line-height: 1;
+  }
+  .brand-wordmark .ai-accent {
+    color: hsl(14 70% 56%);
+    font-weight: 800;
+  }
+  .brand-tagline {
+    font-size: 10px;
+    color: var(--fg3);
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .brand-partner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 10px;
+    color: var(--fg3);
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .brand-partner-divider {
+    width: 1px;
+    height: 28px;
+    background: var(--glass-border);
+  }
+  .infosys-label {
+    color: var(--fg2);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: none;
+  }
+  h2 .section-icon {
+    flex-shrink: 0;
+  }
+  footer .brand-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    opacity: 0.85;
+  }
+  footer .brand-footer svg {
+    width: 20px;
+    height: 20px;
+  }
   @media (max-width: 768px) {
     .two-col { grid-template-columns: 1fr; }
     h1 { font-size: 28px; }
     h2 { font-size: 20px; }
     .container { padding: 32px 20px 64px; }
+    .brand-row { flex-direction: column; align-items: flex-start; gap: 16px; }
   }
 </style>
+
+<!-- Reusable SVG definitions: Aerchain "A" mark -->
+<svg width="0" height="0" style="position: absolute;">
+  <defs>
+    <symbol id="aerchain-mark" viewBox="0 0 32 32">
+      <path d="M29.0091 11.08C30.1065 10.9602 30.9008 9.9732 30.7809 8.87342C30.6611 7.776 29.6741 6.98171 28.5743 7.10156C27.4769 7.22141 26.6826 8.20839 26.8025 9.30816C26.9223 10.4056 27.9093 11.1999 29.0091 11.08Z" fill="currentColor"/>
+      <path d="M31.2794 20.6254C31.3663 16.1699 29.4934 10.7674 24.5961 13.8364C24.1849 13.9962 23.9499 13.9398 23.7337 13.6343C23.1157 12.5158 22.641 11.3713 22.0535 10.1964C17.6332 -1.17501 12.5856 5.32729 7.25353 12.0575C-4.65365 27.4497 0.955675 34.2669 19.7247 20.75C20.3803 20.2847 21.6939 19.3118 22.1663 19.2719C22.6645 19.192 22.8713 19.5962 23.2473 20.4421C23.6115 21.3093 24.2178 22.5383 24.7724 23.4148C27.9754 29.6304 31.5238 28.1899 31.2817 20.6513V20.6254H31.2794ZM17.1656 18.3084C14.8039 19.7842 12.5621 21.5913 9.96771 22.6699C8.83739 23.1422 7.19008 22.6205 6.78354 21.7064C6.32295 20.2894 7.97026 18.2003 8.77864 16.7292C9.71627 15.0537 10.9594 13.5638 12.1508 12.0458C13.307 10.5489 14.8767 8.32817 17.0528 9.2987C18.7988 10.2904 19.5155 13.0328 20.5143 14.6871C20.9655 15.4039 20.9514 15.9114 20.1618 16.3438C19.2054 16.9525 18.169 17.6457 17.1844 18.299L17.1656 18.3107V18.3084ZM29.9634 21.2435C29.9117 22.0965 29.7496 25.323 28.6615 23.7861C27.6511 21.8874 26.5419 19.521 25.5526 17.4977C25.1672 16.4637 27.5712 16.0454 28.1962 16.2216C29.9423 16.8655 30.0033 19.6197 29.9634 21.2294V21.2458V21.2435Z" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
 </head>
 <body>
 <div class="container">
 
 <header>
+  <div class="brand-row">
+    <div class="brand-lockup">
+      <svg class="brand-mark" style="color: hsl(14 70% 56%);"><use href="#aerchain-mark"/></svg>
+      <div>
+        <div class="brand-wordmark">AERCH<span class="ai-accent">AI</span>N</div>
+        <div class="brand-tagline">Autonomous Procurement Platform</div>
+      </div>
+    </div>
+    <div class="brand-partner">
+      <span>In Partnership With</span>
+      <div class="brand-partner-divider"></div>
+      <span class="infosys-label">Infosys</span>
+    </div>
+  </div>
   <div class="eyebrow">Strategic Partner Briefing</div>
   <h1>The Aerchain Pricing Model</h1>
   <p class="subtitle">A unified, defensible pricing framework for autonomous procurement — purpose-built for enterprise deals ranging from $100M to $10B+ in spend under management.</p>
@@ -294,7 +396,8 @@
 </header>
 
 <section>
-  <div class="card accent">
+  <div class="card accent" style="position: relative; padding-right: 80px;">
+    <svg style="position: absolute; top: 20px; right: 20px; width: 48px; height: 48px; color: hsl(14 70% 56%); opacity: 0.25;"><use href="#aerchain-mark"/></svg>
     <div class="card-label">Executive Summary</div>
     <p class="lead">Aerchain's pricing model is a <strong>unified three-layer framework</strong>: a spend-tier anchored subscription (platform access + workflow fees), a soft multiplier layer for user and transaction volume, and a smooth volume-discount power curve. Every component is deterministic code — not AI, not opinion. A $250M mid-market deal and a $3B global enterprise deal are priced from the exact same rules, with every assumption traceable to a single configuration file. The model is designed to be <em>defensible to a CFO</em>, <em>explainable to a procurement VP</em>, and <em>tunable by a sales leader</em> — without code changes.</p>
   </div>
@@ -773,6 +876,10 @@ services       = baseImpl × tierMult × implSpendMult</pre>
 </table>
 
 <footer>
+  <div class="brand-footer">
+    <svg style="color: hsl(14 70% 56%);"><use href="#aerchain-mark"/></svg>
+    <div class="brand-wordmark" style="font-size: 14px;">AERCH<span class="ai-accent">AI</span>N</div>
+  </div>
   <p><strong>Aerchain SalesOS · Pricing Calculator V2</strong></p>
   <p>Engine: <code>lib/pricingEngineV2.js</code> · Config: <code>default-config.json</code> · Calculator: Pricing Calc v2 (app)</p>
   <p style="margin-top: 12px;">This document describes the pricing framework as of 2026-04. Parameters are tunable via the in-app Pricing Rules panel. For deal-specific structuring, contact Aerchain Head of Sales.</p>
