@@ -291,16 +291,29 @@ User can override the estimate by entering actual monthly transactions in the Cu
 actualVol     = user input (optional)
 expectedVol   = preset volume basis × (spend / refSpend)^exponent
 volumeRatio   = actualVol / expectedVol
-volumeMult    = clamp(0.85, 1.15, volumeRatio ^ 0.3)
+volumeMult    = clamp(0.85, 2.00, volumeRatio ^ 0.30)
 
 workflowFees  = (baselineTotal × workflowPct) × volumeMult
 ```
 
 **Key properties:**
-- **Dampened (`^0.3`)**: A team running 2x the expected volume only triggers a ~1.23x raw multiplier — then clamped to 1.15x
-- **Clamped (±15%)**: Volume can move the workflow fees meaningfully but never dominate
-- **Only applies to workflow component**: Platform Access is unaffected (that's the user multiplier's domain)
-- **Only active when user provides override**: If blank, the multiplier stays at 1.00 and the estimate is shown for reference
+- **Dampened (`^0.30`)**: A team running 2x the expected volume triggers a ~1.23x multiplier (not 2x linear). 10x volume triggers exactly 2.0x. The dampening reflects economies of scale — workflow cost doesn't scale linearly with transaction count.
+- **Clamped [0.85, 2.00]**: Light-volume clients get up to -15% discount. Heavy-volume clients pay up to +100% (2x). The upper cap is reached at ~10x expected volume. Beyond that, no additional multiplier.
+- **Only applies to workflow component**: Platform Access is unaffected (that's the user multiplier's domain).
+- **Only active when user provides override**: If blank, the multiplier stays at 1.00 and the estimate is shown for reference.
+
+### Exponent Intuition
+
+The exponent controls how sensitive the multiplier is to volume changes:
+
+| Exponent | 2x Volume → | 10x Volume → | Meaning |
+|----------|------------|-------------|---------|
+| 1.0 | 2.00x | 10.00x | Linear (no dampening) |
+| 0.5 | 1.41x | 3.16x | Square root (gentle) |
+| **0.30** ⭐ | **1.23x** | **2.00x** | **Aggressive (current)** |
+| 0.2 | 1.15x | 1.58x | Very aggressive |
+
+At **0.30**, a 2x volume swing gives +23%, a 5x swing gives +62%, and 10x+ hits the 2.0 cap. This reflects "workflow cost scales sublinearly with transaction count" — a proven pattern in procurement SaaS.
 
 ### Impact Examples ($750M, Auto+Tactical preset, $317K workflow budget baseline)
 
@@ -310,10 +323,13 @@ workflowFees  = (baselineTotal × workflowPct) × volumeMult
 | 500/mo (0.50x) | 0.50 | 0.85x (clamped) | $270K | -$47K |
 | 750/mo (0.75x) | 0.75 | 0.92x | $291K | -$26K |
 | **1,000/mo** (expected) | 1.00 | 1.00x | **$317K** | — |
-| 1,250/mo (1.25x) | 1.25 | 1.07x | $339K | +$22K |
 | 1,500/mo (1.50x) | 1.50 | 1.13x | $358K | +$41K |
-| 2,000/mo (2.00x) | 2.00 | 1.15x (clamped) | $365K | +$48K |
-| 5,000/mo (5.00x) | 5.00 | 1.15x (clamped) | $365K | +$48K |
+| 2,000/mo (2.00x) | 2.00 | 1.23x | $390K | +$73K |
+| 3,000/mo (3.00x) | 3.00 | 1.39x | $440K | +$123K |
+| 5,000/mo (5.00x) | 5.00 | 1.62x | $514K | +$197K |
+| 7,000/mo (7.00x) | 7.00 | 1.80x | $570K | +$253K |
+| **10,000/mo (10.00x)** | 10.00 | **2.00x (clamped)** | **$634K** | **+$317K** |
+| 20,000/mo+ | 20.00 | 2.00x (clamped) | $634K | +$317K |
 
 ### Client-Facing Explanation
 
