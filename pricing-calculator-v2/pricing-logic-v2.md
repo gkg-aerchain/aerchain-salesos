@@ -519,13 +519,41 @@ The 60-65% services-to-subscription ratio holds across most of the range. At exa
 
 ---
 
-## 10. Deal Parameters (Same as V1)
+## 10. Deal Parameters
 
 | Parameter | Default | Range |
 |-----------|---------|-------|
-| Discount | 0% | 0–30% |
+| Manual Discount | 0% | 0–30% |
 | Term | 3 years | 1–5 |
 | YoY Escalation | 10% | 0–15% |
+
+### Manual Discount — Applied to Overall Y1 Total (UPDATED)
+
+The manual discount slider now applies to the **entire Y1 commitment** (subscription + implementation services + gain share), not just the subscription. This is the standard enterprise sales behavior: a 10% discount means 10% off everything, not 10% off one component.
+
+**Distribution**: The discount is applied proportionally to each component for clean display. Under the hood:
+
+```
+discountFactor           = 1 − discount%
+y1SubDiscounted          = y1Subscription × discountFactor
+totalImpl (discounted)   = totalImplGross × discountFactor
+gainShareFee (discounted)= gainShareFeeGross × discountFactor
+
+y1Total                  = y1SubDiscounted + totalImpl + gainShareFee
+                         = y1GrossTotal × discountFactor
+```
+
+**TCO behavior**: The discount carries forward on subscription as the permanent rate — year 2 escalation starts from the discounted year 1 subscription. This matches standard enterprise SaaS contract behavior where the manual discount is a negotiated concession that locks in the subscription price for the term. Services are one-time (year 1 only), so the discount applies once. Gain share escalates the same as subscription.
+
+### Example: $1B Large Enterprise, 10% Manual Discount
+
+| Line Item | Gross | Post-Discount | Δ |
+|-----------|-------|---------------|---|
+| Subscription | $779K | $701K | -$78K |
+| Implementation Services | $472K | $425K | -$47K |
+| **Y1 Total** | **$1,250K** | **$1,125K** | **-$125K (10.0%)** |
+
+Effective discount on Y1 is exactly **10.0%** (versus 6.2% under the old subscription-only behavior for the same slider value).
 
 ---
 

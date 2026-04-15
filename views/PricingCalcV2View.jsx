@@ -148,12 +148,18 @@ function BreakdownTab({ p }) {
                 value: volumeAdj,
                 color: volumeAdj > 0 ? T.warn : T.success,
               }] : []),
-              // Stage 3: integrations + gross + manual discount + net
+              // Stage 3: integrations + gross subscription + services + gain share + manual discount on total
               { label: "Integration Add-Ons", value: p.integrationFees },
-              { label: "Gross Subscription", value: p.y1Subscription, bold: true },
-              ...(p.dealParams.discount > 0 ? [{ label: `Manual Discount (${p.dealParams.discount}%)`, value: -(p.y1Subscription - p.y1SubDiscounted), color: T.success }] : []),
-              { label: "Net Subscription (Y1)", value: p.y1SubDiscounted, bold: true, color: T.accent },
-              ...(p.gainShare.enabled ? [{ label: `Gain Share (${p.gainShare.defaultPct}%)`, value: p.gainShareFee, color: T.warn }] : []),
+              { label: "Gross Subscription", value: p.y1Subscription, bold: true, subtle: true },
+              { label: "+ Implementation Services", value: p.totalImplGross, color: T.muted },
+              ...(p.gainShare.enabled && p.gainShareFeeGross > 0 ? [{ label: `+ Gain Share (${p.gainShare.defaultPct}%)`, value: p.gainShareFeeGross, color: T.muted }] : []),
+              { label: "Gross Y1 Total", value: p.y1GrossTotal, bold: true },
+              ...(p.dealParams.discount > 0 ? [{
+                label: `Manual Discount (${p.dealParams.discount}% on total Y1)`,
+                value: -p.manualDiscountAmount,
+                color: T.success,
+              }] : []),
+              { label: "Net Y1 Total", value: p.y1Total, bold: true, color: T.accent },
             ];
           })().map((row, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", borderTop: row.bold ? `1px solid ${T.border}` : "none" }}>
@@ -619,8 +625,9 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
         <Card>
           <Section title="Deal Parameters" icon={Shield}>
             <div style={{ marginBottom: 8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={labelStyle}>Discount</span><span style={{ fontSize: 11, fontWeight: 600, color: discount > 0 ? T.success : T.muted }}>{discount}%</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span style={labelStyle}>Discount <span style={{ color: T.mutedSoft, fontWeight: 400 }}>(on Y1 total)</span></span><span style={{ fontSize: 11, fontWeight: 600, color: discount > 0 ? T.success : T.muted }}>{discount}%</span></div>
               <input type="range" min="0" max="30" value={discount} onChange={e => setDiscount(parseInt(e.target.value))} style={{ width: "100%", accentColor: T.accent }} />
+              <div style={{ fontSize: 9, color: T.muted, marginTop: 2, lineHeight: 1.4 }}>Applies proportionally to subscription, services, and gain share.</div>
             </div>
             <div style={{ display: "flex", gap: 6 }}>
               <div style={{ flex: 1 }}><div style={labelStyle}>Term (yrs)</div><select value={termYears} onChange={e => setTermYears(parseInt(e.target.value))} style={{ ...inputStyle, cursor: "pointer" }}>{[1,2,3,4,5].map(y => <option key={y} value={y}>{y}yr</option>)}</select></div>
