@@ -167,13 +167,13 @@ platformAccess   = (baselineTotal × platformPct) × userMultiplier
 
 | Tier | Spend Range | Power/Light Users | Entities | Impl Multiplier | Duration |
 |------|------------|-------------------|---------|----------------|----------|
-| Mid-Market | < $250M | 8 / 45 | 1 | 0.60x | 3–4 months |
-| Enterprise | $250M – $750M | 22 / 135 | 2 | 0.85x | 4–6 months |
+| Mid-Market | < $250M | 12 / 60 | 1 | 0.60x | 3–4 months |
+| Enterprise | $250M – $750M | 30 / 180 | 2 | 0.85x | 4–6 months |
 | Large Enterprise | > $750M | 50 / 400 | 11 | 1.00x | 6–8 months |
 
-**Default user counts are based on Hackett Group / APQC procurement team sizing benchmarks:**
-- Mid-Market companies typically run 10–15 procurement FTEs per $1B spend
-- Enterprise averages 8–12 FTE/$1B with higher centralization
+**Default user counts are calibrated above Hackett Group / APQC procurement team sizing benchmarks to err on the higher side — proposals should assume healthy team engagement:**
+- Mid-Market companies typically run 10–15 procurement FTEs per $1B spend; defaults sit at the upper end of typical staffing
+- Enterprise averages 8–12 FTE/$1B with higher centralization; defaults reflect well-staffed mid-size deployments
 - Large Enterprise achieves economies of scale at 5–10 FTE/$1B but with broader stakeholder populations
 - Fortune 500 / Global 2000 prospects should override defaults — the "Large Enterprise" tier is sized for the $750M–$2B range; above that, user overrides are expected
 

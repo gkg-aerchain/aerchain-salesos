@@ -31,8 +31,8 @@
   ],
 
   "clientTiers": {
-    "mid-market":       { "label": "Mid-Market",       "minSpend": 0,   "maxSpend": 250,  "powerUsers": 8,   "lightUsers": 45,   "entities": 1,  "implMultiplier": 0.60, "implDuration": "3-4 months" },
-    "enterprise":       { "label": "Enterprise",       "minSpend": 250, "maxSpend": 750,  "powerUsers": 22,  "lightUsers": 135,  "entities": 2,  "implMultiplier": 0.85, "implDuration": "4-6 months" },
+    "mid-market":       { "label": "Mid-Market",       "minSpend": 0,   "maxSpend": 250,  "powerUsers": 12,  "lightUsers": 60,   "entities": 1,  "implMultiplier": 0.60, "implDuration": "3-4 months" },
+    "enterprise":       { "label": "Enterprise",       "minSpend": 250, "maxSpend": 750,  "powerUsers": 30,  "lightUsers": 180,  "entities": 2,  "implMultiplier": 0.85, "implDuration": "4-6 months" },
     "large-enterprise": { "label": "Large Enterprise", "minSpend": 750, "maxSpend": 99999,"powerUsers": 50,  "lightUsers": 400,  "entities": 11, "implMultiplier": 1.00, "implDuration": "6-8 months" }
   },
 
