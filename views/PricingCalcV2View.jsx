@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef, useCallback } from "react";
-import { DollarSign, TrendingUp, Activity, Settings, BarChart3, AlertTriangle, Building2, Zap, Shield, Clock, Upload, FileText, Brain, Loader2, X, CheckCircle, Gift, Layers, ChevronDown, ChevronRight } from "lucide-react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { DollarSign, TrendingUp, Activity, Settings, BarChart3, AlertTriangle, Building2, Zap, Shield, Clock, Upload, FileText, Brain, Loader2, X, CheckCircle, Gift, Layers, ChevronDown, ChevronRight, EyeOff, Eye, SlidersHorizontal } from "lucide-react";
 import { T } from "../lib/theme.js";
 import { fmt$ } from "../lib/utils.js";
 import { Card } from "../components/Common.jsx";
@@ -335,6 +335,13 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
   const [termYears, setTermYears] = useState(3);
   const [escalation, setEscalation] = useState(10);
   const [activeTab, setActiveTab] = useState("summary");
+  const [showConfig, setShowConfig] = useState(() => {
+    try { return localStorage.getItem("v2-show-config") !== "false"; }
+    catch { return true; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("v2-show-config", String(showConfig)); } catch {}
+  }, [showConfig]);
 
   const annualSpendM = parseFloat(spendInput) || 0;
   const hasSpend = annualSpendM > 0;
@@ -381,11 +388,44 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
   const toggleInteg = (id) => setSelectedIntegrations(prev => { const cur = prev || config.integrations.filter(i => i.standard).map(i => i.id); return cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]; });
 
   return (
-    <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-      {/* LEFT: Config Panel */}
-      <div style={{ width: 280, flexShrink: 0 }}>
-        <PricingConfigPanel config={config} onChange={setConfig} />
-      </div>
+    <div style={{ display: "flex", gap: 14, alignItems: "flex-start", position: "relative" }}>
+      {/* LEFT: Config Panel (collapsible) */}
+      {showConfig ? (
+        <div style={{ width: 280, flexShrink: 0, position: "relative" }}>
+          <button
+            onClick={() => setShowConfig(false)}
+            title="Hide Pricing Rules (presentation mode)"
+            style={{
+              position: "absolute", top: 10, right: 10, zIndex: 2,
+              background: T.bgCard, border: `1px solid ${T.border}`,
+              borderRadius: 6, padding: "4px 8px", cursor: "pointer",
+              color: T.muted, fontSize: 9, fontWeight: 600,
+              display: "flex", alignItems: "center", gap: 4,
+              letterSpacing: 0.3,
+            }}
+          >
+            <EyeOff size={10} /> HIDE
+          </button>
+          <PricingConfigPanel config={config} onChange={setConfig} />
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowConfig(true)}
+          title="Show Pricing Rules"
+          style={{
+            flexShrink: 0, alignSelf: "flex-start",
+            width: 36, height: 36, borderRadius: 8,
+            background: T.bgCard, border: `1px solid ${T.border}`,
+            cursor: "pointer", color: T.muted,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "all 0.15s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = T.accentBg; e.currentTarget.style.color = T.accent; e.currentTarget.style.borderColor = T.borderAcc; }}
+          onMouseLeave={e => { e.currentTarget.style.background = T.bgCard; e.currentTarget.style.color = T.muted; e.currentTarget.style.borderColor = T.border; }}
+        >
+          <SlidersHorizontal size={14} />
+        </button>
+      )}
 
       {/* MIDDLE: Customer Inputs */}
       <div style={{ width: 300, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10 }}>
