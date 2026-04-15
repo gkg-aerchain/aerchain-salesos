@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Settings, ChevronDown, ChevronRight, RotateCcw, Save, AlertTriangle, Percent, Layers, Building2, Zap, Wrench, Gift, EyeOff, TrendingDown } from "lucide-react";
+import { Settings, ChevronDown, ChevronRight, RotateCcw, Save, AlertTriangle, Percent, Layers, Building2, Zap, Wrench, Gift, EyeOff, TrendingDown, TrendingUp } from "lucide-react";
 import { T } from "../lib/theme.js";
 import { Card } from "./Common.jsx";
 import { fmt$ } from "../lib/utils.js";
-import { defaultConfig, interpolateTotal, getProductMultiplier, getEntityMultiplier, estimateTxnVolume, volumeDiscount } from "../lib/pricingEngineV2.js";
+import { defaultConfig, interpolateTotal, getProductMultiplier, getEntityMultiplier, estimateTxnVolume, volumeDiscount, calcImplSpendMultiplier } from "../lib/pricingEngineV2.js";
 import gainShareMd from "../pricing-calculator-v2/gain-share-logic.md?raw";
 
 const labelStyle = { fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 };
@@ -273,6 +273,52 @@ export default function PricingConfigPanel({ config, onChange, onHide }) {
             <input type="number" value={config.dealDefaults.discount} onChange={e => update("dealDefaults.discount", parseInt(e.target.value) || 0)} min="0" max="30" style={inputStyle} />
           </div>
         </div>
+      </Section>
+
+      {/* ─── Implementation Spend Scaling ──────────────────────────────── */}
+      <Section title="Implementation Spend Scaling" icon={TrendingUp}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <div onClick={() => update("implSpendScaling.enabled", !(config.implSpendScaling?.enabled ?? true))} style={{ width: 32, height: 18, borderRadius: 9, background: (config.implSpendScaling?.enabled ?? true) ? T.accent : T.border, cursor: "pointer", position: "relative", transition: "background 0.15s" }}>
+            <div style={{ width: 14, height: 14, borderRadius: 7, background: "#fff", position: "absolute", top: 2, left: (config.implSpendScaling?.enabled ?? true) ? 16 : 2, transition: "left 0.15s" }} />
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 600, color: (config.implSpendScaling?.enabled ?? true) ? T.text : T.muted }}>
+            {(config.implSpendScaling?.enabled ?? true) ? "Enabled" : "Disabled"}
+          </span>
+        </div>
+        {(config.implSpendScaling?.enabled ?? true) && (
+          <>
+            <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+              <div style={{ flex: 1 }}>
+                <div style={labelStyle}>Ref Spend ($M)</div>
+                <input type="number" value={config.implSpendScaling?.refSpend ?? 750} onChange={e => update("implSpendScaling.refSpend", parseFloat(e.target.value) || 0)} step="50" style={inputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={labelStyle}>Exponent</div>
+                <input type="number" value={config.implSpendScaling?.exponent ?? 0.5} onChange={e => update("implSpendScaling.exponent", parseFloat(e.target.value) || 0)} step="0.05" min="0.1" max="2" style={inputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={labelStyle}>Max Mult</div>
+                <input type="number" value={config.implSpendScaling?.maxMult ?? 3.0} onChange={e => update("implSpendScaling.maxMult", parseFloat(e.target.value) || 1.0)} step="0.25" min="1.0" max="10.0" style={inputStyle} />
+              </div>
+            </div>
+            <div className="glass-surface" style={{ borderRadius: 8, padding: "8px 10px", boxShadow: T.glass }}>
+              <div style={{ fontSize: 9, color: T.muted, marginBottom: 6, fontWeight: 700, letterSpacing: 0.5 }}>SPEND SCALING CURVE PREVIEW</div>
+              {[500, 750, 1000, 1500, 2000, 3000, 5000, 10000].map(s => {
+                const m = calcImplSpendMultiplier(s, config);
+                const pct = Math.round((m - 1) * 100);
+                return (
+                  <div key={s} style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: T.muted, padding: "1px 0" }}>
+                    <span>${s >= 1000 ? (s/1000).toFixed(1) + "B" : s + "M"}</span>
+                    <span style={{ color: m > 1.001 ? T.warn : T.muted, fontWeight: 600 }}>{m.toFixed(2)}x {pct > 0 ? `(+${pct}%)` : ""}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 9, color: T.muted, marginTop: 6, lineHeight: 1.5 }}>
+              Formula: <code style={{ fontSize: 9, color: T.accent }}>clamp(min, max, (spend/refSpend)^exp)</code>. Below refSpend = 1.0x (no scaling, tier multipliers handle it). Default exp=0.5 = square root (diminishing returns).
+            </div>
+          </>
+        )}
       </Section>
 
       {/* ─── Gain Share ────────────────────────────────────────────────── */}

@@ -215,20 +215,34 @@ function BreakdownTab({ p }) {
 function ImplementationTab({ p }) {
   const cfg = p.config;
   const tierMult = cfg.clientTiers[p.tier]?.implMultiplier || 1;
+  const spendMult = p.implSpendMultiplier || 1;
+  const combinedMult = tierMult * spendMult;
+  const spendMultActive = spendMult > 1.001;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <Card>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div>
             <div style={labelStyle}>Implementation Rate Card</div>
-            <div style={{ fontSize: 11, color: T.muted }}>Tier: {p.tierLabel} ({tierMult}x) &middot; {p.implDuration}</div>
+            <div style={{ fontSize: 11, color: T.muted }}>
+              Tier: {p.tierLabel} ({tierMult.toFixed(2)}x)
+              {spendMultActive && <> &middot; <span style={{ color: T.warn }}>Spend scale: {spendMult.toFixed(2)}x (+{Math.round((spendMult - 1) * 100)}% at ${p.annualSpendM}M)</span></>}
+              {" "}&middot; {p.implDuration}
+            </div>
           </div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: T.text }}>{fmt$(p.implCost)}</div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: T.text }}>{fmt$(p.implCost)}</div>
+            {spendMultActive && (
+              <div style={{ fontSize: 9, color: T.muted, marginTop: 2 }}>
+                was {fmt$(p.implCostTierBase)} (tier only)
+              </div>
+            )}
+          </div>
         </div>
         {Object.entries(cfg.implSections).map(([key, sec]) => {
           const isOn = sec.alwaysOn || p.implToggles[key] !== false;
           const raw = calcImplSectionRaw(key, cfg);
-          const scaled = Math.round(raw * tierMult);
+          const scaled = Math.round(raw * combinedMult);
           return (
             <div key={key} style={{ marginBottom: 10, borderTop: `1px solid ${T.border}`, paddingTop: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -250,7 +264,7 @@ function ImplementationTab({ p }) {
                         <td style={tdStyle}>{r.hc}</td>
                         <td style={{ ...tdStyle, textAlign: "right" }}>{fmt$(r.rate)}</td>
                         <td style={{ ...tdStyle, textAlign: "right" }}>{r.months}</td>
-                        <td style={{ ...tdStyle, textAlign: "right", color: T.success }}>{fmt$(Math.round(r.hc * r.rate * r.months * tierMult))}</td>
+                        <td style={{ ...tdStyle, textAlign: "right", color: T.success }}>{fmt$(Math.round(r.hc * r.rate * r.months * combinedMult))}</td>
                       </tr>
                     ))}
                   </tbody>

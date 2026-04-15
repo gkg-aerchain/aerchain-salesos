@@ -70,8 +70,8 @@ discount = maxDiscount × t ^ exponent
 |-----------|---------|---------|
 | floor | $100M | Below this spend, volume discount = 0% |
 | cap | $3B | Above this spend, volume discount = maxDiscount (capped) |
-| maxDiscount | 60% | Maximum discount reached at cap |
-| exponent | 0.60 | Curve shape (< 1 = concave, fast rise then tapers) |
+| maxDiscount | 70% | Maximum discount reached at cap |
+| exponent | 0.70 | Curve shape (< 1 = concave, fast rise then tapers) |
 
 ### Why a Power Curve (not anchor points or log)?
 
@@ -80,18 +80,18 @@ discount = maxDiscount × t ^ exponent
 - **Explainable analytically**: "60% × (normalized spend)^0.6" is one sentence, not a lookup table
 - **Naturally handles edge cases**: Below floor = 0, above cap = max, monotonically increasing
 
-### Default Curve (exponent = 0.60)
+### Default Curve (exponent = 0.70, maxDiscount = 70%)
 
 | Spend | Discount | Notes |
 |-------|----------|-------|
 | ≤ $100M | 0.0% | Baseline, no discount |
-| $250M | 9.9% | Light discount starts |
-| $500M | 17.3% | Mid-tier |
-| $750M | 23.6% | |
-| $1B | 29.8% | Round milestone |
-| $1.5B | 38.8% | |
-| $2B | 46.9% | |
-| $3B+ | 60.0% | Capped |
+| $250M | 8.4% | Light discount starts |
+| $500M | 16.7% | Mid-tier |
+| $750M | 24.3% | |
+| $1B | 30.8% | Round milestone |
+| $1.5B | 41.6% | |
+| $2B | 51.9% | |
+| $3B+ | 70.0% | Capped |
 
 ### Where It Sits in the Calculation Chain
 
@@ -131,7 +131,7 @@ Platform + Workflow                                   = Subscription Target (net
 
 ### Client-Facing Explanation
 
-> *"Our volume discount scales continuously with spend using a power-law curve — the more you commit, the larger the automatic discount, reaching 60% for $3B+ commitments. The curve is smooth (no tier cliffs) so your discount grows naturally as your scope grows. For your projected spend of $X, the auto-discount works out to Y%, which you can see itemized on every quote. This auto-applied volume discount stacks with any additional negotiated discount."*
+> *"Our volume discount scales continuously with spend using a power-law curve — the more you commit, the larger the automatic discount, reaching 70% for $3B+ commitments. The curve is smooth (no tier cliffs) so your discount grows naturally as your scope grows. For your projected spend of $X, the auto-discount works out to Y%, which you can see itemized on every quote. This auto-applied volume discount stacks with any additional negotiated discount."*
 
 ---
 
@@ -439,7 +439,41 @@ Standard integrations are included in the base platform fee. Additional integrat
 
 ## 8. Implementation Rate Card (Same as V1)
 
-Large Enterprise baseline = **~$398,000** total.
+Large Enterprise baseline = **~$408,500** total.
+
+### Implementation Spend Scaling (NEW)
+
+The tier multiplier caps at 1.00x for Large Enterprise (> $750M), which meant implementation cost was flat from $750M to $10B+ — clearly wrong since a $3B rollout is nothing like a $750M one (more entities, more users, more change management, longer phased rollouts).
+
+**Fix**: On top of the tier multiplier, a **spend-based multiplier** kicks in above the Large Enterprise threshold, using a square-root curve to reflect diminishing returns:
+
+```
+implSpendMult = clamp(1.0, 3.0, (spend / refSpend)^exponent)
+implCost      = baseImpl × tier.implMultiplier × implSpendMult
+```
+
+**Default parameters:**
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| refSpend | $750M | Below this, no spend scaling (tier multiplier only) |
+| exponent | 0.50 | Square root — diminishing returns |
+| minMult | 1.0 | Never scales below baseline |
+| maxMult | 3.0 | Cap at 3x to prevent runaway at $10B+ |
+
+**Why square root**: A $3B rollout is ~2x the effort of a $750M one, not 4x. Large Enterprise deployments benefit from economies of scale (reused architecture, same PM team, standardized tooling) — effort grows sublinearly with spend.
+
+**Impact curve:**
+| Spend | Spend Multiplier | Services Cost | Ratio vs Net Subscription |
+|-------|-----------------|---------------|---------------------------|
+| ≤ $750M | 1.00x | $409K (LE baseline) | ~63% |
+| $1B | 1.15x | $472K | ~61% |
+| $1.5B | 1.41x | $578K | ~60% |
+| $2B | 1.63x | $667K | ~64% |
+| **$3B** | **2.00x** | **$817K** | ~84% (at vol discount cap) |
+| $5B | 2.58x | $1,056K | ~66% |
+| $10B+ | 3.00x (clamped) | $1,227K | (plateau) |
+
+The 60-65% services-to-subscription ratio holds across most of the range. At exactly $3B the ratio spikes because the 70% volume discount cap hits — subscription is minimized while services keep scaling. Above $3B the ratio normalizes back as subscription grows past the discount cap.
 
 | Section | Toggleable | Cost |
 |---------|-----------|------|

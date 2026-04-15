@@ -22,8 +22,16 @@
     "enabled": true,
     "floor": 100,
     "cap": 3000,
-    "maxDiscount": 0.60,
-    "exponent": 0.60
+    "maxDiscount": 0.70,
+    "exponent": 0.70
+  },
+
+  "implSpendScaling": {
+    "enabled": true,
+    "refSpend": 750,
+    "exponent": 0.50,
+    "minMult": 1.0,
+    "maxMult": 3.0
   },
 
   "products": {
