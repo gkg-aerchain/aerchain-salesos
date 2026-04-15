@@ -167,7 +167,7 @@ platformAccess   = (baselineTotal × platformPct) × userMultiplier
 
 | Tier | Spend Range | Power/Light Users | Entities | Impl Multiplier | Duration |
 |------|------------|-------------------|---------|----------------|----------|
-| Mid-Market | < $250M | 12 / 60 | 1 | 0.60x | 3–4 months |
+| Mid-Market | < $250M | 15 / 60 | 1 | 0.60x | 3–4 months |
 | Enterprise | $250M – $750M | 30 / 180 | 2 | 0.85x | 4–6 months |
 | Large Enterprise | > $750M | 50 / 400 | 11 | 1.00x | 6–8 months |
 
