@@ -155,32 +155,31 @@ Standard integrations are included in the base platform fee. Additional integrat
 
 ## 8. Implementation Rate Card (Same as V1)
 
-Large Enterprise baseline = **$393,000** total.
+Large Enterprise baseline = **~$398,000** total.
 
 | Section | Toggleable | Cost |
 |---------|-----------|------|
-| Core Implementation | Always ON | $242,000 |
+| Core Implementation | Always ON | $248,000 |
 | Integrations | ON by default | $36,000 |
-| QA & Validation | ON by default | $32,000 |
-| Customer Success | ON by default | $83,000 |
-| **Total** | | **$393,000** |
+| QA & Validation | ON by default | $34,500 |
+| Customer Success | ON by default | $90,000 |
+| **Total** | | **~$408,500** |
 
 ### Tier Scaling
 
 | Tier | Multiplier | Approx Total |
 |------|-----------|-------------|
-| Mid-Market | 0.60x | ~$236,000 |
-| Enterprise | 0.85x | ~$334,000 |
-| Large Enterprise | 1.00x | $393,000 |
+| Mid-Market | 0.60x | ~$245,000 |
+| Enterprise | 0.85x | ~$347,000 |
+| Large Enterprise | 1.00x | ~$408,500 |
 
 ### Role Detail
 
-**Core ($242K):**
-- Solution Architect × 1, $24K/mo, 1 mo = $24K
-- PC Team Lead × 1, $9K/mo, 3 mo = $28K
-- Project Manager × 1, $9K/mo, 6 mo = $52K
-- Product Consultant × 1, $9K/mo, 5 mo = $43K
-- Assoc. Product Consultant × 2, $8K/mo, 6 mo = $95K
+**Core ($248K):**
+- PC Team Lead × 1, $10K/mo, 3 mo = $30K
+- Project Manager × 1, $10K/mo, 6 mo = $60K
+- Product Consultant × 1, $10K/mo, 5 mo = $50K
+- Assoc. Product Consultant × 2, $9K/mo, 6 mo = $108K
 
 **Integrations ($36K):** Integration Lead + Engineer × 2 months
 **QA ($32K):** QA Lead + 2 QA Engineers × 1.5 months

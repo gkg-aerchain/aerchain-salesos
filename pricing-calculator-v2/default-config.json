@@ -69,11 +69,10 @@
 
   "implSections": {
     "core":            { "label": "Core Implementation",  "alwaysOn": true,  "roles": [
-      { "title": "Solution Architect",        "hc": 1, "rate": 24000, "months": 1   },
-      { "title": "PC Team Lead",              "hc": 1, "rate": 9000,  "months": 3   },
-      { "title": "Project Manager",           "hc": 1, "rate": 9000,  "months": 6   },
-      { "title": "Product Consultant",        "hc": 1, "rate": 9000,  "months": 5   },
-      { "title": "Assoc. Product Consultant", "hc": 2, "rate": 8000,  "months": 6   }
+      { "title": "PC Team Lead",              "hc": 1, "rate": 10000, "months": 3   },
+      { "title": "Project Manager",           "hc": 1, "rate": 10000, "months": 6   },
+      { "title": "Product Consultant",        "hc": 1, "rate": 10000, "months": 5   },
+      { "title": "Assoc. Product Consultant", "hc": 2, "rate": 9000,  "months": 6   }
     ]},
     "integrations":    { "label": "Integrations",         "alwaysOn": false, "roles": [
       { "title": "Integration Lead",    "hc": 1, "rate": 9000, "months": 2 },
