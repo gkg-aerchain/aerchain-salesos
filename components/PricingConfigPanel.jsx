@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Settings, ChevronDown, ChevronRight, RotateCcw, Save, AlertTriangle, Percent, Layers, Building2, Zap, Wrench, Gift, EyeOff } from "lucide-react";
+import { Settings, ChevronDown, ChevronRight, RotateCcw, Save, AlertTriangle, Percent, Layers, Building2, Zap, Wrench, Gift, EyeOff, TrendingDown } from "lucide-react";
 import { T } from "../lib/theme.js";
 import { Card } from "./Common.jsx";
 import { fmt$ } from "../lib/utils.js";
-import { defaultConfig, interpolateTotal, getProductMultiplier, getEntityMultiplier, estimateTxnVolume } from "../lib/pricingEngineV2.js";
+import { defaultConfig, interpolateTotal, getProductMultiplier, getEntityMultiplier, estimateTxnVolume, volumeDiscount } from "../lib/pricingEngineV2.js";
 import gainShareMd from "../pricing-calculator-v2/gain-share-logic.md?raw";
 
 const labelStyle = { fontSize: 10, fontWeight: 600, color: T.muted, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 };
@@ -32,7 +32,10 @@ export default function PricingConfigPanel({ config, onChange, onHide }) {
     const next = JSON.parse(JSON.stringify(config));
     const keys = path.split(".");
     let obj = next;
-    for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (obj[keys[i]] == null || typeof obj[keys[i]] !== "object") obj[keys[i]] = {};
+      obj = obj[keys[i]];
+    }
     obj[keys[keys.length - 1]] = value;
     onChange(next);
   };
@@ -151,6 +154,62 @@ export default function PricingConfigPanel({ config, onChange, onHide }) {
             <input type="number" value={config.bpsAbove1B} onChange={e => update("bpsAbove1B", parseFloat(e.target.value) || 0)} step="0.5" style={inputStyle} />
           </div>
         </div>
+        <div style={{ marginTop: 6 }}>
+          <div style={labelStyle}>Baseline Floor ($K) — minimum subscription</div>
+          <input type="number" value={config.baselineFloorK ?? 100} onChange={e => update("baselineFloorK", parseFloat(e.target.value) || 0)} step="10" style={inputStyle} />
+        </div>
+      </Section>
+
+      {/* ─── Volume Discount Curve ─────────────────────────────────────── */}
+      <Section title="Volume Discount Curve" icon={TrendingDown}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <div onClick={() => update("volumeDiscount.enabled", !(config.volumeDiscount?.enabled ?? true))} style={{ width: 32, height: 18, borderRadius: 9, background: (config.volumeDiscount?.enabled ?? true) ? T.accent : T.border, cursor: "pointer", position: "relative", transition: "background 0.15s" }}>
+            <div style={{ width: 14, height: 14, borderRadius: 7, background: "#fff", position: "absolute", top: 2, left: (config.volumeDiscount?.enabled ?? true) ? 16 : 2, transition: "left 0.15s" }} />
+          </div>
+          <span style={{ fontSize: 10, fontWeight: 600, color: (config.volumeDiscount?.enabled ?? true) ? T.text : T.muted }}>
+            {(config.volumeDiscount?.enabled ?? true) ? "Auto-applied" : "Disabled"}
+          </span>
+        </div>
+        {(config.volumeDiscount?.enabled ?? true) && (
+          <>
+            <div style={{ display: "flex", gap: 6, marginBottom: 6 }}>
+              <div style={{ flex: 1 }}>
+                <div style={labelStyle}>Floor ($M)</div>
+                <input type="number" value={config.volumeDiscount?.floor ?? 100} onChange={e => update("volumeDiscount.floor", parseFloat(e.target.value) || 0)} step="50" style={inputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={labelStyle}>Cap ($M)</div>
+                <input type="number" value={config.volumeDiscount?.cap ?? 3000} onChange={e => update("volumeDiscount.cap", parseFloat(e.target.value) || 0)} step="100" style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+              <div style={{ flex: 1 }}>
+                <div style={labelStyle}>Max Discount %</div>
+                <input type="number" value={Math.round((config.volumeDiscount?.maxDiscount ?? 0.60) * 100)} onChange={e => update("volumeDiscount.maxDiscount", (parseFloat(e.target.value) || 0) / 100)} step="5" min="0" max="90" style={inputStyle} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={labelStyle}>Exponent (shape)</div>
+                <input type="number" value={config.volumeDiscount?.exponent ?? 0.60} onChange={e => update("volumeDiscount.exponent", parseFloat(e.target.value) || 0)} step="0.05" min="0.1" max="3" style={inputStyle} />
+              </div>
+            </div>
+            <div className="glass-surface" style={{ borderRadius: 8, padding: "8px 10px", boxShadow: T.glass }}>
+              <div style={{ fontSize: 9, color: T.muted, marginBottom: 6, fontWeight: 700, letterSpacing: 0.5 }}>DISCOUNT CURVE PREVIEW</div>
+              {[100, 250, 500, 750, 1000, 1500, 2000, 3000].map(s => {
+                const d = volumeDiscount(s, config);
+                const pct = Math.round(d * 1000) / 10;
+                return (
+                  <div key={s} style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: T.muted, padding: "1px 0" }}>
+                    <span>${s >= 1000 ? (s/1000).toFixed(1) + "B" : s + "M"}</span>
+                    <span style={{ color: d > 0 ? T.success : T.muted, fontWeight: 600 }}>{pct.toFixed(1)}%</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 9, color: T.muted, marginTop: 6, lineHeight: 1.5 }}>
+              Formula: <code style={{ fontSize: 9, color: T.accent }}>max × ((spend−floor)/(cap−floor))^exp</code>. Exponent &lt; 1 = concave (fast rise, tapers). Stacks multiplicatively with manual discount slider.
+            </div>
+          </>
+        )}
       </Section>
 
       {/* ─── Products ──────────────────────────────────────────────────── */}

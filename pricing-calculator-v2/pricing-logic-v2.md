@@ -40,8 +40,92 @@ The **total subscription** is determined by spend under management — the total
 ### Interpolation Rule
 
 - **Between tiers**: Linear interpolation
-- **Below $100M**: 10 BPS floor
-- **Above $1B**: 7.0 BPS marginal rate
+- **Below $100M**: 10 BPS extrapolation, but with a **hard $100K baseline floor** so tiny-spend deals never drop below the minimum subscription
+- **Above $1B**: 7.0 BPS marginal rate on excess spend
+
+### Unit Math (for auditors)
+
+```
+fee_$    = spend_$ × BPS / 10000
+fee_$K   = spendM × BPS / 10
+```
+
+So a 7.0 BPS marginal rate from $1B to $3B adds `2000 × 7 / 10 = 1400` → $1.4M, taking the baseline from $750K (at $1B) to $2,150K (at $3B).
+
+---
+
+## 1b. Volume Discount Curve (NEW)
+
+On top of the spend-tier baseline, a **volume discount** is auto-applied using a smooth power curve. This is the primary mechanism for scaling pricing down at large spend levels, replacing hard-coded anchor points with a continuous formula.
+
+### Formula
+
+```
+t        = clamp(0, 1, (spend − floor) / (cap − floor))
+discount = maxDiscount × t ^ exponent
+```
+
+**Default parameters:**
+| Parameter | Default | Meaning |
+|-----------|---------|---------|
+| floor | $100M | Below this spend, volume discount = 0% |
+| cap | $3B | Above this spend, volume discount = maxDiscount (capped) |
+| maxDiscount | 60% | Maximum discount reached at cap |
+| exponent | 0.60 | Curve shape (< 1 = concave, fast rise then tapers) |
+
+### Why a Power Curve (not anchor points or log)?
+
+- **Smooth, no kinks**: A client at $999M vs $1.001B sees nearly identical discount and slope — no arbitrary cliffs
+- **Single tunable shape parameter**: Change exponent from 0.60 → 0.50 and the entire curve steepens uniformly
+- **Explainable analytically**: "60% × (normalized spend)^0.6" is one sentence, not a lookup table
+- **Naturally handles edge cases**: Below floor = 0, above cap = max, monotonically increasing
+
+### Default Curve (exponent = 0.60)
+
+| Spend | Discount | Notes |
+|-------|----------|-------|
+| ≤ $100M | 0.0% | Baseline, no discount |
+| $250M | 9.9% | Light discount starts |
+| $500M | 17.3% | Mid-tier |
+| $750M | 23.6% | |
+| $1B | 29.8% | Round milestone |
+| $1.5B | 38.8% | |
+| $2B | 46.9% | |
+| $3B+ | 60.0% | Capped |
+
+### Where It Sits in the Calculation Chain
+
+```
+interpolate(spend) × productMult × entityMult         = Baseline Total
+                     ↓
+× userMultiplier (on platform access portion)         = Subscription Target
+                     ↓
+× (1 − volumeDiscount(spend))  ← AUTO, spend-driven  = Post-Volume Subscription
+                     ↓
++ integrationFees (not subject to volume discount)    = Gross Subscription
+                     ↓
+× (1 − manualDiscount) ← sales slider, stacks on top  = Net Subscription (Y1)
+                     ↓
++ implementation + addOns (flat, no discount)         = Y1 Total
+```
+
+### Sample Full-Pipeline Results (Intake to Award, 1 entity, default multipliers)
+
+| Spend | Baseline | Vol Discount | Net Subscription | Effective BPS |
+|-------|----------|--------------|------------------|---------------|
+| $50M | $100K (floor) | 0% | $100K | 20.0 |
+| $100M | $100K | 0% | $100K | 10.0 |
+| $250M | $225K | 10.1% | $202K | 8.1 |
+| $500M | $400K | 18.3% | $327K | 6.5 |
+| $1B | $750K | 29.7% | $527K | 5.3 |
+| $1.5B | $1,100K | 38.8% | $674K | 4.5 |
+| $2B | $1,450K | 46.6% | $775K | 3.9 |
+| $3B | $2,150K | 60.0% | $860K | 2.9 |
+| $5B | $3,550K | 60.0% (capped) | $1,420K | 2.8 |
+
+### Client-Facing Explanation
+
+> *"Our volume discount scales continuously with spend using a power-law curve — the more you commit, the larger the automatic discount, reaching 60% for $3B+ commitments. The curve is smooth (no tier cliffs) so your discount grows naturally as your scope grows. For your projected spend of $X, the auto-discount works out to Y%, which you can see itemized on every quote. This auto-applied volume discount stacks with any additional negotiated discount."*
 
 ---
 

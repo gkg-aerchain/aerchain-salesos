@@ -16,6 +16,15 @@
   ],
   "bpsBelow100M": 10.0,
   "bpsAbove1B": 7.0,
+  "baselineFloorK": 100,
+
+  "volumeDiscount": {
+    "enabled": true,
+    "floor": 100,
+    "cap": 3000,
+    "maxDiscount": 0.60,
+    "exponent": 0.60
+  },
 
   "products": {
     "intake-to-award":  { "label": "Intake to Award",  "sub": "Autonomous & Strategic Sourcing", "multiplier": 1.00, "base": true },

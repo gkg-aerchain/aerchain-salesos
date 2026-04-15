@@ -57,11 +57,16 @@ function SummaryTab({ p }) {
   const platformSub = userMultActive
     ? `${Math.round(p.feeStructure.platformPct*100)}% + ${userMultPct > 0 ? "+" : ""}${userMultPct}% user mult`
     : `${Math.round(p.feeStructure.platformPct*100)}% of subscription`;
+  const hasVolumeDiscount = p.volumeDiscountAmount > 0;
+  const volPct = Math.round(p.volumeDiscountPct * 1000) / 10;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
         <StatCard label="Platform Access" value={fmt$(p.platformAccess)} sub={platformSub} icon={DollarSign} />
         <StatCard label="Workflow Fees" value={fmt$(p.workflowFeesAnnual)} sub={`${Math.round(p.feeStructure.workflowPct*100)}% of subscription`} icon={Zap} color={T.success} />
+        {hasVolumeDiscount && (
+          <StatCard label="Volume Discount" value={`-${fmt$(p.volumeDiscountAmount)}`} sub={`${volPct}% auto-applied at $${p.annualSpendM}M`} icon={TrendingUp} color={T.success} />
+        )}
         <StatCard label="Y1 Total" value={fmt$(p.y1Total)} sub="Sub + impl + gain share" icon={TrendingUp} color={T.warn} />
       </div>
       {p.gainShare.enabled && p.gainShareFee > 0 && (
@@ -111,6 +116,8 @@ function BreakdownTab({ p }) {
           {(() => {
             const userAdj = p.platformAccess - p.platformAccessBase;
             const userMultActive = Math.abs(userAdj) >= 500;
+            const hasVolumeDiscount = p.volumeDiscountAmount > 0;
+            const volumePct = Math.round(p.volumeDiscountPct * 1000) / 10;
             return [
               { label: "Platform Access (baseline)", value: p.platformAccessBase },
               ...(userMultActive ? [{
@@ -119,9 +126,15 @@ function BreakdownTab({ p }) {
                 color: userAdj > 0 ? T.warn : T.success,
               }] : []),
               { label: "Workflow Fees", value: p.workflowFeesAnnual },
+              { label: "Subscription (pre-volume)", value: p.subscriptionBeforeVolume, bold: true, subtle: true },
+              ...(hasVolumeDiscount ? [{
+                label: `Volume Discount (${volumePct}% auto)`,
+                value: -p.volumeDiscountAmount,
+                color: T.success,
+              }] : []),
               { label: "Integration Add-Ons", value: p.integrationFees },
               { label: "Gross Subscription", value: p.y1Subscription, bold: true },
-              ...(p.dealParams.discount > 0 ? [{ label: `Discount (${p.dealParams.discount}%)`, value: -(p.y1Subscription - p.y1SubDiscounted), color: T.success }] : []),
+              ...(p.dealParams.discount > 0 ? [{ label: `Manual Discount (${p.dealParams.discount}%)`, value: -(p.y1Subscription - p.y1SubDiscounted), color: T.success }] : []),
               { label: "Net Subscription (Y1)", value: p.y1SubDiscounted, bold: true, color: T.accent },
               ...(p.gainShare.enabled ? [{ label: `Gain Share (${p.gainShare.defaultPct}%)`, value: p.gainShareFee, color: T.warn }] : []),
             ];
