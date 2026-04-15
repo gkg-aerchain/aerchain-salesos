@@ -499,9 +499,30 @@ export default function PricingCalcV2View({ data, onFilesSelected, uploadedFiles
             <div style={labelStyle}>Customer Name</div>
             <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="e.g. Iron Mountain" style={inputStyle} />
           </div>
-          <div style={{ marginBottom: 8 }}>
-            <div style={labelStyle}>Annual Spend ($M)</div>
-            <input type="number" value={spendInput} onChange={e => setSpendInput(e.target.value)} placeholder="e.g. 500" min="0" step="10" style={inputStyle} />
+          <div style={{ marginBottom: 10, padding: "8px 10px", borderRadius: 10, background: "rgba(16,185,129,0.08)", border: `1px solid rgba(16,185,129,0.35)`, boxShadow: "0 0 0 1px rgba(16,185,129,0.15), 0 0 20px rgba(16,185,129,0.08)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+              <div style={{ ...labelStyle, color: T.success, marginBottom: 0 }}>Annual Spend ($M)</div>
+              <span style={{ fontSize: 8, fontWeight: 700, color: T.success, background: "rgba(16,185,129,0.15)", padding: "2px 6px", borderRadius: 4, letterSpacing: 0.5 }}>CORE INPUT</span>
+            </div>
+            <input
+              type="number"
+              value={spendInput}
+              onChange={e => setSpendInput(e.target.value)}
+              placeholder="e.g. 500"
+              min="0"
+              step="10"
+              style={{
+                ...inputStyle,
+                border: `1px solid rgba(16,185,129,0.5)`,
+                background: "rgba(16,185,129,0.05)",
+                color: T.text,
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            />
+            <div style={{ fontSize: 9, color: T.muted, marginTop: 4, lineHeight: 1.4 }}>
+              Drives all downstream calculations — tier, users, entities, volume, subscription, services, and discounts all derive from this.
+            </div>
           </div>
           <div style={{ marginBottom: 8 }}>
             <div style={labelStyle}>Products</div>
